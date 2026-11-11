@@ -101,10 +101,10 @@ async function routeBuilderInteraction(interaction) {
     const sid = parts[1];
     const domain = parts[2];
     const ctx = { sid, parts };
-    if (domain === 'nav') return handleNavigation(interaction, ctx), true;
-    if (domain === 'cmp') return handleComponents(interaction, ctx), true;
-    if (domain === 'prop') return handleProperties(interaction, ctx), true;
-    if (domain === 'pub') return handlePublishing(interaction, ctx), true;
+    if (domain === 'nav') { await handleNavigation(interaction, ctx); return true; }
+    if (domain === 'cmp') { await handleComponents(interaction, ctx); return true; }
+    if (domain === 'prop') { await handleProperties(interaction, ctx); return true; }
+    if (domain === 'pub') { await handlePublishing(interaction, ctx); return true; }
     await replySafe(interaction, { content: 'Unknown builder interaction.', flags: 64 });
     return true;
   }
