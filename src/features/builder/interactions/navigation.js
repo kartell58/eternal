@@ -67,15 +67,10 @@ function buildMainPanel(session) {
   const { ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, MessageFlags } = require('discord.js');
 
   const options = containers.length
-    ? containers.slice(0, 25).map((c, i) => {
-        const textChild = (c.components || []).find(x => x && x.type === 'text_display' && x.content);
-        const hint = textChild ? String(textChild.content).slice(0, 40) : `ID ${c._id}`;
-        return {
-          label: `Container ${i + 1}`.slice(0, 100),
-          value: c._id,
-          description: hint.slice(0, 100)
-        };
-      })
+    ? containers.slice(0, 25).map((c, i) => ({
+        label: `Container ${i + 1}`.slice(0, 100),
+        value: c._id
+      }))
     : [{ label: 'No containers available', value: 'none', description: 'Add a container to get started' }];
 
   const infoContainer = new ContainerBuilder()
