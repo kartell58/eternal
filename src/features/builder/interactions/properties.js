@@ -304,6 +304,20 @@ async function handleProperties(interaction, { sid }) {
           }
         }
       } catch (e) { /* keep partial */ }
+      // If editing was initiated from ephemeral container editor, return to it when possible
+      const { findParentInfo } = require('../utils/component-tree');
+      const { buildContainerEditor } = require('./container-editor');
+      let parent = info && info.parent;
+      if (session.containerEditorContainerId) {
+        // If edited node is the container itself or a child, prefer container editor
+        const cid = session.containerEditorContainerId;
+        const container = (session.state.root || []).find(c => c._id === cid);
+        if (container) {
+          session.selectedNodeId = cid;
+          saveSession(session);
+          return interaction.update(buildContainerEditor(session));
+        }
+      }
       saveSession(session);
       return interaction.update(buildCv2Editor(session));
     }
@@ -313,6 +327,19 @@ async function handleProperties(interaction, { sid }) {
       session.templateId = tpl.id;
       saveSession(session);
       return interaction.reply({ content: `Template saved: **${tpl.name}** (${tpl.id})`, flags: 64 });
+    }
+    if (action === 'ce_color_modal') {
+      const { buildContainerEditor } = require('./container-editor');
+      const cid = session.containerEditorContainerId || session.selectedNodeId;
+      const container = (session.state.root || []).find(c => c._id === cid && c.type === 'container') || (session.state.root || []).find(c => c._id === session.selectedNodeId && c.type === 'container');
+      if (!container) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
+      pushHistory(session);
+      const c = interaction.fields.getTextInputValue('accent_color').trim();
+      container.accent_color = c ? parseColor(c) : null;
+      session.selectedNodeId = container._id;
+      session.containerEditorContainerId = container._id;
+      saveSession(session);
+      return interaction.update(buildContainerEditor(session));
     }
     if (action === 'json_import') {
       const axios = require('axios');
@@ -509,4 +536,4 @@ async function handleProperties(interaction, { sid }) {
   return interaction.reply({ content: 'Unhandled property action.', flags: 64 });
 }
 
-module.exports = { handleProperties };
+module.exports = { handleProperties, showCv2EditModal };

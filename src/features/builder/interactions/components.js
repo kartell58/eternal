@@ -58,7 +58,7 @@ async function handleComponents(interaction, { sid }) {
     const targetId = session.selectedNodeId;
     if (!targetId) {
       const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('Add Component')
-        .setDescription('No node selected. Add a top-level container, or go back and select a container/section/action row to add a child inside it.');
+        .setDescription('No node selected. Add a top-level container, or go back and select a container, section, or action row to add a child inside it.');
       const row = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder().setCustomId(`bld:${sid}:cmp:add_type:root`).setPlaceholder('Add top-level component').addOptions([{ label: 'Container', value: 'container', description: 'Top-level Components V2 container' }])
       );

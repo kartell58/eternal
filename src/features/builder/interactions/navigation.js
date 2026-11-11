@@ -4,17 +4,24 @@ const {
   ButtonStyle,
   EmbedBuilder,
   StringSelectMenuBuilder,
-  ChannelType
+  ChannelType,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  LabelBuilder,
+  FileUploadBuilder
 } = require('discord.js');
 const { requireSession, saveSession, pushHistory, popHistory } = require('../services/session.service');
 const { createDefaultEmbedState } = require('../schemas/embed.schema');
-const { createDefaultComponentsV2State, createContainer } = require('../schemas/components-v2.schema');
+const { createDefaultComponentsV2State, createContainer, COMPONENT_FACTORIES } = require('../schemas/components-v2.schema');
 const draftService = require('../services/draft.service');
 const templateService = require('../services/template.service');
 const { buildEmbedPayload } = require('../builders/embed.builder');
 const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
 const { toPublishPayload, publishNew, editExisting, canSendToChannel } = require('../services/publisher.service');
-const { validateEmbedState, validateComponentsV2State } = require('../utils/validator');
+const { validateEmbedState, validateComponentsV2State, parseColor } = require('../utils/validator');
+const { allowedChildTypes } = require('../utils/component-tree');
+const { buildContainerEditor, buildContainerDeleteConfirm, buildContainerEditorClosed, getSelectedContainer } = require('./container-editor');
 
 function sid(session) { return session.id; }
 
@@ -36,13 +43,13 @@ function buildMainPanel(session) {
 
   const info = new EmbedBuilder()
     .setColor(0x5865f2)
-    .setTitle('Container info')
+    .setTitle('Container Information')
     .setDescription(
       'Manage the containers in your current Builder message. Select a container to edit, add new ones, import JSON, load templates, or publish.'
     )
     .addFields(
       { name: 'Containers', value: containers.length ? `${containers.length} available` : 'None yet', inline: true },
-      { name: 'Session owner', value: `<@${session.userId}>`, inline: true },
+      { name: 'Session Owner', value: `<@${session.userId}>`, inline: true },
       { name: 'Draft', value: session.draftId ? session.draftId : 'Not saved', inline: true }
     )
     .setFooter({ text: 'Only the session owner can use this panel.' });
@@ -62,27 +69,27 @@ function buildMainPanel(session) {
   const selectRow = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId(`bld:${sid(session)}:nav:container_select`)
-      .setPlaceholder('Selecione um Container para editar')
+      .setPlaceholder('Select a container to edit')
       .setDisabled(!containers.length)
       .addOptions(options)
   );
 
   const actionsRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:add_container_main`).setLabel('Adicionar Container').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:add_container_main`).setLabel('Add Container').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:open_templates`).setLabel('Templates').setStyle(ButtonStyle.Secondary),
   );
 
   const jsonRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:json_editor`).setLabel('Editor JSON').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:json_editor`).setLabel('JSON Editor').setStyle(ButtonStyle.Secondary),
   );
 
   const publishRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:send_custom`).setLabel('Enviar Personalizado').setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:quick_send`).setLabel('Enviar Rápido').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:send_custom`).setLabel('Custom Send').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:quick_send`).setLabel('Quick Send').setStyle(ButtonStyle.Success),
   );
 
   return {
-    content: '**Painel de Criação de Container**',
+    content: '**Container Creation Panel**',
     embeds: [info],
     components: [selectRow, actionsRow, jsonRow, publishRow]
   };
@@ -306,6 +313,13 @@ function buildPayloadForSession(session) {
   return toPublishPayload(buildComponentsV2Payload(session.state), 'components_v2');
 }
 
+function openContainerEditorResponse(session) {
+  session.view = 'editor';
+  session.containerEditorContainerId = session.selectedNodeId;
+  saveSession(session);
+  return buildContainerEditor(session);
+}
+
 async function handleNavigation(interaction, { sid }) {
   const { session, error } = requireSession(sid, interaction.user.id, interaction.guildId);
   if (error) {
@@ -320,10 +334,12 @@ async function handleNavigation(interaction, { sid }) {
     if (action === 'container_select') {
       const val = interaction.values[0];
       if (val === 'none') return interaction.deferUpdate();
-      session.selectedNodeId = val;
-      session.view = 'editor';
-      saveSession(session);
-      return interaction.update(buildCv2Editor(session));
+      const containers = getContainers(session);
+      const target = containers.find(c => c._id === val);
+      if (!target) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
+      session.selectedNodeId = target._id;
+      session.containerEditorContainerId = target._id;
+      return interaction.reply(openContainerEditorResponse(session));
     }
     if (action === 'embed_section') {
       session.embedSection = interaction.values[0];
@@ -334,6 +350,44 @@ async function handleNavigation(interaction, { sid }) {
       session.selectedNodeId = interaction.values[0] === 'none' ? null : interaction.values[0];
       saveSession(session);
       return interaction.update(buildCv2Editor(session));
+    }
+    if (action === 'ce_edit_item') {
+      const val = interaction.values[0];
+      if (val === 'none') return interaction.reply({ content: 'There are no items to edit in this container.', flags: 64 });
+      const container = getSelectedContainer(session);
+      if (!container) return interaction.update(buildContainerEditorClosed());
+      const item = (container.components || []).find(c => c && c._id === val);
+      if (!item) return interaction.reply({ content: 'The selected item could not be found in this container.', flags: 64 });
+      session.containerEditorContainerId = container._id;
+      session.selectedNodeId = item._id;
+      saveSession(session);
+      const { showCv2EditModal } = require('./properties');
+      try {
+        return await showCv2EditModal(interaction, session);
+      } catch (e) {
+        // restore container selection on failure to open modal
+        session.selectedNodeId = container._id;
+        saveSession(session);
+        if (interaction.deferred || interaction.replied) return interaction.followUp({ content: `Could not open item editor: ${e.message}`, flags: 64 });
+        return interaction.reply({ content: `Could not open item editor: ${e.message}`, flags: 64 });
+      }
+    }
+    if (action === 'ce_add_item') {
+      const type = interaction.values[0];
+      const container = getSelectedContainer(session);
+      if (!container) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
+      const allowed = allowedChildTypes('container');
+      if (!allowed.includes(type)) return interaction.reply({ content: `Cannot add ${type.replace(/_/g, ' ')} to a container.`, flags: 64 });
+      const factory = COMPONENT_FACTORIES[type];
+      if (!factory) return interaction.reply({ content: 'Unknown component type.', flags: 64 });
+      pushHistory(session);
+      const node = factory();
+      container.components = container.components || [];
+      container.components.push(node);
+      session.selectedNodeId = container._id;
+      session.containerEditorContainerId = container._id;
+      saveSession(session);
+      return interaction.update(buildContainerEditor(session));
     }
     if (action === 'load_draft') {
       try {
@@ -402,23 +456,68 @@ async function handleNavigation(interaction, { sid }) {
       session.state.root.push(c);
       if (isFirst) {
         session.selectedNodeId = c._id;
-        session.view = 'editor';
-        saveSession(session);
-        return interaction.update(buildCv2Editor(session));
+        // Open ephemeral container editor; keep public main panel intact
+        return interaction.reply(openContainerEditorResponse(session));
       }
       // subsequent: preserve existing selection if still valid, do not auto-replace
       const containersNow = getContainers(session);
       if (!containersNow.find(x => x._id === session.selectedNodeId)) {
-        // keep selection as-is if missing; fall back to first existing (not the new one) when possible
         const prev = existingContainers.find(x => containersNow.some(y => y._id === x._id));
         if (prev) session.selectedNodeId = prev._id;
       }
       session.view = 'home';
+      session.containerEditorContainerId = null;
       saveSession(session);
       return interaction.update(buildMainPanel(session));
     }
+    case 'ce_back': {
+      session.view = 'home';
+      session.containerEditorContainerId = null;
+      saveSession(session);
+      return interaction.update(buildContainerEditorClosed());
+    }
+    case 'ce_color': {
+      const container = getSelectedContainer(session);
+      if (!container) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
+      session.containerEditorContainerId = container._id;
+      session.selectedNodeId = container._id;
+      saveSession(session);
+      const modal = new ModalBuilder().setCustomId(`bld:${session.id}:prop:ce_color_modal`).setTitle('Select Color');
+      const current = container.accent_color != null ? '#' + Number(container.accent_color).toString(16).padStart(6, '0') : '';
+      modal.addComponents(new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('accent_color')
+          .setLabel('Accent color (hex, e.g. #5865F2)')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(false)
+          .setValue(current)
+          .setPlaceholder('Leave empty to remove the accent color')
+      ));
+      return interaction.showModal(modal);
+    }
+    case 'ce_delete': {
+      const container = getSelectedContainer(session);
+      if (!container) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
+      return interaction.update(buildContainerDeleteConfirm(session));
+    }
+    case 'ce_delete_cancel': {
+      const container = getSelectedContainer(session);
+      if (!container) return interaction.update(buildContainerEditorClosed());
+      return interaction.update(buildContainerEditor(session));
+    }
+    case 'ce_delete_confirm': {
+      const container = getSelectedContainer(session);
+      if (!container) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
+      pushHistory(session);
+      session.state.root = (session.state.root || []).filter(c => c._id !== container._id);
+      const remaining = getContainers(session);
+      session.selectedNodeId = remaining[0]?._id || null;
+      session.containerEditorContainerId = null;
+      session.view = 'home';
+      saveSession(session);
+      return interaction.update(buildContainerEditorClosed());
+    }
     case 'json_editor': {
-      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, LabelBuilder, FileUploadBuilder } = require('discord.js');
       const { getDefaultJsonTemplateString, isPristineDefaultState } = require('../utils/json-document');
       let defaultValue = getDefaultJsonTemplateString();
       if (!isPristineDefaultState(session)) {
@@ -430,7 +529,7 @@ async function handleNavigation(interaction, { sid }) {
       }
       if (defaultValue.length > 4000) defaultValue = defaultValue.slice(0, 4000);
 
-      const modal = new ModalBuilder().setCustomId(`bld:${session.id}:prop:json_import`).setTitle('Editor JSON');
+      const modal = new ModalBuilder().setCustomId(`bld:${session.id}:prop:json_import`).setTitle('JSON Editor');
       const text = new TextInputBuilder()
         .setCustomId('json')
         .setLabel('Builder JSON document')
@@ -445,8 +544,8 @@ async function handleNavigation(interaction, { sid }) {
         .setMinValues(0)
         .setMaxValues(1);
       const fileLabel = new LabelBuilder()
-        .setLabel('Arquivo (opcional)')
-        .setDescription('Um .txt ou .json com o JSON. Se anexado, substitui o campo de texto.')
+        .setLabel('File (optional)')
+        .setDescription('A .txt or .json file with the JSON. If attached, it replaces the text field.')
         .setFileUploadComponent(fileUpload);
 
       modal.addComponents(new ActionRowBuilder().addComponents(text));
@@ -478,7 +577,7 @@ async function handleNavigation(interaction, { sid }) {
           return interaction.reply({ content: `✅ Message edited (quick send): ${msg.url}`, flags: 64 });
         }
         if (!session.publishChannelId) {
-          return interaction.reply({ content: 'Quick send needs a destination. Use **Enviar Personalizado** to select a channel (or set an edit target) first.', flags: 64 });
+          return interaction.reply({ content: 'Quick send needs a destination. Use **Custom Send** to select a channel (or set an edit target) first.', flags: 64 });
         }
         const channel = await interaction.client.channels.fetch(session.publishChannelId);
         const permErr = canSendToChannel(channel, interaction.client.user);
@@ -533,6 +632,7 @@ async function handleNavigation(interaction, { sid }) {
       return interaction.update(buildPublishMenu(session));
     }
     case 'back_editor':
+      // If coming from within ephemeral container editor context, close it; else update current view
       return interaction.update(currentEditor(session));
     case 'undo':
       if (!popHistory(session)) return interaction.reply({ content: 'Nothing to undo.', flags: 64 });
@@ -566,7 +666,6 @@ async function handleNavigation(interaction, { sid }) {
       }
     }
     case 'save_template': {
-      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
       const modal = new ModalBuilder().setCustomId(`bld:${session.id}:prop:tpl_name`).setTitle('Save Template');
       modal.addComponents(new ActionRowBuilder().addComponents(
         new TextInputBuilder().setCustomId('name').setLabel('Template name').setStyle(TextInputStyle.Short).setRequired(true).setMaxLength(80)
@@ -576,7 +675,7 @@ async function handleNavigation(interaction, { sid }) {
     case 'embed_field_tools': {
       const fields = session.state.embed.fields || [];
       const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('Field Tools')
-        .setDescription(fields.length ? fields.map((f, i) => `${i + 1}. ${String(f.name || '(unnamed)').slice(0, 80)}`).join('\n').slice(0, 4000) : 'No fields yet. Go back and use “Add Field” first.');
+        .setDescription(fields.length ? fields.map((f, i) => `${i + 1}. ${String(f.name || '(unnamed)').slice(0, 80)}`).join('\n').slice(0, 4000) : 'No fields yet. Go back and use "Add Field" first.');
       const opts = fields.map((f, i) => ({ label: `${i + 1}. ${String(f.name || 'Field').slice(0, 90)}`.slice(0, 100), value: String(i) })).slice(0, 25);
       if (!opts.length) opts.push({ label: 'No fields', value: 'none' });
       const components = [
@@ -599,4 +698,4 @@ async function handleNavigation(interaction, { sid }) {
   }
 }
 
-module.exports = { handleNavigation, buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor, currentEditor };
+module.exports = { handleNavigation, buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor, currentEditor, buildContainerEditor };

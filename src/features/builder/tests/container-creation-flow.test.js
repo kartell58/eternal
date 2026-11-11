@@ -6,6 +6,7 @@ function freshModules() {
   delete require.cache[require.resolve('../interactions/components')];
   delete require.cache[require.resolve('../interactions/properties')];
   delete require.cache[require.resolve('../interactions/publishing')];
+  delete require.cache[require.resolve('../interactions/container-editor')];
 }
 
 (async () => {
@@ -33,15 +34,39 @@ function freshModules() {
   function idsFromView(view) {
     const ids = [];
     for (const row of (view.components || [])) {
-      for (const c of (row.components || [])) {
+      const comps = row.components || [];
+      for (const c of comps) {
         const j = typeof c.toJSON === 'function' ? c.toJSON() : c;
-        if (j.custom_id) ids.push(j.custom_id);
+        if (j && j.custom_id) ids.push(j.custom_id);
       }
+      // also top-level component might have custom_id in some cases
+      const rj = typeof row.toJSON === 'function' ? row.toJSON() : row;
+      if (rj && rj.custom_id) ids.push(rj.custom_id);
     }
-    return ids;
+    // deep-ish scan for nested action rows inside CV2 containers not needed for controls; scan all custom_ids recursively
+    const all = [];
+    function walk(node) {
+      if (!node) return;
+      if (Array.isArray(node)) return node.forEach(walk);
+      if (typeof node !== 'object') return;
+      const j = typeof node.toJSON === 'function' ? node.toJSON() : node;
+      if (j && j.custom_id) all.push(j.custom_id);
+      if (j && Array.isArray(j.components)) j.components.forEach(walk);
+      if (node.components && Array.isArray(node.components)) node.components.forEach(walk);
+    }
+    walk(view.components || []);
+    return all;
   }
 
-  await test('creating the first container opens its editor immediately', async () => {
+  function hasFlag(payload, bit) {
+    if (!payload) return false;
+    const f = payload.flags;
+    if (typeof f === 'number') return (f & bit) === bit;
+    if (f && typeof f.bitfield === 'number') return (f.bitfield & bit) === bit;
+    return false;
+  }
+
+  await test('creating the first container opens its ephemeral container editor immediately', async () => {
     freshModules();
     const { createSession, getSession } = require('../services/session.service');
     const { handleNavigation } = require('../interactions/navigation');
@@ -54,12 +79,18 @@ function freshModules() {
     assert.strictEqual(session.state.root.length, 1, 'one container created');
     assert.strictEqual(session.selectedNodeId, session.state.root[0]._id, 'selected is created container');
     assert.strictEqual(session.view, 'editor');
-    assert.ok(i.updated, 'view updated');
-    const ids = idsFromView(i.updated).join(' ');
-    assert.ok(ids.includes(':nav:cv2_select') || ids.includes(':cmp:add'), 'cv2 editor shown');
+    assert.ok(i.repliedPayload, 'ephemeral editor opened via reply');
+    assert.ok(!i.updated, 'public main panel not updated/replaced');
+    assert.ok(hasFlag(i.repliedPayload, 64), 'ephemeral');
+    const ids = idsFromView(i.repliedPayload).join(' ');
+    assert.ok(ids.includes(`bld:${s.id}:nav:ce_add_item`), 'container editor add item');
+    assert.ok(ids.includes(`bld:${s.id}:nav:ce_edit_item`), 'container editor edit item');
+    assert.ok(ids.includes(`bld:${s.id}:nav:ce_color`), 'container editor select color');
+    assert.ok(ids.includes(`bld:${s.id}:nav:ce_delete`), 'container editor delete');
+    assert.ok(ids.includes(`bld:${s.id}:nav:ce_back`), 'container editor back');
   });
 
-  await test('creating a subsequent container preserves existing containers and selection', async () => {
+  await test('creating a subsequent container preserves existing containers and updates main panel', async () => {
     freshModules();
     const { createSession, getSession } = require('../services/session.service');
     const { handleNavigation } = require('../interactions/navigation');
@@ -75,10 +106,11 @@ function freshModules() {
     assert.ok(session.state.root.some(c => c._id === firstId), 'first container preserved');
     assert.strictEqual(session.selectedNodeId, firstId, 'existing selection preserved');
     assert.strictEqual(session.view, 'home');
-    assert.ok(i.updated && i.updated.content && i.updated.content.includes('Painel de Criação de Container'), 'main panel shown');
+    assert.ok(i.updated && i.updated.content && i.updated.content.includes('Container Creation Panel'), 'main panel shown');
+    assert.ok(!i.repliedPayload, 'no ephemeral editor opened');
   });
 
-  await test('selecting an existing container opens its editor with correct ID preserved', async () => {
+  await test('selecting an existing container opens its ephemeral editor with correct ID preserved', async () => {
     freshModules();
     const { createSession, getSession } = require('../services/session.service');
     const { handleNavigation } = require('../interactions/navigation');
@@ -92,9 +124,11 @@ function freshModules() {
     const session = getSession(s.id);
     assert.strictEqual(session.selectedNodeId, c2._id, 'selected container ID preserved/set');
     assert.strictEqual(session.view, 'editor');
-    assert.ok(i.updated, 'editor opened');
-    const ids = idsFromView(i.updated).join(' ');
-    assert.ok(ids.includes(':nav:cv2_select'), 'cv2 editor shown');
+    assert.ok(i.repliedPayload, 'ephemeral editor opened');
+    assert.ok(!i.updated, 'public main panel not updated');
+    assert.ok(hasFlag(i.repliedPayload, 64), 'ephemeral');
+    const ids = idsFromView(i.repliedPayload).join(' ');
+    assert.ok(ids.includes(`bld:${s.id}:nav:ce_back`), 'container editor shown');
   });
 
   await test('unauthorized user cannot manipulate another user\'s container session', async () => {
