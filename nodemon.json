@@ -1,0 +1,14 @@
+{
+  "watch": ["src", "index.js"],
+  "ext": "js,json",
+  "ignore": [
+    "node_modules/**",
+    "data/**",
+    "*.db",
+    "*.sqlite",
+    "*.sqlite3",
+    "builder-*.json",
+    "*.log"
+  ],
+  "exec": "node ."
+}

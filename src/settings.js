@@ -1,61 +1,109 @@
 const fs = require("fs");
 const path = require("path");
+const Database = require("better-sqlite3");
 
-const FILE_PATH = path.join(__dirname, "..", "settings.json");
+const DATA_DIR = path.join(__dirname, "..", "data");
+const DB_PATH = path.join(DATA_DIR, "settings.db");
+const LEGACY_JSON_PATH = path.join(__dirname, "..", "settings.json");
 
-// Load settings from file
-function loadSettings() {
-  if (!fs.existsSync(FILE_PATH)) {
-    return {};
-  }
+fs.mkdirSync(DATA_DIR, { recursive: true });
+
+const db = new Database(DB_PATH);
+db.pragma("journal_mode = WAL");
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS guild_settings (
+    guild_id TEXT NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    PRIMARY KEY (guild_id, key)
+  )
+`);
+
+const stmtGet = db.prepare("SELECT value FROM guild_settings WHERE guild_id = ? AND key = ?");
+const stmtSet = db.prepare(
+  "INSERT INTO guild_settings (guild_id, key, value) VALUES (?, ?, ?) " +
+    "ON CONFLICT(guild_id, key) DO UPDATE SET value = excluded.value"
+);
+const stmtRemove = db.prepare("DELETE FROM guild_settings WHERE guild_id = ? AND key = ?");
+const stmtGetAll = db.prepare("SELECT key, value FROM guild_settings WHERE guild_id = ?");
+const stmtCount = db.prepare("SELECT COUNT(*) AS count FROM guild_settings");
+
+function migrateLegacyJson() {
   try {
-    const data = fs.readFileSync(FILE_PATH, "utf8");
-    return JSON.parse(data);
+    if (!fs.existsSync(LEGACY_JSON_PATH)) return;
+    const { count } = stmtCount.get();
+    if (count > 0) return;
+
+    const raw = fs.readFileSync(LEGACY_JSON_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return;
+
+    const insertMany = db.transaction(entries => {
+      for (const [guildId, guildData] of entries) {
+        if (!guildData || typeof guildData !== "object" || Array.isArray(guildData)) continue;
+        for (const [key, value] of Object.entries(guildData)) {
+          stmtSet.run(String(guildId), String(key), JSON.stringify(value));
+        }
+      }
+    });
+
+    insertMany(Object.entries(parsed));
+    console.log("Migrated legacy settings.json into SQLite database.");
   } catch (err) {
-    console.error("Error loading settings:", err);
-    return {};
+    console.error("Error migrating legacy settings.json:", err);
   }
 }
 
-// Save settings to file
-function saveSettings() {
-  try {
-    fs.writeFileSync(FILE_PATH, JSON.stringify(settings, null, 2));
-  } catch (err) {
-    console.error("Error saving settings:", err);
-  }
-}
-
-// In-memory cache
-let settings = loadSettings();
+migrateLegacyJson();
 
 // Get setting for a specific guild
 function get(guildId, key) {
-  const guildData = settings[guildId];
-  if (!guildData) return undefined;
-  return guildData[key];
+  try {
+    const row = stmtGet.get(String(guildId), String(key));
+    if (!row) return undefined;
+    return JSON.parse(row.value);
+  } catch (err) {
+    console.error("Error reading setting:", err);
+    return undefined;
+  }
 }
 
 // Set setting for a specific guild
 function set(guildId, key, value) {
-  if (!settings[guildId]) {
-    settings[guildId] = {};
+  try {
+    stmtSet.run(String(guildId), String(key), JSON.stringify(value));
+  } catch (err) {
+    console.error("Error saving setting:", err);
   }
-  settings[guildId][key] = value;
-  saveSettings();
 }
 
 // Remove setting for a specific guild
 function remove(guildId, key) {
-  const guildData = settings[guildId];
-  if (!guildData) return;
-  delete guildData[key];
-  saveSettings();
+  try {
+    stmtRemove.run(String(guildId), String(key));
+  } catch (err) {
+    console.error("Error removing setting:", err);
+  }
 }
 
 // Get all settings for a guild
 function getAll(guildId) {
-  return settings[guildId] || {};
+  try {
+    const rows = stmtGetAll.all(String(guildId));
+    const result = {};
+    for (const row of rows) {
+      try {
+        result[row.key] = JSON.parse(row.value);
+      } catch {
+        result[row.key] = undefined;
+      }
+    }
+    return result;
+  } catch (err) {
+    console.error("Error reading guild settings:", err);
+    return {};
+  }
 }
 
-module.exports = { get, set, remove, getAll };
+module.exports = { get, set, remove, getAll, _db: db };
