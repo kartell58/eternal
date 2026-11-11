@@ -1,19 +1,20 @@
 # Eternal
 
-Eternal is a Discord bot built with Node.js and discord.js, providing per-server configuration and utility panels.
+Eternal is a Discord bot built with Node.js and discord.js, providing per-server configuration panels and a visual message builder.
 
 ## Scope
 
 ### What it does
 - Registers slash commands and handles Discord gateway events.
-- Provides `/ping` for latency/uptime and `/config` for a centralized server configuration panel.
-- Supports configurable per-guild settings (stored in `settings.json`) for welcome channel, verification channel/role, honeypot channel, AutoQuest channel, HypeSquad channel, auto role, and rules channel.
-- Posts and handles panels/features for welcome/auto role, member verification, honeypot (anti-selfbot) moderation, rules posting (`rules.txt`), AutoQuest, and HypeSquad.
-- Includes utilities for user-token-backed AutoQuest/HypeSquad interactions and supporting services.
+- Provides `/ping`, `/config`, `/quest`, `/clear`, and `/builder`.
+- Supports configurable per-guild settings (persisted in `settings.json`) for welcome, verification, honeypot (anti-selfbot), rules, AutoQuest, and HypeSquad panels/channels/roles.
+- Includes `/builder`: a visual message editor for creating/editing/previewing/publishing messages with Embeds and Components V2, with drafts/templates and validation (implemented under `src/features/builder/`).
+- Includes AutoQuest/HypeSquad utilities and supporting services.
 
 ### What it is not
-- Not a complete moderation suite or a replacement for dedicated security bots.
-- Does not include the visual `/builder` message editor in this snapshot.
+- Not a general-purpose website/dashboard; interaction is via Discord commands and components.
+- Does not execute arbitrary user-provided code.
+- Not a substitute for Discord's native safety/moderation controls.
 
 ## Requirements
 - Node.js (CommonJS)
@@ -23,12 +24,13 @@ Eternal is a Discord bot built with Node.js and discord.js, providing per-server
 ## Configuration
 - `.env`: `TOKEN` (bot token), `CLIENT_ID` (application client ID)
 - `config.json` may be used by user API utilities where applicable.
-- Runtime per-guild settings are persisted to `settings.json` (gitignored).
+- Runtime data (gitignored as configured): `settings.json`, `data/tokens.json`, and builder storage such as `builder-drafts.json`, `builder-templates.json`, `builder-published-actions.json`.
 
 ## Build and test
 ```bash
 npm install
 node --check index.js
+node src/features/builder/tests/audit-fixes.test.js
 ```
 
 ## Usage
@@ -37,14 +39,16 @@ npm start
 # or
 node .
 ```
-Use `/config` in a server to configure modules and post panels.
+- Use `/config` to configure server modules and post panels.
+- Use `/builder` to create, edit, preview, save, and publish messages.
 
 ## Architecture
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) when available; core entry is `index.js` -> `src/connection.js`, with commands/events loaded from `src/commands` and `src/events`.
+Core entry: `index.js` -> `src/connection.js`; commands/events are loaded from `src/commands` and `src/events`. The builder feature is isolated under `src/features/builder/` with command/event shims at `src/commands/builder.js` and `src/events/builder.js`. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) when available.
 
 ## Limitations
-- Feature behavior depends on correct bot permissions and role/channel configuration.
-- Some integrations rely on user-provided tokens and external Discord endpoints; handle secrets carefully.
+- Builder sessions are in-memory and subject to session lifecycle/TTL behavior.
+- Feature behavior depends on bot permissions, role hierarchy, and correct channel configuration.
+- AutoQuest/HypeSquad flows rely on user-provided tokens and external Discord endpoints; secrets must never be committed.
 
 ## License
 See [LICENSE](LICENSE) if present in this repository.
