@@ -36,7 +36,7 @@ const { createDefaultComponentsV2State } = require('../schemas/components-v2.sch
     assert.ok(ids.includes(':nav:quick_send'), 'quick send');
   });
 
-  await test('main panel shows empty container state', () => {
+  await test('main panel shows placeholder and empty container state with no default selection', () => {
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     s.state = createDefaultComponentsV2State();
     s.state.root = [];
@@ -44,8 +44,36 @@ const { createDefaultComponentsV2State } = require('../schemas/components-v2.sch
     const selectRow = (view.components || [])[0];
     const select = (selectRow.components || [])[0];
     const j = select.toJSON ? select.toJSON() : select;
+    assert.strictEqual(j.placeholder, 'Selecione um Container para editar', 'placeholder');
     assert.ok(j.disabled === true, 'select disabled when empty');
     assert.ok((j.options || [])[0].value === 'none', 'empty option');
+    assert.ok(!(j.options || []).some(o => o.default), 'no default option');
+  });
+
+  await test('main panel with containers always shows placeholder and no default selection', () => {
+    const s = createSession('u1', 'g1', 'c1', 'components_v2');
+    s.state = createDefaultComponentsV2State(); // 1 container
+    const view1 = buildMainPanel(s);
+    const j1 = ((view1.components || [])[0].components || [])[0].toJSON();
+    assert.strictEqual(j1.placeholder, 'Selecione um Container para editar');
+    assert.ok(!(j1.options || []).some(o => o.default), 'no default with one container');
+
+    const { createContainer } = require('../schemas/components-v2.schema');
+    s.state.root.push(createContainer());
+    const view2 = buildMainPanel(s);
+    const j2 = ((view2.components || [])[0].components || [])[0].toJSON();
+    assert.strictEqual(j2.placeholder, 'Selecione um Container para editar');
+    assert.ok(!(j2.options || []).some(o => o.default), 'no default with multiple containers');
+  });
+
+  await test('returning to main panel restores placeholder without default selection', () => {
+    const s = createSession('u1', 'g1', 'c1', 'components_v2');
+    s.state = createDefaultComponentsV2State();
+    s.selectedNodeId = s.state.root[0]._id;
+    const view = buildMainPanel(s); // render as if returned to main panel
+    const j = ((view.components || [])[0].components || [])[0].toJSON();
+    assert.strictEqual(j.placeholder, 'Selecione um Container para editar');
+    assert.ok(!(j.options || []).some(o => o.default), 'no default after selection in session');
   });
 
   await test('embed editor has section navigation, actions, and back controls', () => {

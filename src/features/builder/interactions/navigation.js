@@ -33,8 +33,6 @@ function getContainers(session) {
 
 function buildMainPanel(session) {
   const containers = getContainers(session);
-  const selected = containers.find(c => c._id === session.selectedNodeId) ? session.selectedNodeId : (containers[0]?._id || null);
-  if (selected !== session.selectedNodeId) session.selectedNodeId = selected;
 
   const info = new EmbedBuilder()
     .setColor(0x5865f2)
@@ -56,11 +54,10 @@ function buildMainPanel(session) {
         return {
           label: `Container ${i + 1}`.slice(0, 100),
           value: c._id,
-          description: hint.slice(0, 100),
-          default: c._id === selected
+          description: hint.slice(0, 100)
         };
       })
-    : [{ label: 'No containers available', value: 'none', description: 'Add a container to get started', default: true }];
+    : [{ label: 'No containers available', value: 'none', description: 'Add a container to get started' }];
 
   const selectRow = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
