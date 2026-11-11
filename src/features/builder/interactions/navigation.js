@@ -393,6 +393,8 @@ async function handleNavigation(interaction, { sid }) {
       saveSession(session);
       return interaction.update(buildMainPanel(session));
     case 'add_container_main': {
+      const existingContainers = getContainers(session);
+      const isFirst = existingContainers.length === 0;
       pushHistory(session);
       if (!session.state || session.state.type !== 'components_v2' || !Array.isArray(session.state.root)) {
         session.state = createDefaultComponentsV2State();
@@ -401,7 +403,19 @@ async function handleNavigation(interaction, { sid }) {
       }
       const c = createContainer();
       session.state.root.push(c);
-      session.selectedNodeId = c._id;
+      if (isFirst) {
+        session.selectedNodeId = c._id;
+        session.view = 'editor';
+        saveSession(session);
+        return interaction.update(buildCv2Editor(session));
+      }
+      // subsequent: preserve existing selection if still valid, do not auto-replace
+      const containersNow = getContainers(session);
+      if (!containersNow.find(x => x._id === session.selectedNodeId)) {
+        // keep selection as-is if missing; fall back to first existing (not the new one) when possible
+        const prev = existingContainers.find(x => containersNow.some(y => y._id === x._id));
+        if (prev) session.selectedNodeId = prev._id;
+      }
       session.view = 'home';
       saveSession(session);
       return interaction.update(buildMainPanel(session));
