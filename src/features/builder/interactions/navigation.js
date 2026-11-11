@@ -91,7 +91,8 @@ function buildMainPanel(session) {
   return {
     content: '**Container Creation Panel**',
     embeds: [info],
-    components: [selectRow, actionsRow, jsonRow, publishRow]
+    components: [selectRow, actionsRow, jsonRow, publishRow],
+    flags: 64
   };
 }
 
@@ -161,7 +162,7 @@ function buildEmbedEditor(session) {
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:home`).setLabel('Home').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:undo`).setLabel('Undo').setStyle(ButtonStyle.Secondary),
   );
-  return { embeds: [embed], components: [nav, editRow, actions, back] };
+  return { embeds: [embed], components: [nav, editRow, actions, back], flags: 64 };
 }
 
 function listNodes(nodes, depth = 0, out = []) {
@@ -214,7 +215,7 @@ function buildCv2Editor(session) {
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:home`).setLabel('Home').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:undo`).setLabel('Undo').setStyle(ButtonStyle.Secondary),
   );
-  return { embeds: [embed], components: [selectRow, ops, ops2, actions, back] };
+  return { embeds: [embed], components: [selectRow, ops, ops2, actions, back], flags: 64 };
 }
 
 function buildSaveMenu(session) {
@@ -227,7 +228,7 @@ function buildSaveMenu(session) {
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:save_template`).setLabel('Save Template').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:back_editor`).setLabel('Back to Editor').setStyle(ButtonStyle.Secondary),
   );
-  return { embeds: [embed], components: [row] };
+  return { embeds: [embed], components: [row], flags: 64 };
 }
 
 function storageWarning(status) {
@@ -257,7 +258,7 @@ function buildDraftsList(session) {
     ));
   }
   components.push(new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:home`).setLabel('Back').setStyle(ButtonStyle.Secondary)));
-  return { embeds: [embed], components };
+  return { embeds: [embed], components, flags: 64 };
 }
 
 function buildTemplatesList(session) {
@@ -285,7 +286,7 @@ function buildTemplatesList(session) {
     ));
   }
   components.push(new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:home`).setLabel('Back').setStyle(ButtonStyle.Secondary)));
-  return { embeds: [embed], components };
+  return { embeds: [embed], components, flags: 64 };
 }
 
 function buildEditExisting(session) {
@@ -301,7 +302,7 @@ function buildEditExisting(session) {
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:edit_existing`).setLabel('Enter Message Info').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:home`).setLabel('Back').setStyle(ButtonStyle.Secondary),
   );
-  return { embeds: [embed], components: [row] };
+  return { embeds: [embed], components: [row], flags: 64 };
 }
 
 function currentEditor(session) {

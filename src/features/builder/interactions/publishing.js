@@ -50,7 +50,7 @@ function buildPublishMenu(session) {
       new ButtonBuilder().setCustomId(`bld:${sid(session)}:pub:clear_target`).setLabel('Switch to New Message').setStyle(ButtonStyle.Danger)
     ));
   }
-  return { embeds: [embed], components: rows };
+  return { embeds: [embed], components: rows, flags: 64 };
 }
 
 async function handlePublishing(interaction, { sid }) {
