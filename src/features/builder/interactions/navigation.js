@@ -21,7 +21,7 @@ const { buildComponentsV2Payload } = require('../builders/components-v2.builder'
 const { toPublishPayload, publishNew, editExisting, canSendToChannel } = require('../services/publisher.service');
 const { validateEmbedState, validateComponentsV2State, parseColor } = require('../utils/validator');
 const { allowedChildTypes } = require('../utils/component-tree');
-const { buildContainerEditor, buildContainerDeleteConfirm, buildContainerEditorClosed, getSelectedContainer } = require('./container-editor');
+const { buildContainerEditor, buildContainerDeleteConfirm, getSelectedContainer } = require('./container-editor');
 
 function sid(session) { return session.id; }
 
@@ -340,7 +340,7 @@ async function handleNavigation(interaction, { sid }) {
       if (!target) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
       session.selectedNodeId = target._id;
       session.containerEditorContainerId = target._id;
-      return interaction.reply(openContainerEditorResponse(session));
+      return interaction.update(openContainerEditorResponse(session));
     }
     if (action === 'embed_section') {
       session.embedSection = interaction.values[0];
@@ -457,8 +457,10 @@ async function handleNavigation(interaction, { sid }) {
       session.state.root.push(c);
       if (isFirst) {
         session.selectedNodeId = c._id;
-        // Open ephemeral container editor; keep public main panel intact
-        return interaction.reply(openContainerEditorResponse(session));
+        session.containerEditorContainerId = c._id;
+        session.view = 'editor';
+        saveSession(session);
+        return interaction.update(buildContainerEditor(session));
       }
       // subsequent: preserve existing selection if still valid, do not auto-replace
       const containersNow = getContainers(session);
@@ -475,7 +477,7 @@ async function handleNavigation(interaction, { sid }) {
       session.view = 'home';
       session.containerEditorContainerId = null;
       saveSession(session);
-      return interaction.update(buildContainerEditorClosed());
+      return interaction.update(buildMainPanel(session));
     }
     case 'ce_color': {
       const container = getSelectedContainer(session);
@@ -516,7 +518,7 @@ async function handleNavigation(interaction, { sid }) {
       session.containerEditorContainerId = null;
       session.view = 'home';
       saveSession(session);
-      return interaction.update(buildContainerEditorClosed());
+      return interaction.update(buildMainPanel(session));
     }
     case 'json_editor': {
       const { getDefaultJsonTemplateString, isPristineDefaultState } = require('../utils/json-document');

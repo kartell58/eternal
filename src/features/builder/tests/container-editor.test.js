@@ -43,8 +43,6 @@ function freshModules() {
       if (Array.isArray(node)) return node.forEach(walk);
       const j = typeof node.toJSON === 'function' ? node.toJSON() : node;
       if (j && j.custom_id) ids.push(j.custom_id);
-      if (j && j.placeholder) ids.__placeholders = ids.__placeholders || [];
-      if (j && j.placeholder) ids.__placeholders.push(j.placeholder);
       if (j && Array.isArray(j.components)) j.components.forEach(walk);
       if (Array.isArray(node.components)) node.components.forEach(walk);
     }
@@ -70,12 +68,10 @@ function freshModules() {
     const f = payload && payload.flags;
     if (typeof f === 'number') return (f & bit) === bit;
     if (f && typeof f.bitfield === 'number') return (f.bitfield & bit) === bit;
-    // builders may carry MessageFlags
-    if (payload && payload.flags && payload.flags.bitfield != null) return (payload.flags.bitfield & bit) === bit;
     return false;
   }
 
-  await test('selecting a container opens an ephemeral editor and keeps public main panel unchanged', async () => {
+  await test('selecting a container opens editor in the same ephemeral message', async () => {
     freshModules();
     const { createSession, getSession } = require('../services/session.service');
     const { handleNavigation } = require('../interactions/navigation');
@@ -84,10 +80,10 @@ function freshModules() {
     const i = mockInteraction(s, `bld:${s.id}:nav:container_select`, { isSelect: true, values: [c._id] });
     await handleNavigation(i, { sid: s.id });
     const session = getSession(s.id);
-    assert.ok(i.repliedPayload, 'ephemeral reply sent');
-    assert.ok(!i.updated, 'public panel not updated');
-    assert.ok(hasFlag(i.repliedPayload, MessageFlags.Ephemeral), 'ephemeral');
-    assert.ok(hasFlag(i.repliedPayload, MessageFlags.IsComponentsV2), 'components v2');
+    assert.ok(i.updated, 'same message updated');
+    assert.ok(!i.repliedPayload, 'no new reply message');
+    assert.ok(hasFlag(i.updated, MessageFlags.Ephemeral), 'ephemeral');
+    assert.ok(hasFlag(i.updated, MessageFlags.IsComponentsV2), 'components v2');
     assert.strictEqual(session.selectedNodeId, c._id);
   });
 
@@ -106,7 +102,6 @@ function freshModules() {
     assert.ok(text.includes('Editing Container'), 'title present');
     assert.ok(text.includes('Preview text here'), 'actual preview content present');
     const ids = walkIds(view.components);
-    // order: add item select, edit item select, then color/delete/back buttons
     const addIdx = ids.findIndex(id => id.endsWith(':nav:ce_add_item'));
     const editIdx = ids.findIndex(id => id.endsWith(':nav:ce_edit_item'));
     const colorIdx = ids.findIndex(id => id.endsWith(':nav:ce_color'));
@@ -115,7 +110,7 @@ function freshModules() {
     assert.ok(addIdx >= 0 && editIdx > addIdx && colorIdx > editIdx && delIdx > colorIdx && backIdx > delIdx, 'controls in expected order');
   });
 
-  await test('add item adds supported item to container and updates ephemeral editor without losing draft state', async () => {
+  await test('add item adds supported item to container and updates same ephemeral editor', async () => {
     freshModules();
     const { createSession, getSession } = require('../services/session.service');
     const { handleNavigation } = require('../interactions/navigation');
@@ -153,7 +148,7 @@ function freshModules() {
     assert.strictEqual(session.containerEditorContainerId, c._id, 'container context preserved');
   });
 
-  await test('select color opens modal and updates accent color and preview', async () => {
+  await test('select color opens modal and updates accent color and preview in same message', async () => {
     freshModules();
     const { createSession, getSession } = require('../services/session.service');
     const { handleNavigation } = require('../interactions/navigation');
@@ -173,7 +168,7 @@ function freshModules() {
     assert.ok(submit.updated && hasFlag(submit.updated, MessageFlags.Ephemeral), 'editor updated');
   });
 
-  await test('delete container requires confirmation and preserves other containers', async () => {
+  await test('delete container requires confirmation and preserves other containers then returns to main panel', async () => {
     freshModules();
     const { createSession, getSession } = require('../services/session.service');
     const { handleNavigation } = require('../interactions/navigation');
@@ -192,7 +187,8 @@ function freshModules() {
     const session = getSession(s.id);
     assert.strictEqual(session.state.root.length, 1);
     assert.strictEqual(session.state.root[0]._id, c2._id);
-    assert.ok(confirm.updated && hasFlag(confirm.updated, MessageFlags.Ephemeral), 'editor closed ephemerally');
+    assert.ok(confirm.updated && hasFlag(confirm.updated, MessageFlags.Ephemeral), 'main panel shown ephemerally');
+    assert.ok((confirm.updated.content || '').includes('Container Creation Panel'), 'returned to main panel');
   });
 
   await test('deleting last container returns to a valid main panel state (no containers)', async () => {
@@ -208,13 +204,14 @@ function freshModules() {
     const session = getSession(s.id);
     assert.strictEqual(session.state.root.length, 0);
     assert.strictEqual(session.view, 'home');
+    assert.ok(confirm.updated && (confirm.updated.content || '').includes('Container Creation Panel'));
     const main = buildMainPanel(session);
     const select = (main.components[0].components[0].toJSON ? main.components[0].components[0].toJSON() : main.components[0].components[0]);
     assert.strictEqual(select.placeholder, 'Select a container to edit');
     assert.ok(select.disabled === true);
   });
 
-  await test('back returns without losing changes', async () => {
+  await test('back returns to main panel in same message without losing changes', async () => {
     freshModules();
     const { createSession, getSession } = require('../services/session.service');
     const { handleNavigation } = require('../interactions/navigation');
@@ -227,7 +224,8 @@ function freshModules() {
     const session = getSession(s.id);
     assert.strictEqual(session.state.root[0].accent_color, 123, 'changes preserved');
     assert.strictEqual(session.view, 'home');
-    assert.ok(back.updated && hasFlag(back.updated, MessageFlags.Ephemeral), 'ephemeral closed');
+    assert.ok(back.updated && hasFlag(back.updated, MessageFlags.Ephemeral), 'ephemeral update');
+    assert.ok((back.updated.content || '').includes('Container Creation Panel'), 'main panel shown');
   });
 
   await test('unauthorized user cannot interact with another user\'s container editor', async () => {
