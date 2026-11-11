@@ -4,7 +4,6 @@ const {
   ButtonStyle,
   EmbedBuilder,
   StringSelectMenuBuilder,
-  ChannelSelectMenuBuilder,
   ChannelType
 } = require('discord.js');
 const { requireSession, createSession, saveSession, pushHistory, popHistory } = require('../services/session.service');
@@ -18,67 +17,91 @@ const { toPublishPayload } = require('../services/publisher.service');
 
 function sid(session) { return session.id; }
 
+function typeLabel(session) {
+  return session.state?.type === 'components_v2' ? 'Components V2' : 'Embed';
+}
+
+function editorContext(session) {
+  const target = session.editingMessage ? `editing ${session.editingMessage.channelId}/${session.editingMessage.messageId}` : 'new message';
+  return `${typeLabel(session)} • ${target}`;
+}
+
 function buildHome(session) {
   const embed = new EmbedBuilder()
     .setColor(0x5865f2)
     .setTitle('Eternal Builder')
-    .setDescription('Create, edit, preview, save, and publish Discord messages.\n\nChoose what you want to do:')
+    .setDescription('Visual editor for Discord messages. Create, edit, preview, save, and publish.')
     .addFields(
-      { name: 'Session', value: `Type: ${session.type === 'embed' ? 'Embed' : 'Components V2'}\nView: ${session.view}`, inline: true }
-    );
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:new_embed`).setLabel('Create Embed').setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:new_cv2`).setLabel('Create Components V2').setStyle(ButtonStyle.Primary),
+      { name: 'Current session', value: editorContext(session), inline: false },
+      { name: 'Quick actions', value: 'Start a new message, continue your current draft, or open saved work.', inline: false }
+    )
+    .setFooter({ text: 'Tip: save drafts often. Sessions expire after inactivity.' });
+
+  const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:new_embed`).setLabel('New Embed').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:new_cv2`).setLabel('New Components V2').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:continue`).setLabel('Continue').setStyle(ButtonStyle.Success),
   );
   const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:open_drafts`).setLabel('Open Saved Draft').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:open_templates`).setLabel('Open Saved Template').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:edit_existing`).setLabel('Edit Existing Message').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:open_drafts`).setLabel('Drafts').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:open_templates`).setLabel('Templates').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:edit_existing`).setLabel('Edit Existing').setStyle(ButtonStyle.Secondary),
   );
-  const row3 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:continue`).setLabel('Continue Current').setStyle(ButtonStyle.Success),
-  );
-  return { embeds: [embed], components: [row, row2, row3] };
+  return { embeds: [embed], components: [row1, row2] };
 }
 
 function summarizeEmbed(state) {
   const e = state.embed || {};
-  const parts = [];
-  if (e.title) parts.push(`Title: ${e.title.slice(0, 40)}`);
-  if (e.description) parts.push(`Desc: ${String(e.description).slice(0, 60)}`);
-  parts.push(`Fields: ${(e.fields || []).length}`);
-  return parts.join('\n') || 'Empty embed';
+  const lines = [];
+  lines.push(`Title: ${e.title ? String(e.title).slice(0, 60) : '—'}`);
+  lines.push(`Description: ${e.description ? String(e.description).slice(0, 80) : '—'}`);
+  lines.push(`Fields: ${(e.fields || []).length}/25`);
+  if (state.content) lines.push(`Content: ${String(state.content).slice(0, 60)}`);
+  return lines.join('\n').slice(0, 1024);
+}
+
+function sectionLabel(key) {
+  const map = {
+    basic: 'Title & description',
+    author: 'Author',
+    footer: 'Footer & timestamp',
+    images: 'Images',
+    fields: 'Fields',
+    content: 'Message content'
+  };
+  return map[key] || key;
 }
 
 function buildEmbedEditor(session) {
-  const e = session.state.embed || {};
+  const section = session.embedSection || 'basic';
   const embed = new EmbedBuilder()
     .setColor(0x5865f2)
-    .setTitle('Embed Builder')
-    .setDescription(summarizeEmbed(session.state))
+    .setTitle('Embed Editor')
+    .setDescription(`**Editing:** ${editorContext(session)}\n**Section:** ${sectionLabel(section)}`)
     .addFields(
-      { name: 'Section', value: session.embedSection || 'basic', inline: true },
-      { name: 'Content', value: (session.state.content || '(none)').slice(0, 100), inline: true }
-    );
+      { name: 'Summary', value: summarizeEmbed(session.state), inline: false }
+    )
+    .setFooter({ text: 'Select a section, edit it, then preview or publish.' });
 
   const nav = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId(`bld:${sid(session)}:nav:embed_section`)
-      .setPlaceholder('Select section to edit')
+      .setPlaceholder('Choose section')
       .addOptions([
-        { label: 'Basic (title, desc, color, url)', value: 'basic' },
-        { label: 'Author', value: 'author' },
-        { label: 'Footer & Timestamp', value: 'footer' },
-        { label: 'Images (thumbnail, image)', value: 'images' },
-        { label: 'Fields', value: 'fields' },
-        { label: 'Message Content', value: 'content' },
+        { label: 'Title & description', value: 'basic', description: 'Title, URL, description, color', default: section === 'basic' },
+        { label: 'Message content', value: 'content', description: 'Text above the embed', default: section === 'content' },
+        { label: 'Author', value: 'author', description: 'Author name, URL, icon', default: section === 'author' },
+        { label: 'Images', value: 'images', description: 'Thumbnail and main image', default: section === 'images' },
+        { label: 'Footer & timestamp', value: 'footer', description: 'Footer text, icon, timestamp', default: section === 'footer' },
+        { label: 'Fields', value: 'fields', description: 'Add, edit, reorder fields', default: section === 'fields' },
       ])
   );
 
+  const isFields = section === 'fields';
   const editRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_edit`).setLabel('Edit Section').setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_add_field`).setLabel('Add Field').setStyle(ButtonStyle.Secondary).setDisabled(session.embedSection !== 'fields'),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:embed_field_tools`).setLabel('Field Tools').setStyle(ButtonStyle.Secondary).setDisabled(session.embedSection !== 'fields'),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_edit`).setLabel('Edit Section').setStyle(ButtonStyle.Primary).setDisabled(isFields),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_add_field`).setLabel('Add Field').setStyle(ButtonStyle.Secondary).setDisabled(!isFields),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:embed_field_tools`).setLabel('Field Tools').setStyle(ButtonStyle.Secondary).setDisabled(!isFields),
   );
 
   const actions = new ActionRowBuilder().addComponents(
@@ -88,16 +111,19 @@ function buildEmbedEditor(session) {
   );
   const back = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:home`).setLabel('Home').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:undo`).setLabel('Back/Undo').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:undo`).setLabel('Undo').setStyle(ButtonStyle.Secondary),
   );
   return { embeds: [embed], components: [nav, editRow, actions, back] };
 }
 
 function listNodes(nodes, depth = 0, out = []) {
   for (const n of (nodes || [])) {
-    const indent = '  '.repeat(depth);
-    const label = `${indent}${n.type} [${n._id}]${n.label ? ` (${n.label})` : ''}${n.content ? `: ${String(n.content).slice(0,20)}` : ''}`;
-    out.push({ label: label.slice(0, 100), value: n._id });
+    const indent = '  '.repeat(Math.min(depth, 3));
+    let label = `${indent}${n.type} [${n._id}]`;
+    if (n.label) label += ` "${String(n.label).slice(0, 18)}"`;
+    else if (n.content) label += `: ${String(n.content).slice(0, 18)}`;
+    else if (n.type && n.type.endsWith('_select')) label += ` (${n.placeholder || 'select'})`;
+    out.push({ label: label.slice(0, 100), value: n._id, description: n.type.slice(0, 50) });
     if (n.components) listNodes(n.components, depth + 1, out);
   }
   return out;
@@ -105,25 +131,31 @@ function listNodes(nodes, depth = 0, out = []) {
 
 function buildCv2Editor(session) {
   const options = listNodes(session.state.root).slice(0, 25);
-  if (options.length === 0) options.push({ label: 'No components', value: 'none' });
+  if (options.length === 0) options.push({ label: 'No components yet', value: 'none' });
+  const selected = session.selectedNodeId || '(none)';
   const embed = new EmbedBuilder()
     .setColor(0x5865f2)
-    .setTitle('Components V2 Builder')
-    .setDescription('Select a node to edit, add children, remove, duplicate, or reorder. Top-level items are Containers.')
-    .addFields({ name: 'Selected', value: session.selectedNodeId || '(none)', inline: true });
+    .setTitle('Components V2 Editor')
+    .setDescription(`**Editing:** ${editorContext(session)}\nBuild with containers, sections, text, buttons, selects, media, and more.`)
+    .addFields(
+      { name: 'Selected node', value: String(selected).slice(0, 1024), inline: true },
+      { name: 'Top-level', value: `${(session.state.root || []).length} container(s)`, inline: true }
+    )
+    .setFooter({ text: 'Select a node to add children, edit, move, duplicate, or remove.' });
 
   const selectRow = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder().setCustomId(`bld:${sid(session)}:nav:cv2_select`).setPlaceholder('Select component node').addOptions(options)
   );
   const ops = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:cmp:add`).setLabel('Add Child').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:cv2_edit`).setLabel('Edit').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:cmp:remove`).setLabel('Remove').setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:cmp:dup`).setLabel('Duplicate').setStyle(ButtonStyle.Secondary),
   );
   const ops2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:cmp:up`).setLabel('Move Up').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:cmp:down`).setLabel('Move Down').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:cv2_edit`).setLabel('Edit Props').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:cmp:add_root`).setLabel('Add Container').setStyle(ButtonStyle.Secondary),
   );
   const actions = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:preview`).setLabel('Preview').setStyle(ButtonStyle.Success),
@@ -132,40 +164,47 @@ function buildCv2Editor(session) {
   );
   const back = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:home`).setLabel('Home').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:undo`).setLabel('Back/Undo').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:cmp:add_root`).setLabel('Add Container').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:undo`).setLabel('Undo').setStyle(ButtonStyle.Secondary),
   );
   return { embeds: [embed], components: [selectRow, ops, ops2, actions, back] };
 }
 
 function buildSaveMenu(session) {
-  const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('Save').setDescription('Save your current work as a draft or template.');
+  const embed = new EmbedBuilder()
+    .setColor(0x5865f2)
+    .setTitle('Save')
+    .setDescription(`Save your current **${typeLabel(session)}** message as a draft or reusable template.\n\nDrafts and templates are private to you in this server.`);
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:save_draft`).setLabel('Save Draft').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:save_template`).setLabel('Save Template').setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:back_editor`).setLabel('Back').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:back_editor`).setLabel('Back to Editor').setStyle(ButtonStyle.Secondary),
   );
   return { embeds: [embed], components: [row] };
+}
+
+function storageWarning(status) {
+  if (status && status.recovered) {
+    return `\n\n⚠️ Previous storage was corrupted and backed up${status.backup ? ` (${status.backup})` : ''}.`;
+  }
+  return '';
 }
 
 function buildDraftsList(session) {
   const drafts = draftService.listDrafts(session.userId, session.guildId).slice(0, 25);
   const status = draftService.getLoadStatus ? draftService.getLoadStatus() : null;
-  let desc = drafts.length ? 'Select a draft to open.' : 'No drafts saved.';
-  if (status && status.recovered) desc += `
-
-Warning: previous draft storage was corrupted and backed up${status.backup ? ` to ${status.backup}` : ''}.`;
+  let desc = drafts.length ? 'Select a draft to open, or choose one to delete.' : 'No drafts saved for you in this server.';
+  desc += storageWarning(status);
   const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('Saved Drafts').setDescription(desc.slice(0, 4000));
   const components = [];
   if (drafts.length) {
     components.push(new ActionRowBuilder().addComponents(
-      new StringSelectMenuBuilder().setCustomId(`bld:${sid(session)}:nav:load_draft`).setPlaceholder('Select draft').addOptions(
-        drafts.map(d => ({ label: d.name.slice(0, 100), value: d.id, description: `${d.state.type} - ${new Date(d.updatedAt).toLocaleString()}`.slice(0, 100) }))
+      new StringSelectMenuBuilder().setCustomId(`bld:${sid(session)}:nav:load_draft`).setPlaceholder('Open draft').addOptions(
+        drafts.map(d => ({ label: d.name.slice(0, 100), value: d.id, description: `${d.state.type} • ${new Date(d.updatedAt).toLocaleString()}`.slice(0, 100) }))
       )
     ));
     components.push(new ActionRowBuilder().addComponents(
-      new StringSelectMenuBuilder().setCustomId(`bld:${sid(session)}:nav:delete_draft`).setPlaceholder('Delete draft...').addOptions(
-        drafts.map(d => ({ label: `Delete: ${d.name}`.slice(0, 100), value: d.id }))
+      new StringSelectMenuBuilder().setCustomId(`bld:${sid(session)}:nav:delete_draft`).setPlaceholder('Delete draft').addOptions(
+        drafts.map(d => ({ label: `Delete: ${d.name}`.slice(0, 100), value: d.id, description: d.id.slice(0, 100) }))
       )
     ));
   }
@@ -176,25 +215,23 @@ Warning: previous draft storage was corrupted and backed up${status.backup ? ` t
 function buildTemplatesList(session) {
   const templates = templateService.listTemplates(session.userId, session.guildId).slice(0, 25);
   const status = templateService.getLoadStatus ? templateService.getLoadStatus() : null;
-  let desc = templates.length ? 'Open, duplicate, or delete templates.' : 'No templates saved.';
-  if (status && status.recovered) desc += `
-
-Warning: previous template storage was corrupted and backed up${status.backup ? ` to ${status.backup}` : ''}.`;
+  let desc = templates.length ? 'Open, duplicate, or delete your templates.' : 'No templates saved for you in this server.';
+  desc += storageWarning(status);
   const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('Saved Templates').setDescription(desc.slice(0, 4000));
   const components = [];
   if (templates.length) {
     components.push(new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder().setCustomId(`bld:${sid(session)}:nav:load_template`).setPlaceholder('Open template').addOptions(
-        templates.map(t => ({ label: t.name.slice(0, 100), value: t.id, description: `${t.state.type}` }))
+        templates.map(t => ({ label: t.name.slice(0, 100), value: t.id, description: `${t.state.type}`.slice(0, 100) }))
       )
     ));
     components.push(new ActionRowBuilder().addComponents(
-      new StringSelectMenuBuilder().setCustomId(`bld:${sid(session)}:nav:dup_template`).setPlaceholder('Duplicate template...').addOptions(
+      new StringSelectMenuBuilder().setCustomId(`bld:${sid(session)}:nav:dup_template`).setPlaceholder('Duplicate template').addOptions(
         templates.map(t => ({ label: `Duplicate: ${t.name}`.slice(0, 100), value: t.id }))
       )
     ));
     components.push(new ActionRowBuilder().addComponents(
-      new StringSelectMenuBuilder().setCustomId(`bld:${sid(session)}:nav:delete_template`).setPlaceholder('Delete template...').addOptions(
+      new StringSelectMenuBuilder().setCustomId(`bld:${sid(session)}:nav:delete_template`).setPlaceholder('Delete template').addOptions(
         templates.map(t => ({ label: `Delete: ${t.name}`.slice(0, 100), value: t.id }))
       )
     ));
@@ -205,7 +242,13 @@ Warning: previous template storage was corrupted and backed up${status.backup ? 
 
 function buildEditExisting(session) {
   const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('Edit Existing Message')
-    .setDescription('Provide a message ID and channel to load a bot-authored message for editing.\n\nNote: Only messages sent by this bot can be edited. Complex Components V2 messages may not be fully reconstructable into the visual editor; in that case you can replace them by building a new message and publishing as an edit.');
+    .setDescription(
+      'Load a message sent by this bot to edit and republish it.\n\n' +
+      '- Only bot-authored messages can be edited.\n' +
+      '- Embeds can be imported into the editor.\n' +
+      '- Existing Components V2 messages cannot be fully reconstructed visually; loading one sets it as the edit target and starts a new Components V2 draft to replace it on publish.\n\n' +
+      'Provide the channel and message IDs below.'
+    );
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:edit_existing`).setLabel('Enter Message Info').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:home`).setLabel('Back').setStyle(ButtonStyle.Secondary),
@@ -297,7 +340,10 @@ async function handleNavigation(interaction, { sid }) {
       session.state = createDefaultEmbedState();
       session.type = 'embed';
       session.draftId = null;
+      session.templateId = null;
+      session.editingMessage = null;
       session.view = 'editor';
+      session.embedSection = 'basic';
       saveSession(session);
       return interaction.update(buildEmbedEditor(session));
     case 'new_cv2':
@@ -306,6 +352,8 @@ async function handleNavigation(interaction, { sid }) {
       session.type = 'components_v2';
       session.selectedNodeId = session.state.root[0]?._id || null;
       session.draftId = null;
+      session.templateId = null;
+      session.editingMessage = null;
       session.view = 'editor';
       saveSession(session);
       return interaction.update(buildCv2Editor(session));
@@ -321,10 +369,10 @@ async function handleNavigation(interaction, { sid }) {
       return interaction.update(buildEditExisting(session));
     case 'save_menu':
       return interaction.update(buildSaveMenu(session));
-    case 'publish_menu':
-      // delegate to publishing view via update from publishing module
+    case 'publish_menu': {
       const { buildPublishMenu } = require('./publishing');
       return interaction.update(buildPublishMenu(session));
+    }
     case 'back_editor':
       return interaction.update(currentEditor(session));
     case 'undo':
@@ -336,11 +384,10 @@ async function handleNavigation(interaction, { sid }) {
         let payload;
         if (session.state.type === 'embed') payload = toPublishPayload(buildEmbedPayload(session.state), 'embed');
         else payload = toPublishPayload(buildComponentsV2Payload(session.state), 'components_v2');
-        // show preview as ephemeral follow-up (cannot always perfectly mirror inside editor)
         if (session.state.type === 'components_v2') {
-          await interaction.reply({ content: 'Preview (Components V2):', ...payload, flags: 64 });
+          await interaction.reply({ content: 'Preview (Components V2) — editing controls remain in the builder message.', ...payload, flags: 64 });
         } else {
-          await interaction.reply({ content: session.state.content ? `Content: ${session.state.content.slice(0,200)}` : 'Preview:', embeds: payload.embeds, components: [], flags: 64 });
+          await interaction.reply({ content: session.state.content ? `Content preview: ${session.state.content.slice(0, 200)}` : 'Preview — editing controls remain in the builder message.', embeds: payload.embeds, components: [], flags: 64 });
         }
       } catch (e) {
         return interaction.reply({ content: `Preview failed: ${e.message}`, flags: 64 });
@@ -353,15 +400,13 @@ async function handleNavigation(interaction, { sid }) {
         saveSession(session);
         let note = '';
         const status = draftService.getLoadStatus ? draftService.getLoadStatus() : null;
-        if (status && status.recovered) note = `
-Warning: previous draft storage was corrupted and backed up${status.backup ? ` to ${status.backup}` : ''}.`;
-        return interaction.reply({ content: `Draft saved: **${draft.name}** (${draft.id})${note}`, flags: 64 });
+        if (status && status.recovered) note = `\nWarning: previous draft storage was corrupted and backed up${status.backup ? ` to ${status.backup}` : ''}.`;
+        return interaction.reply({ content: `✅ Draft saved: **${draft.name}** (${draft.id})${note}`, flags: 64 });
       } catch (e) {
         return interaction.reply({ content: `Failed to save draft: ${e.message}`, flags: 64 });
       }
     }
     case 'save_template': {
-      // ask for name via modal
       const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
       const modal = new ModalBuilder().setCustomId(`bld:${session.id}:prop:tpl_name`).setTitle('Save Template');
       modal.addComponents(new ActionRowBuilder().addComponents(
@@ -371,20 +416,21 @@ Warning: previous draft storage was corrupted and backed up${status.backup ? ` t
     }
     case 'embed_field_tools': {
       const fields = session.state.embed.fields || [];
-      const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('Field Tools').setDescription(fields.length ? fields.map((f,i)=>`${i+1}. ${f.name}`).join('\n').slice(0, 4000) : 'No fields.');
-      const opts = fields.map((f, i) => ({ label: `${i+1}. ${String(f.name).slice(0,90)}`.slice(0,100), value: String(i) })).slice(0,25);
+      const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('Field Tools')
+        .setDescription(fields.length ? fields.map((f, i) => `${i + 1}. ${String(f.name || '(unnamed)').slice(0, 80)}`).join('\n').slice(0, 4000) : 'No fields yet. Go back and use “Add Field” first.');
+      const opts = fields.map((f, i) => ({ label: `${i + 1}. ${String(f.name || 'Field').slice(0, 90)}`.slice(0, 100), value: String(i) })).slice(0, 25);
       if (!opts.length) opts.push({ label: 'No fields', value: 'none' });
       const components = [
-        new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId(`bld:${sid}:prop:field_select`).setPlaceholder('Select field').addOptions(opts)),
+        new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId(`bld:${session.id}:prop:field_select`).setPlaceholder('Select field').addOptions(opts)),
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId(`bld:${sid}:prop:field_edit`).setLabel('Edit').setStyle(ButtonStyle.Primary),
-          new ButtonBuilder().setCustomId(`bld:${sid}:prop:field_remove`).setLabel('Remove').setStyle(ButtonStyle.Danger),
-          new ButtonBuilder().setCustomId(`bld:${sid}:prop:field_dup`).setLabel('Duplicate').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_edit`).setLabel('Edit').setStyle(ButtonStyle.Primary),
+          new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_remove`).setLabel('Remove').setStyle(ButtonStyle.Danger),
+          new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_dup`).setLabel('Duplicate').setStyle(ButtonStyle.Secondary),
         ),
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId(`bld:${sid}:prop:field_up`).setLabel('Move Up').setStyle(ButtonStyle.Secondary),
-          new ButtonBuilder().setCustomId(`bld:${sid}:prop:field_down`).setLabel('Move Down').setStyle(ButtonStyle.Secondary),
-          new ButtonBuilder().setCustomId(`bld:${sid}:nav:back_editor`).setLabel('Back').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_up`).setLabel('Move Up').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_down`).setLabel('Move Down').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId(`bld:${session.id}:nav:back_editor`).setLabel('Back').setStyle(ButtonStyle.Secondary),
         )
       ];
       return interaction.update({ embeds: [embed], components });

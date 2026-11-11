@@ -23,7 +23,8 @@ function modalField(id, label, style, value, required = false, opts = {}) {
 function showEmbedModal(interaction, session) {
   const section = session.embedSection || 'basic';
   const e = session.state.embed || {};
-  const modal = new ModalBuilder().setCustomId(tid(session, 'embed_modal', section)).setTitle(`Edit Embed: ${section}`.slice(0, 45));
+  const titles = { basic: "Title & Description", author: "Author", footer: "Footer & Timestamp", images: "Images", content: "Message Content" };
+  const modal = new ModalBuilder().setCustomId(tid(session, 'embed_modal', section)).setTitle((titles[section] || `Edit: ${section}`).slice(0, 45));
   if (section === 'basic') {
     modal.addComponents(
       new ActionRowBuilder().addComponents(modalField('title', 'Title', TextInputStyle.Short, e.title || '', false, { max: 256 })),
