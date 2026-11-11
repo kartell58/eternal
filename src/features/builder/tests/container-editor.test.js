@@ -188,7 +188,7 @@ function freshModules() {
     assert.strictEqual(session.state.root.length, 1);
     assert.strictEqual(session.state.root[0]._id, c2._id);
     assert.ok(confirm.updated && hasFlag(confirm.updated, MessageFlags.Ephemeral), 'main panel shown ephemerally');
-    assert.ok((confirm.updated.content || '').includes('Container Creation Panel'), 'returned to main panel');
+    assert.ok(allText(confirm.updated.components).includes('Container Creation Panel'), 'returned to main panel');
   });
 
   await test('deleting last container returns to a valid main panel state (no containers)', async () => {
@@ -204,11 +204,13 @@ function freshModules() {
     const session = getSession(s.id);
     assert.strictEqual(session.state.root.length, 0);
     assert.strictEqual(session.view, 'home');
-    assert.ok(confirm.updated && (confirm.updated.content || '').includes('Container Creation Panel'));
+    assert.ok(confirm.updated && allText(confirm.updated.components).includes('Container Creation Panel'));
     const main = buildMainPanel(session);
-    const select = (main.components[0].components[0].toJSON ? main.components[0].components[0].toJSON() : main.components[0].components[0]);
-    assert.strictEqual(select.placeholder, 'Select a container to edit');
-    assert.ok(select.disabled === true);
+    const select = walkIds(main.components) ? null : null; // placeholder, find select below
+    function findSelect(view, ends){ let found=null; function walk(n){ if(found||!n) return; if(Array.isArray(n)) return n.forEach(walk); const j=typeof n.toJSON==='function'?n.toJSON():n; if(j&&j.custom_id&&j.custom_id.endsWith(ends)) found=j; if(j&&Array.isArray(j.components)) j.components.forEach(walk); if(Array.isArray(n.components)) n.components.forEach(walk);} walk(view.components||[]); return found; }
+    const sel = findSelect(main, ':nav:container_select');
+    assert.strictEqual(sel.placeholder, 'Select a container to edit');
+    assert.ok(sel.disabled === true);
   });
 
   await test('back returns to main panel in same message without losing changes', async () => {
@@ -225,7 +227,7 @@ function freshModules() {
     assert.strictEqual(session.state.root[0].accent_color, 123, 'changes preserved');
     assert.strictEqual(session.view, 'home');
     assert.ok(back.updated && hasFlag(back.updated, MessageFlags.Ephemeral), 'ephemeral update');
-    assert.ok((back.updated.content || '').includes('Container Creation Panel'), 'main panel shown');
+    assert.ok(allText(back.updated.components).includes('Container Creation Panel'), 'main panel shown');
   });
 
   await test('unauthorized user cannot interact with another user\'s container editor', async () => {

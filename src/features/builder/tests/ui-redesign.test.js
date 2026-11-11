@@ -1,4 +1,5 @@
 const assert = require('assert');
+const { MessageFlags } = require('discord.js');
 const { createSession } = require('../services/session.service');
 const { buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor } = require('../interactions/navigation');
 const { buildPublishMenu } = require('../interactions/publishing');
@@ -11,22 +12,60 @@ const { createDefaultComponentsV2State, createContainer } = require('../schemas/
 
   function customIds(view) {
     const ids = [];
-    for (const row of (view.components || [])) {
-      const comps = row.components || row.toJSON?.().components || [];
-      for (const c of comps) {
-        const j = typeof c.toJSON === 'function' ? c.toJSON() : c;
-        if (j.custom_id) ids.push(j.custom_id);
-      }
+    function walk(node) {
+      if (!node) return;
+      if (Array.isArray(node)) return node.forEach(walk);
+      const j = typeof node.toJSON === 'function' ? node.toJSON() : node;
+      if (j && j.custom_id) ids.push(j.custom_id);
+      if (j && Array.isArray(j.components)) j.components.forEach(walk);
+      if (Array.isArray(node.components)) node.components.forEach(walk);
     }
+    walk(view.components || []);
     return ids;
+  }
+
+  function allText(view) {
+    const out = [];
+    function walk(node) {
+      if (!node) return;
+      if (Array.isArray(node)) return node.forEach(walk);
+      const j = typeof node.toJSON === 'function' ? node.toJSON() : node;
+      if (j && typeof j.content === 'string') out.push(j.content);
+      if (j && Array.isArray(j.components)) j.components.forEach(walk);
+      if (Array.isArray(node.components)) node.components.forEach(walk);
+    }
+    walk(view.components || []);
+    if (typeof view.content === 'string') out.push(view.content);
+    return out.join('\n');
+  }
+
+  function hasFlag(view, bit) {
+    const f = view && view.flags;
+    if (typeof f === 'number') return (f & bit) === bit;
+    if (f && typeof f.bitfield === 'number') return (f.bitfield & bit) === bit;
+    return false;
+  }
+
+  function findSelect(view, customIdEndsWith) {
+    let found = null;
+    function walk(node) {
+      if (found || !node) return;
+      if (Array.isArray(node)) return node.forEach(walk);
+      const j = typeof node.toJSON === 'function' ? node.toJSON() : node;
+      if (j && j.custom_id && (!customIdEndsWith || j.custom_id.endsWith(customIdEndsWith))) found = j;
+      if (j && Array.isArray(j.components)) j.components.forEach(walk);
+      if (Array.isArray(node.components)) node.components.forEach(walk);
+    }
+    walk(view.components || []);
+    return found;
   }
 
   await test('main panel (home) exposes container controls in English', () => {
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     s.state = createDefaultComponentsV2State();
     const view = buildHome(s);
-    assert.ok(view.content && view.content.includes('Container Creation Panel'), 'title content');
-    assert.ok(view.embeds && view.embeds.length === 1, 'info card');
+    assert.ok(allText(view).includes('Container Creation Panel'), 'title content');
+    assert.ok(hasFlag(view, MessageFlags.Ephemeral), 'ephemeral');
     const ids = customIds(view).join(' ');
     assert.ok(ids.includes(':nav:container_select'), 'container select');
     assert.ok(ids.includes(':nav:add_container_main'), 'add container');
@@ -34,9 +73,9 @@ const { createDefaultComponentsV2State, createContainer } = require('../schemas/
     assert.ok(ids.includes(':nav:json_editor'), 'json editor');
     assert.ok(ids.includes(':nav:send_custom'), 'custom send');
     assert.ok(ids.includes(':nav:quick_send'), 'quick send');
-    // labels
-    const all = (view.components || []).flatMap(r => (r.components || []));
-    const labels = all.map(c => (c.toJSON?.().label || c.data?.label)).filter(Boolean).join('|');
+    const all = [];
+    function walk(node){ if(!node) return; if(Array.isArray(node)) return node.forEach(walk); const j=typeof node.toJSON==='function'?node.toJSON():node; if(j&&j.label) all.push(j.label); if(j&&Array.isArray(j.components)) j.components.forEach(walk); if(Array.isArray(node.components)) node.components.forEach(walk);} walk(view.components||[]);
+    const labels = all.join('|');
     assert.ok(labels.includes('Add Container'));
     assert.ok(labels.includes('JSON Editor'));
     assert.ok(labels.includes('Custom Send'));
@@ -48,9 +87,8 @@ const { createDefaultComponentsV2State, createContainer } = require('../schemas/
     s.state = createDefaultComponentsV2State();
     s.state.root = [];
     const view = buildMainPanel(s);
-    const selectRow = (view.components || [])[0];
-    const select = (selectRow.components || [])[0];
-    const j = select.toJSON ? select.toJSON() : select;
+    const j = findSelect(view, ':nav:container_select');
+    assert.ok(j, 'select found');
     assert.strictEqual(j.placeholder, 'Select a container to edit', 'placeholder');
     assert.ok(j.disabled === true, 'select disabled when empty');
     assert.ok((j.options || [])[0].value === 'none', 'empty option');
@@ -61,13 +99,13 @@ const { createDefaultComponentsV2State, createContainer } = require('../schemas/
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     s.state = createDefaultComponentsV2State(); // 1 container
     const view1 = buildMainPanel(s);
-    const j1 = ((view1.components || [])[0].components || [])[0].toJSON();
+    const j1 = findSelect(view1, ':nav:container_select');
     assert.strictEqual(j1.placeholder, 'Select a container to edit');
     assert.ok(!(j1.options || []).some(o => o.default), 'no default with one container');
 
     s.state.root.push(createContainer());
     const view2 = buildMainPanel(s);
-    const j2 = ((view2.components || [])[0].components || [])[0].toJSON();
+    const j2 = findSelect(view2, ':nav:container_select');
     assert.strictEqual(j2.placeholder, 'Select a container to edit');
     assert.ok(!(j2.options || []).some(o => o.default), 'no default with multiple containers');
   });
@@ -76,8 +114,8 @@ const { createDefaultComponentsV2State, createContainer } = require('../schemas/
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     s.state = createDefaultComponentsV2State();
     s.selectedNodeId = s.state.root[0]._id;
-    const view = buildMainPanel(s); // render as if returned to main panel
-    const j = ((view.components || [])[0].components || [])[0].toJSON();
+    const view = buildMainPanel(s);
+    const j = findSelect(view, ':nav:container_select');
     assert.strictEqual(j.placeholder, 'Select a container to edit');
     assert.ok(!(j.options || []).some(o => o.default), 'no default after selection in session');
   });
@@ -102,13 +140,14 @@ const { createDefaultComponentsV2State, createContainer } = require('../schemas/
     s.state = createDefaultEmbedState();
     s.embedSection = 'fields';
     const view = buildEmbedEditor(s);
-    const all = (view.components || []).flatMap(r => (r.components || []));
-    const add = all.find(c => (c.toJSON?.().custom_id || c.data?.custom_id) === `bld:${s.id}:prop:embed_add_field`);
-    const tools = all.find(c => (c.toJSON?.().custom_id || c.data?.custom_id) === `bld:${s.id}:nav:embed_field_tools`);
-    const edit = all.find(c => (c.toJSON?.().custom_id || c.data?.custom_id) === `bld:${s.id}:prop:embed_edit`);
-    assert.ok(add && !(add.toJSON?.().disabled || add.data?.disabled), 'add field enabled');
-    assert.ok(tools && !(tools.toJSON?.().disabled || tools.data?.disabled), 'field tools enabled');
-    assert.ok(edit && (edit.toJSON?.().disabled || edit.data?.disabled), 'edit section disabled for fields');
+    const all = [];
+    function walk(node){ if(!node) return; if(Array.isArray(node)) return node.forEach(walk); const j=typeof node.toJSON==='function'?node.toJSON():node; if(j&&j.custom_id) all.push(j); if(j&&Array.isArray(j.components)) j.components.forEach(walk); if(Array.isArray(node.components)) node.components.forEach(walk);} walk(view.components||[]);
+    const add = all.find(c => c.custom_id === `bld:${s.id}:prop:embed_add_field`);
+    const tools = all.find(c => c.custom_id === `bld:${s.id}:nav:embed_field_tools`);
+    const edit = all.find(c => c.custom_id === `bld:${s.id}:prop:embed_edit`);
+    assert.ok(add && !add.disabled, 'add field enabled');
+    assert.ok(tools && !tools.disabled, 'field tools enabled');
+    assert.ok(edit && edit.disabled, 'edit section disabled for fields');
   });
 
   await test('components v2 editor has node selection and management controls', () => {
@@ -139,15 +178,17 @@ const { createDefaultComponentsV2State, createContainer } = require('../schemas/
     assert.ok(ids.includes(':pub:channel'), 'channel select for new message');
     assert.ok(ids.includes(':pub:confirm'));
     assert.ok(ids.includes(':pub:preview'));
-    const all = (view.components || []).flatMap(r => (r.components || []));
-    const confirm = all.find(c => (c.toJSON?.().custom_id || c.data?.custom_id) === `bld:${s.id}:pub:confirm`);
-    assert.ok(confirm && (confirm.toJSON?.().disabled || confirm.data?.disabled), 'confirm disabled without destination');
+    const all = [];
+    function walk(node){ if(!node) return; if(Array.isArray(node)) return node.forEach(walk); const j=typeof node.toJSON==='function'?node.toJSON():node; if(j&&j.custom_id) all.push(j); if(j&&Array.isArray(j.components)) j.components.forEach(walk); if(Array.isArray(node.components)) node.components.forEach(walk);} walk(view.components||[]);
+    const confirm = all.find(c => c.custom_id === `bld:${s.id}:pub:confirm`);
+    assert.ok(confirm && confirm.disabled, 'confirm disabled without destination');
 
     s.publishChannelId = '123';
     const view2 = buildPublishMenu(s);
-    const all2 = (view2.components || []).flatMap(r => (r.components || []));
-    const confirm2 = all2.find(c => (c.toJSON?.().custom_id || c.data?.custom_id) === `bld:${s.id}:pub:confirm`);
-    assert.ok(confirm2 && !(confirm2.toJSON?.().disabled || confirm2.data?.disabled), 'confirm enabled when valid and destination set');
+    const all2 = [];
+    walk = function(node){ if(!node) return; if(Array.isArray(node)) return node.forEach(walk); const j=typeof node.toJSON==='function'?node.toJSON():node; if(j&&j.custom_id) all2.push(j); if(j&&Array.isArray(j.components)) j.components.forEach(walk); if(Array.isArray(node.components)) node.components.forEach(walk);} ; walk(view2.components||[]);
+    const confirm2 = all2.find(c => c.custom_id === `bld:${s.id}:pub:confirm`);
+    assert.ok(confirm2 && !confirm2.disabled, 'confirm enabled when valid and destination set');
   });
 
   console.log(JSON.stringify(results, null, 2));

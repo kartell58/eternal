@@ -93,7 +93,8 @@ function freshModules() {
     assert.ok(session.state.root.some(c => c._id === firstId), 'first container preserved');
     assert.strictEqual(session.selectedNodeId, firstId, 'existing selection preserved');
     assert.strictEqual(session.view, 'home');
-    assert.ok(i.updated && i.updated.content && i.updated.content.includes('Container Creation Panel'), 'main panel shown');
+    function allText(view){ const out=[]; function walk(n){ if(!n) return; if(Array.isArray(n)) return n.forEach(walk); const j=typeof n.toJSON==='function'?n.toJSON():n; if(j&&typeof j.content==='string') out.push(j.content); if(j&&Array.isArray(j.components)) j.components.forEach(walk); if(Array.isArray(n.components)) n.components.forEach(walk);} walk(view.components||[]); if(typeof view.content==='string') out.push(view.content); return out.join('\n'); }
+    assert.ok(i.updated && allText(i.updated).includes('Container Creation Panel'), 'main panel shown');
     assert.ok(!i.repliedPayload, 'no extra reply');
   });
 

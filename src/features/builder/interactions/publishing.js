@@ -24,33 +24,36 @@ function buildPublishMenu(session) {
     lines.push(`**Destination:** ${session.publishChannelId ? `<#${session.publishChannelId}>` : 'Not selected'}`);
   }
 
-  const embed = new EmbedBuilder()
-    .setColor(validation.valid ? 0x57f287 : 0xed4245)
-    .setTitle('Publish')
-    .setDescription(lines.join('\n').slice(0, 4000))
-    .setFooter({ text: 'Publishing uses safe defaults (mentions disabled). Review preview before confirming.' });
+  const { ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
+  const info = new ContainerBuilder()
+    .setAccentColor(validation.valid ? 0x57f287 : 0xed4245)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent('## Publish'),
+      new TextDisplayBuilder().setContent(lines.join('\n').slice(0, 4000)),
+      new TextDisplayBuilder().setContent('-# Publishing uses safe defaults (mentions disabled). Review preview before confirming.')
+    );
 
-  const rows = [];
+  const components = [info];
   if (!session.editingMessage) {
     const channelTypes = [ChannelType.GuildText, ChannelType.GuildAnnouncement];
     if (ChannelType.PublicThread) channelTypes.push(ChannelType.PublicThread);
     if (ChannelType.PrivateThread) channelTypes.push(ChannelType.PrivateThread);
     if (ChannelType.AnnouncementThread) channelTypes.push(ChannelType.AnnouncementThread);
-    rows.push(new ActionRowBuilder().addComponents(
+    components.push(new ActionRowBuilder().addComponents(
       new ChannelSelectMenuBuilder().setCustomId(`bld:${sid(session)}:pub:channel`).setPlaceholder('Select destination channel').addChannelTypes(...channelTypes)
     ));
   }
-  rows.push(new ActionRowBuilder().addComponents(
+  components.push(new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:pub:confirm`).setLabel(session.editingMessage ? 'Confirm Edit' : 'Confirm Publish').setStyle(ButtonStyle.Success).setDisabled(!validation.valid || (!session.editingMessage && !session.publishChannelId)),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:pub:preview`).setLabel('Final Preview').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:back_editor`).setLabel('Back').setStyle(ButtonStyle.Secondary),
   ));
   if (session.editingMessage) {
-    rows.push(new ActionRowBuilder().addComponents(
+    components.push(new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId(`bld:${sid(session)}:pub:clear_target`).setLabel('Switch to New Message').setStyle(ButtonStyle.Danger)
     ));
   }
-  return { embeds: [embed], components: rows, flags: 64 };
+  return { content: null, embeds: [], components, flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 };
 }
 
 async function handlePublishing(interaction, { sid }) {

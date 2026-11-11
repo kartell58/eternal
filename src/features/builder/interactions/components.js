@@ -55,33 +55,38 @@ async function handleComponents(interaction, { sid }) {
   }
 
   if (action === 'add') {
+    const { ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
     const targetId = session.selectedNodeId;
     if (!targetId) {
-      const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('Add Component')
-        .setDescription('No node selected. Add a top-level container, or go back and select a container, section, or action row to add a child inside it.');
+      const info = new ContainerBuilder().setAccentColor(0x5865f2).addTextDisplayComponents(
+        new TextDisplayBuilder().setContent('## Add Component'),
+        new TextDisplayBuilder().setContent('No node selected. Add a top-level container, or go back and select a container, section, or action row to add a child inside it.')
+      );
       const row = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder().setCustomId(`bld:${sid}:cmp:add_type:root`).setPlaceholder('Add top-level component').addOptions([{ label: 'Container', value: 'container', description: 'Top-level Components V2 container' }])
       );
       const back = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`bld:${sid}:nav:back_editor`).setLabel('Back').setStyle(ButtonStyle.Secondary));
-      return interaction.update({ embeds: [embed], components: [row, back] });
+      return interaction.update({ content: null, embeds: [], components: [info, row, back], flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 });
     }
-    const info = findParentInfo(root, targetId);
-    if (!info) return interaction.reply({ content: 'Selected node not found.', flags: 64 });
-    const parentNode = info.node;
+    const infoNode = findParentInfo(root, targetId);
+    if (!infoNode) return interaction.reply({ content: 'Selected node not found.', flags: 64 });
+    const parentNode = infoNode.node;
     const pType = parentNode.type === 'action_row' ? 'action_row' : parentNode.type === 'section' ? 'section' : parentNode.type === 'container' ? 'container' : null;
     let allowed = allowedChildTypes(pType);
     if (!allowed.length) {
       return interaction.reply({ content: `Cannot add children to **${parentNode.type}**. Select a container, section, or action row instead.`, flags: 64 });
     }
     const options = allowed.map(t => ({ label: t.replace(/_/g, ' '), value: t })).slice(0, 25);
-    const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('Add Child Component')
-      .setDescription(`Adding inside **${parentNode.type}** (\`${parentNode._id}\`). Choose a component type:`)
-      .addFields({ name: 'Allowed types', value: allowed.join(', ').slice(0, 1024) });
+    const info = new ContainerBuilder().setAccentColor(0x5865f2).addTextDisplayComponents(
+      new TextDisplayBuilder().setContent('## Add Child Component'),
+      new TextDisplayBuilder().setContent(`Adding inside **${parentNode.type}**. Choose a component type:`),
+      new TextDisplayBuilder().setContent(`**Allowed types:** ${allowed.join(', ')}`.slice(0, 4000))
+    );
     const row = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder().setCustomId(`bld:${sid}:cmp:add_type:${targetId}`).setPlaceholder('Choose component type').addOptions(options)
     );
     const back = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`bld:${sid}:nav:back_editor`).setLabel('Back').setStyle(ButtonStyle.Secondary));
-    return interaction.update({ embeds: [embed], components: [row, back] });
+    return interaction.update({ content: null, embeds: [], components: [info, row, back], flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 });
   }
 
   if (action === 'remove') {

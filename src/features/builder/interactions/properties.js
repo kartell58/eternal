@@ -512,10 +512,15 @@ async function handleProperties(interaction, { sid }) {
     if (action === 'field_down' && idx < fields.length-1) { const [it]=fields.splice(idx,1); fields.splice(idx+1,0,it); session.selectedFieldIndex = idx+1; }
     saveSession(session);
     // rebuild field tools view
-    const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('Field Tools').setDescription(fields.length ? fields.map((f,i)=>`${i+1}. ${f.name}`).join('\n').slice(0, 4000) : 'No fields.');
-    const opts = fields.map((f, i) => ({ label: `${i+1}. ${String(f.name).slice(0,90)}`.slice(0,100), value: String(i) })).slice(0,25);
+    const { ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
+    const info = new ContainerBuilder().setAccentColor(0x5865f2).addTextDisplayComponents(
+      new TextDisplayBuilder().setContent('## Field Tools'),
+      new TextDisplayBuilder().setContent(fields.length ? fields.map((f,i)=>`${i+1}. ${String(f.name||'(unnamed)').slice(0,80)}`).join('\n').slice(0, 4000) : 'No fields.')
+    );
+    const opts = fields.map((f, i) => ({ label: `${i+1}. ${String(f.name || 'Field').slice(0,90)}`.slice(0,100), value: String(i) })).slice(0,25);
     if (!opts.length) opts.push({ label: 'No fields', value: 'none' });
     const components = [
+      info,
       new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId(`bld:${session.id}:prop:field_select`).setPlaceholder('Select field').addOptions(opts)),
       new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_edit`).setLabel('Edit').setStyle(ButtonStyle.Primary),
@@ -528,7 +533,7 @@ async function handleProperties(interaction, { sid }) {
         new ButtonBuilder().setCustomId(`bld:${session.id}:nav:back_editor`).setLabel('Back').setStyle(ButtonStyle.Secondary),
       )
     ];
-    return interaction.update({ embeds: [embed], components });
+    return interaction.update({ content: null, embeds: [], components, flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 });
   }
 
   return interaction.reply({ content: 'Unhandled property action.', flags: 64 });
