@@ -5,8 +5,153 @@ const {
   ButtonBuilder,
   ButtonStyle
 } = require("discord.js");
+const fs = require("fs");
+const path = require("path");
 const { get, set } = require("../settings");
 const { MODULES, buildPanel } = require("../utils/configView");
+
+async function postVerificationPanel(guild) {
+  const channelId = get(guild.id, "verificationChannel");
+  const roleId = get(guild.id, "verificationRole");
+  const channel = channelId ? guild.channels.cache.get(channelId) : null;
+  const role = roleId ? guild.roles.cache.get(roleId) : null;
+  if (!channel) return { ok: false, status: "skipped", reason: "verification channel not configured" };
+  if (!role) return { ok: false, status: "skipped", reason: "verification role not configured" };
+
+  const embed = new EmbedBuilder()
+    .setColor(0x57f287)
+    .setTitle("✅ Verification")
+    .setDescription("Click the button below to receive your verified role.")
+    .setFooter({ text: guild.name });
+
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("btn_verify")
+      .setLabel("Verify")
+      .setStyle(ButtonStyle.Success)
+      .setEmoji("✅")
+  );
+
+  await channel.send({ embeds: [embed], components: [row] });
+  return { ok: true, status: "posted", channel };
+}
+
+async function postHoneypotNotice(guild) {
+  const channelId = get(guild.id, "honeypotChannel");
+  const channel = channelId ? guild.channels.cache.get(channelId) : null;
+  if (!channel) return { ok: false, status: "skipped", reason: "honeypot channel not configured" };
+
+  const embed = new EmbedBuilder()
+    .setColor(0xed4245)
+    .setTitle("🚫 DO NOT SEND ANY MESSAGES HERE")
+    .setDescription(
+      "This channel is used to detect **automated accounts**.\n" +
+      "Any message sent here will result in an **automatic sanction** (softban)."
+    );
+
+  await channel.send({ embeds: [embed] });
+  return { ok: true, status: "posted", channel };
+}
+
+async function postRulesPanel(guild) {
+  const channelId = get(guild.id, "rulesChannel");
+  const channel = channelId ? guild.channels.cache.get(channelId) : null;
+  if (!channel) return { ok: false, status: "skipped", reason: "rules channel not configured" };
+
+  let rulesContent = "";
+  try {
+    const rulesPath = path.join(__dirname, "..", "..", "rules.txt");
+    rulesContent = fs.readFileSync(rulesPath, "utf8");
+  } catch (err) {
+    rulesContent = "⚠️ Could not read the rules file.";
+    console.error("Error reading rules.txt:", err);
+  }
+
+  const embed = new EmbedBuilder()
+    .setColor(0x5865f2)
+    .setTitle("📜 Server Rules")
+    .setDescription(rulesContent.trim())
+    .setFooter({ text: `Posted on ${new Date().toLocaleString()}` });
+
+  await channel.send({ embeds: [embed] });
+  return { ok: true, status: "posted", channel };
+}
+
+async function postAutoQuestPanel(guild) {
+  const channelId = get(guild.id, "autoQuestChannel");
+  const channel = channelId ? guild.channels.cache.get(channelId) : null;
+  if (!channel) return { ok: false, status: "skipped", reason: "AutoQuest channel not configured" };
+
+  const embed = new EmbedBuilder()
+    .setColor(0x5865f2)
+    .setTitle("🚀 AutoQuest")
+    .setDescription(
+      "Connect your account to farm quests automatically.\n" +
+      "Click **Configure account**, then **View quests** or **Start farm**."
+    );
+
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("aq_config")
+      .setLabel("Configure account")
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId("aq_ver")
+      .setLabel("View quests")
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId("aq_farm")
+      .setLabel("Start farm")
+      .setStyle(ButtonStyle.Success)
+  );
+
+  await channel.send({ embeds: [embed], components: [row] });
+  return { ok: true, status: "posted", channel };
+}
+
+async function postHypeSquadPanel(guild) {
+  const channelId = get(guild.id, "hypeSquadChannel");
+  const channel = channelId ? guild.channels.cache.get(channelId) : null;
+  if (!channel) return { ok: false, status: "skipped", reason: "HypeSquad channel not configured" };
+
+  const embed = new EmbedBuilder()
+    .setColor(0xf1c40f)
+    .setTitle("🏆 HypeSquad")
+    .setDescription(
+      "Choose your HypeSquad house!\n" +
+      "**Configure account** first (token), then **Join Bravery/Brilliance/Balance**.\n" +
+      "Use **Leave house** to leave HypeSquad."
+    );
+
+  const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("hs_config")
+      .setLabel("Configure account")
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId("hs_bravery")
+      .setLabel("Bravery")
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId("hs_brilliance")
+      .setLabel("Brilliance")
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("hs_balance")
+      .setLabel("Balance")
+      .setStyle(ButtonStyle.Success),
+    new ButtonBuilder()
+      .setCustomId("hs_remove")
+      .setLabel("Leave house")
+      .setStyle(ButtonStyle.Danger)
+  );
+
+  await channel.send({ embeds: [embed], components: [row1, row2] });
+  return { ok: true, status: "posted", channel };
+}
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -48,45 +193,16 @@ module.exports = {
 
     // ---------- Button: Post verification panel ----------
     if (customId === "btn_post_verification") {
-      const guild = interaction.guild;
-      const channelId = get(guild.id, "verificationChannel");
-      const roleId = get(guild.id, "verificationRole");
-      const channel = guild.channels.cache.get(channelId);
-      const role = guild.roles.cache.get(roleId);
-
-      if (!channel) {
-        await interaction.reply({
-          content: "Verification channel is not configured. Select it in the panel before posting.",
-          flags: 64
-        });
-        return;
-      }
-
-      if (!role) {
-        await interaction.reply({
-          content: "Verification role is not configured. Select it in the panel before posting.",
-          flags: 64
-        });
-        return;
-      }
-
-      const embed = new EmbedBuilder()
-        .setColor(0x57f287)
-        .setTitle("✅ Verification")
-        .setDescription("Click the button below to receive your verified role.")
-        .setFooter({ text: guild.name });
-
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("btn_verify")
-          .setLabel("Verify")
-          .setStyle(ButtonStyle.Success)
-          .setEmoji("✅")
-      );
-
       try {
-        await channel.send({ embeds: [embed], components: [row] });
-        await interaction.reply({ content: `Verification panel posted in ${channel}.`, flags: 64 });
+        const result = await postVerificationPanel(interaction.guild);
+        if (!result.ok) {
+          const msg = result.reason === "verification role not configured"
+            ? "Verification role is not configured. Select it in the panel before posting."
+            : "Verification channel is not configured. Select it in the panel before posting.";
+          await interaction.reply({ content: msg, flags: 64 });
+          return;
+        }
+        await interaction.reply({ content: `Verification panel posted in ${result.channel}.`, flags: 64 });
       } catch (err) {
         console.error("Error posting verification panel:", err);
         await interaction.reply({
@@ -99,29 +215,16 @@ module.exports = {
 
     // ---------- Button: Post honeypot notice ----------
     if (customId === "btn_post_honeypot") {
-      const guild = interaction.guild;
-      const channelId = get(guild.id, "honeypotChannel");
-      const channel = guild.channels.cache.get(channelId);
-
-      if (!channel) {
-        await interaction.reply({
-          content: "Honeypot channel is not configured. Select it in the panel before posting.",
-          flags: 64
-        });
-        return;
-      }
-
-      const embed = new EmbedBuilder()
-        .setColor(0xed4245)
-        .setTitle("🚫 DO NOT SEND ANY MESSAGES HERE")
-        .setDescription(
-          "This channel is used to detect **automated accounts**.\n" +
-          "Any message sent here will result in an **automatic sanction** (softban)."
-        );
-
       try {
-        await channel.send({ embeds: [embed] });
-        await interaction.reply({ content: `Honeypot notice posted in ${channel}.`, flags: 64 });
+        const result = await postHoneypotNotice(interaction.guild);
+        if (!result.ok) {
+          await interaction.reply({
+            content: "Honeypot channel is not configured. Select it in the panel before posting.",
+            flags: 64
+          });
+          return;
+        }
+        await interaction.reply({ content: `Honeypot notice posted in ${result.channel}.`, flags: 64 });
       } catch (err) {
         console.error("Error posting honeypot notice:", err);
         await interaction.reply({
@@ -134,44 +237,16 @@ module.exports = {
 
     // ---------- Button: Post AutoQuest panel ----------
     if (customId === "btn_post_autoquest") {
-      const guild = interaction.guild;
-      const channelId = get(guild.id, "autoQuestChannel");
-      const channel = guild.channels.cache.get(channelId);
-
-      if (!channel) {
-        await interaction.reply({
-          content: "AutoQuest channel is not configured. Select it in the panel before posting.",
-          flags: 64
-        });
-        return;
-      }
-
-      const embed = new EmbedBuilder()
-        .setColor(0x5865f2)
-        .setTitle("🚀 AutoQuest")
-        .setDescription(
-          "Connect your account to farm quests automatically.\n" +
-          "Click **Configure account**, then **View quests** or **Start farm**."
-        );
-
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("aq_config")
-          .setLabel("Configure account")
-          .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId("aq_ver")
-          .setLabel("View quests")
-          .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-          .setCustomId("aq_farm")
-          .setLabel("Start farm")
-          .setStyle(ButtonStyle.Success)
-      );
-
       try {
-        await channel.send({ embeds: [embed], components: [row] });
-        await interaction.reply({ content: `AutoQuest panel posted in ${channel}.`, flags: 64 });
+        const result = await postAutoQuestPanel(interaction.guild);
+        if (!result.ok) {
+          await interaction.reply({
+            content: "AutoQuest channel is not configured. Select it in the panel before posting.",
+            flags: 64
+          });
+          return;
+        }
+        await interaction.reply({ content: `AutoQuest panel posted in ${result.channel}.`, flags: 64 });
       } catch (err) {
         console.error("Error posting AutoQuest panel:", err);
         await interaction.reply({
@@ -184,56 +259,16 @@ module.exports = {
 
     // ---------- Button: Post HypeSquad panel ----------
     if (customId === "btn_post_hypesquad") {
-      const guild = interaction.guild;
-      const channelId = get(guild.id, "hypeSquadChannel");
-      const channel = guild.channels.cache.get(channelId);
-
-      if (!channel) {
-        await interaction.reply({
-          content: "HypeSquad channel is not configured. Select it in the panel before posting.",
-          flags: 64
-        });
-        return;
-      }
-
-      const embed = new EmbedBuilder()
-        .setColor(0xf1c40f)
-        .setTitle("🏆 HypeSquad")
-        .setDescription(
-          "Choose your HypeSquad house!\n" +
-          "**Configure account** first (token), then **Join Bravery/Brilliance/Balance**.\n" +
-          "Use **Leave house** to leave HypeSquad."
-        );
-
-      const row1 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("hs_config")
-          .setLabel("Configure account")
-          .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId("hs_bravery")
-          .setLabel("Bravery")
-          .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId("hs_brilliance")
-          .setLabel("Brilliance")
-          .setStyle(ButtonStyle.Secondary)
-      );
-
-      const row2 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("hs_balance")
-          .setLabel("Balance")
-          .setStyle(ButtonStyle.Success),
-        new ButtonBuilder()
-          .setCustomId("hs_remove")
-          .setLabel("Leave house")
-          .setStyle(ButtonStyle.Danger)
-      );
-
       try {
-        await channel.send({ embeds: [embed], components: [row1, row2] });
-        await interaction.reply({ content: `HypeSquad panel posted in ${channel}.`, flags: 64 });
+        const result = await postHypeSquadPanel(interaction.guild);
+        if (!result.ok) {
+          await interaction.reply({
+            content: "HypeSquad channel is not configured. Select it in the panel before posting.",
+            flags: 64
+          });
+          return;
+        }
+        await interaction.reply({ content: `HypeSquad panel posted in ${result.channel}.`, flags: 64 });
       } catch (err) {
         console.error("Error posting HypeSquad panel:", err);
         await interaction.reply({
@@ -246,39 +281,16 @@ module.exports = {
 
     // ---------- Button: Post rules ----------
     if (customId === "btn_post_regras") {
-      const guild = interaction.guild;
-      const channelId = get(guild.id, "rulesChannel");
-      const channel = guild.channels.cache.get(channelId);
-
-      // Read rules from file
-      let rulesContent = "";
       try {
-        const fs = require("fs");
-        const path = require("path");
-        const rulesPath = path.join(__dirname, "..", "..", "rules.txt");
-        rulesContent = fs.readFileSync(rulesPath, "utf8");
-      } catch (err) {
-        rulesContent = "⚠️ Could not read the rules file.";
-        console.error("Error reading rules.txt:", err);
-      }
-
-      if (!channel) {
-        await interaction.reply({
-          content: "Rules channel is not configured. Select it in the panel before posting.",
-          flags: 64
-        });
-        return;
-      }
-
-      const embed = new EmbedBuilder()
-        .setColor(0x5865f2)
-        .setTitle("📜 Server Rules")
-        .setDescription(rulesContent.trim())
-        .setFooter({ text: `Posted on ${new Date().toLocaleString()}` });
-
-      try {
-        await channel.send({ embeds: [embed] });
-        await interaction.reply({ content: `Rules posted in ${channel}.`, flags: 64 });
+        const result = await postRulesPanel(interaction.guild);
+        if (!result.ok) {
+          await interaction.reply({
+            content: "Rules channel is not configured. Select it in the panel before posting.",
+            flags: 64
+          });
+          return;
+        }
+        await interaction.reply({ content: `Rules posted in ${result.channel}.`, flags: 64 });
       } catch (err) {
         console.error("Error posting rules:", err);
         await interaction.reply({
@@ -286,6 +298,56 @@ module.exports = {
           flags: 64
         });
       }
+      return;
+    }
+
+    // ---------- Button: Post all ----------
+    if (customId === "btn_post_all") {
+      await interaction.deferReply({ flags: 64 });
+
+      const tasks = [
+        ["Verification", postVerificationPanel],
+        ["Honeypot", postHoneypotNotice],
+        ["Rules", postRulesPanel],
+        ["AutoQuest", postAutoQuestPanel],
+        ["HypeSquad", postHypeSquadPanel]
+      ];
+
+      const posted = [];
+      const skipped = [];
+      const failed = [];
+
+      for (const [name, fn] of tasks) {
+        try {
+          const result = await fn(interaction.guild);
+          if (result.ok) {
+            posted.push(`${name} → ${result.channel}`);
+          } else if (result.status === "skipped") {
+            skipped.push(`${name}: ${result.reason}`);
+          } else {
+            failed.push(`${name}: ${result.reason || "unknown error"}`);
+          }
+        } catch (err) {
+          console.error(`Error posting ${name} panel:`, err);
+          failed.push(`${name}: ${err.message || "failed to post"}`);
+        }
+      }
+
+      const lines = [];
+      if (posted.length) {
+        lines.push(`**Posted:**\n${posted.map(item => `- ${item}`).join("\n")}`);
+      }
+      if (skipped.length) {
+        lines.push(`**Skipped:**\n${skipped.map(item => `- ${item}`).join("\n")}`);
+      }
+      if (failed.length) {
+        lines.push(`**Failed:**\n${failed.map(item => `- ${item}`).join("\n")}`);
+      }
+      if (!lines.length) {
+        lines.push("No panels were posted.");
+      }
+
+      await interaction.editReply({ content: lines.join("\n\n") });
       return;
     }
 

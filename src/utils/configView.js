@@ -193,7 +193,11 @@ function buildPanel(guild, editingKey = DEFAULT_MODULE) {
     new ButtonBuilder()
       .setCustomId("btn_post_hypesquad")
       .setLabel("Post HypeSquad panel")
-      .setStyle(ButtonStyle.Secondary)
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId("btn_post_all")
+      .setLabel("Send all")
+      .setStyle(ButtonStyle.Success)
   );
 
   return {
