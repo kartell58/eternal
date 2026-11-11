@@ -25,19 +25,23 @@ module.exports = {
       return;
     }
 
-    await interaction.deferReply({ flags: 64 });
+    try {
+      await interaction.deferReply({ flags: 64 });
+    } catch {
+      return;
+    }
 
     try {
       const deleted = await channel.bulkDelete(100, true);
       await interaction.editReply({
         content: `🧹 Deleted ${deleted.size} message(s).`
-      });
+      }).catch(() => {});
     } catch (err) {
       console.error("Error deleting messages:", err);
       await interaction.editReply({
         content:
           "❌ Could not delete messages. Check my permissions and ensure messages are less than 14 days old."
-      });
+      }).catch(() => {});
     }
   }
 };
