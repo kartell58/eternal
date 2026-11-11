@@ -54,7 +54,7 @@ function buildPublishMenu(session) {
 }
 
 async function handlePublishing(interaction, { sid }) {
-  const { session, error } = requireSession(sid, interaction.user.id);
+  const { session, error } = requireSession(sid, interaction.user.id, interaction.guildId);
   if (error) return interaction.reply({ content: error, flags: 64 });
   const action = interaction.customId.split(':')[3];
 

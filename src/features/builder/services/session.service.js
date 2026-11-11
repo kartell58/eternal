@@ -52,10 +52,11 @@ function deleteSession(id) {
   sessions.delete(id);
 }
 
-function requireSession(sessionId, userId) {
+function requireSession(sessionId, userId, guildId) {
   const s = getSession(sessionId);
   if (!s) return { error: 'This builder session has expired. Use /builder to start a new session. If you saved a draft or template, open it from the builder home to resume your work.' };
   if (s.userId !== userId) return { error: 'This builder session belongs to another user.' };
+  if (guildId && s.guildId && s.guildId !== guildId) return { error: 'This builder session is not valid in this server.' };
   return { session: s };
 }
 

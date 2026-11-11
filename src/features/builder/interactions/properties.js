@@ -141,7 +141,7 @@ function showCv2EditModal(interaction, session) {
 }
 
 async function handleProperties(interaction, { sid }) {
-  const { session, error } = requireSession(sid, interaction.user.id);
+  const { session, error } = requireSession(sid, interaction.user.id, interaction.guildId);
   if (error) return interaction.reply({ content: error, flags: 64 });
   const action = interaction.customId.split(':')[3];
 
@@ -313,6 +313,48 @@ async function handleProperties(interaction, { sid }) {
       session.templateId = tpl.id;
       saveSession(session);
       return interaction.reply({ content: `Template saved: **${tpl.name}** (${tpl.id})`, flags: 64 });
+    }
+    if (action === 'json_import') {
+      const raw = interaction.fields.getTextInputValue('json');
+      let parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch (e) {
+        return interaction.reply({ content: `Invalid JSON: ${e.message}`, flags: 64 });
+      }
+      // Accept complete builder document/state
+      let candidate = parsed;
+      if (parsed && typeof parsed === 'object' && parsed.state && typeof parsed.state === 'object') {
+        candidate = parsed.state;
+      }
+      if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+        return interaction.reply({ content: 'Unsupported JSON structure: expected a builder document/state object.', flags: 64 });
+      }
+      if (candidate.type !== 'embed' && candidate.type !== 'components_v2') {
+        return interaction.reply({ content: 'Unsupported JSON structure: missing or invalid `type` (expected `embed` or `components_v2`).', flags: 64 });
+      }
+      if (candidate.type === 'components_v2' && !Array.isArray(candidate.root)) {
+        return interaction.reply({ content: 'Unsupported Components V2 document: `root` must be an array.', flags: 64 });
+      }
+      if (candidate.type === 'embed' && (typeof candidate.embed !== 'object' || candidate.embed == null || Array.isArray(candidate.embed))) {
+        return interaction.reply({ content: 'Unsupported embed document: `embed` must be an object.', flags: 64 });
+      }
+      // Validate before applying; preserve existing data on failure
+      const { validateEmbedState, validateComponentsV2State } = require('../utils/validator');
+      const validation = candidate.type === 'embed' ? validateEmbedState(candidate) : validateComponentsV2State(candidate);
+      if (!validation.valid) {
+        return interaction.reply({ content: `JSON validation failed (existing data preserved):\n${validation.errors.slice(0, 8).map(e => `- ${e}`).join('\n')}`.slice(0, 2000), flags: 64 });
+      }
+      pushHistory(session);
+      session.state = JSON.parse(JSON.stringify(candidate));
+      session.type = candidate.type;
+      session.draftId = null;
+      session.templateId = null;
+      session.selectedNodeId = candidate.type === 'components_v2' ? (candidate.root?.[0]?._id || null) : null;
+      session.view = 'home';
+      saveSession(session);
+      const { buildMainPanel } = require('./navigation');
+      return interaction.update(buildMainPanel(session));
     }
     if (action === 'edit_existing_modal') {
       const channelId = interaction.fields.getTextInputValue('channel_id').trim();

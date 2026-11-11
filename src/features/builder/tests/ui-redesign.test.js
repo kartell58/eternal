@@ -1,6 +1,6 @@
 const assert = require('assert');
 const { createSession } = require('../services/session.service');
-const { buildHome, buildEmbedEditor, buildCv2Editor } = require('../interactions/navigation');
+const { buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor } = require('../interactions/navigation');
 const { buildPublishMenu } = require('../interactions/publishing');
 const { createDefaultEmbedState } = require('../schemas/embed.schema');
 const { createDefaultComponentsV2State } = require('../schemas/components-v2.schema');
@@ -21,17 +21,31 @@ const { createDefaultComponentsV2State } = require('../schemas/components-v2.sch
     return ids;
   }
 
-  await test('home view exposes core navigation actions', () => {
-    const s = createSession('u1', 'g1', 'c1', 'embed');
+  await test('main panel (home) exposes Rio-style container controls', () => {
+    const s = createSession('u1', 'g1', 'c1', 'components_v2');
+    s.state = createDefaultComponentsV2State();
     const view = buildHome(s);
-    assert.ok(view.embeds && view.embeds.length === 1, 'home embed');
+    assert.ok(view.content && view.content.includes('Painel de Criação de Container'), 'title content');
+    assert.ok(view.embeds && view.embeds.length === 1, 'info card');
     const ids = customIds(view).join(' ');
-    assert.ok(ids.includes(':nav:new_embed'));
-    assert.ok(ids.includes(':nav:new_cv2'));
-    assert.ok(ids.includes(':nav:continue'));
-    assert.ok(ids.includes(':nav:open_drafts'));
-    assert.ok(ids.includes(':nav:open_templates'));
-    assert.ok(ids.includes(':nav:edit_existing'));
+    assert.ok(ids.includes(':nav:container_select'), 'container select');
+    assert.ok(ids.includes(':nav:add_container_main'), 'add container');
+    assert.ok(ids.includes(':nav:open_templates'), 'templates');
+    assert.ok(ids.includes(':nav:json_editor'), 'json editor');
+    assert.ok(ids.includes(':nav:send_custom'), 'send custom');
+    assert.ok(ids.includes(':nav:quick_send'), 'quick send');
+  });
+
+  await test('main panel shows empty container state', () => {
+    const s = createSession('u1', 'g1', 'c1', 'components_v2');
+    s.state = createDefaultComponentsV2State();
+    s.state.root = [];
+    const view = buildMainPanel(s);
+    const selectRow = (view.components || [])[0];
+    const select = (selectRow.components || [])[0];
+    const j = select.toJSON ? select.toJSON() : select;
+    assert.ok(j.disabled === true, 'select disabled when empty');
+    assert.ok((j.options || [])[0].value === 'none', 'empty option');
   });
 
   await test('embed editor has section navigation, actions, and back controls', () => {

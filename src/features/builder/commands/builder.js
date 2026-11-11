@@ -8,9 +8,10 @@ module.exports = {
     .setDescription('Open the visual message builder to create, edit, preview, and publish messages'),
 
   async execute(interaction) {
-    const session = createSession(interaction.user.id, interaction.guildId, interaction.channelId, 'embed');
+    const session = createSession(interaction.user.id, interaction.guildId, interaction.channelId, 'components_v2');
     session.view = 'home';
+    session.selectedNodeId = session.state.root?.[0]?._id || null;
     const view = buildHome(session);
-    await interaction.reply({ ...view, flags: 64 });
+    await interaction.reply(view);
   }
 };

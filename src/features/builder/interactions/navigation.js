@@ -6,14 +6,15 @@ const {
   StringSelectMenuBuilder,
   ChannelType
 } = require('discord.js');
-const { requireSession, createSession, saveSession, pushHistory, popHistory } = require('../services/session.service');
+const { requireSession, saveSession, pushHistory, popHistory } = require('../services/session.service');
 const { createDefaultEmbedState } = require('../schemas/embed.schema');
-const { createDefaultComponentsV2State } = require('../schemas/components-v2.schema');
+const { createDefaultComponentsV2State, createContainer } = require('../schemas/components-v2.schema');
 const draftService = require('../services/draft.service');
 const templateService = require('../services/template.service');
 const { buildEmbedPayload } = require('../builders/embed.builder');
 const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
-const { toPublishPayload } = require('../services/publisher.service');
+const { toPublishPayload, publishNew, editExisting, canSendToChannel } = require('../services/publisher.service');
+const { validateEmbedState, validateComponentsV2State } = require('../utils/validator');
 
 function sid(session) { return session.id; }
 
@@ -26,28 +27,73 @@ function editorContext(session) {
   return `${typeLabel(session)} • ${target}`;
 }
 
-function buildHome(session) {
-  const embed = new EmbedBuilder()
-    .setColor(0x5865f2)
-    .setTitle('Eternal Builder')
-    .setDescription('Visual editor for Discord messages. Create, edit, preview, save, and publish.')
-    .addFields(
-      { name: 'Current session', value: editorContext(session), inline: false },
-      { name: 'Quick actions', value: 'Start a new message, continue your current draft, or open saved work.', inline: false }
-    )
-    .setFooter({ text: 'Tip: save drafts often. Sessions expire after inactivity.' });
+function getContainers(session) {
+  return (session.state?.root || []).filter(n => n && n.type === 'container');
+}
 
-  const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:new_embed`).setLabel('New Embed').setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:new_cv2`).setLabel('New Components V2').setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:continue`).setLabel('Continue').setStyle(ButtonStyle.Success),
+function buildMainPanel(session) {
+  const containers = getContainers(session);
+  const selected = containers.find(c => c._id === session.selectedNodeId) ? session.selectedNodeId : (containers[0]?._id || null);
+  if (selected !== session.selectedNodeId) session.selectedNodeId = selected;
+
+  const info = new EmbedBuilder()
+    .setColor(0x5865f2)
+    .setTitle('Container info')
+    .setDescription(
+      'Manage the containers in your current Builder message. Select a container to edit, add new ones, import JSON, load templates, or publish.'
+    )
+    .addFields(
+      { name: 'Containers', value: containers.length ? `${containers.length} available` : 'None yet', inline: true },
+      { name: 'Session owner', value: `<@${session.userId}>`, inline: true },
+      { name: 'Draft', value: session.draftId ? session.draftId : 'Not saved', inline: true }
+    )
+    .setFooter({ text: 'Only the session owner can use this panel.' });
+
+  const options = containers.length
+    ? containers.slice(0, 25).map((c, i) => {
+        const textChild = (c.components || []).find(x => x && x.type === 'text_display' && x.content);
+        const hint = textChild ? String(textChild.content).slice(0, 40) : `ID ${c._id}`;
+        return {
+          label: `Container ${i + 1}`.slice(0, 100),
+          value: c._id,
+          description: hint.slice(0, 100),
+          default: c._id === selected
+        };
+      })
+    : [{ label: 'No containers available', value: 'none', description: 'Add a container to get started', default: true }];
+
+  const selectRow = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(`bld:${sid(session)}:nav:container_select`)
+      .setPlaceholder('Selecione um Container para editar')
+      .setDisabled(!containers.length)
+      .addOptions(options)
   );
-  const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:open_drafts`).setLabel('Drafts').setStyle(ButtonStyle.Secondary),
+
+  const actionsRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:add_container_main`).setLabel('Adicionar Container').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:open_templates`).setLabel('Templates').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:edit_existing`).setLabel('Edit Existing').setStyle(ButtonStyle.Secondary),
   );
-  return { embeds: [embed], components: [row1, row2] };
+
+  const jsonRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:json_editor`).setLabel('Editor JSON').setStyle(ButtonStyle.Secondary),
+  );
+
+  const publishRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:send_custom`).setLabel('Enviar Personalizado').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:quick_send`).setLabel('Enviar Rápido').setStyle(ButtonStyle.Success),
+  );
+
+  return {
+    content: '**Painel de Criação de Container**',
+    embeds: [info],
+    components: [selectRow, actionsRow, jsonRow, publishRow]
+  };
+}
+
+// Backwards-compatible alias for existing callers
+function buildHome(session) {
+  return buildMainPanel(session);
 }
 
 function summarizeEmbed(state) {
@@ -78,9 +124,7 @@ function buildEmbedEditor(session) {
     .setColor(0x5865f2)
     .setTitle('Embed Editor')
     .setDescription(`**Editing:** ${editorContext(session)}\n**Section:** ${sectionLabel(section)}`)
-    .addFields(
-      { name: 'Summary', value: summarizeEmbed(session.state), inline: false }
-    )
+    .addFields({ name: 'Summary', value: summarizeEmbed(session.state), inline: false })
     .setFooter({ text: 'Select a section, edit it, then preview or publish.' });
 
   const nav = new ActionRowBuilder().addComponents(
@@ -260,8 +304,13 @@ function currentEditor(session) {
   return session.state.type === 'embed' ? buildEmbedEditor(session) : buildCv2Editor(session);
 }
 
+function buildPayloadForSession(session) {
+  if (session.state.type === 'embed') return toPublishPayload(buildEmbedPayload(session.state), 'embed');
+  return toPublishPayload(buildComponentsV2Payload(session.state), 'components_v2');
+}
+
 async function handleNavigation(interaction, { sid }) {
-  const { session, error } = requireSession(sid, interaction.user.id);
+  const { session, error } = requireSession(sid, interaction.user.id, interaction.guildId);
   if (error) {
     const payload = { content: error, flags: 64 };
     if (interaction.deferred || interaction.replied) return interaction.followUp(payload);
@@ -271,6 +320,14 @@ async function handleNavigation(interaction, { sid }) {
   const action = interaction.customId.split(':')[3];
 
   if (interaction.isStringSelectMenu()) {
+    if (action === 'container_select') {
+      const val = interaction.values[0];
+      if (val === 'none') return interaction.deferUpdate();
+      session.selectedNodeId = val;
+      session.view = 'editor';
+      saveSession(session);
+      return interaction.update(buildCv2Editor(session));
+    }
     if (action === 'embed_section') {
       session.embedSection = interaction.values[0];
       saveSession(session);
@@ -334,7 +391,74 @@ async function handleNavigation(interaction, { sid }) {
     case 'home':
       session.view = 'home';
       saveSession(session);
-      return interaction.update(buildHome(session));
+      return interaction.update(buildMainPanel(session));
+    case 'add_container_main': {
+      pushHistory(session);
+      if (!session.state || session.state.type !== 'components_v2' || !Array.isArray(session.state.root)) {
+        session.state = createDefaultComponentsV2State();
+        session.state.root = [];
+        session.type = 'components_v2';
+      }
+      const c = createContainer();
+      session.state.root.push(c);
+      session.selectedNodeId = c._id;
+      session.view = 'home';
+      saveSession(session);
+      return interaction.update(buildMainPanel(session));
+    }
+    case 'json_editor': {
+      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+      const modal = new ModalBuilder().setCustomId(`bld:${session.id}:prop:json_import`).setTitle('Editor JSON');
+      modal.addComponents(new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('json')
+          .setLabel('Builder JSON document')
+          .setStyle(TextInputStyle.Paragraph)
+          .setRequired(true)
+          .setMaxLength(4000)
+          .setPlaceholder('Paste a complete Builder document JSON (state)')
+      ));
+      return interaction.showModal(modal);
+    }
+    case 'send_custom': {
+      const { buildPublishMenu } = require('./publishing');
+      session.view = 'publish';
+      saveSession(session);
+      return interaction.update(buildPublishMenu(session));
+    }
+    case 'quick_send': {
+      const validation = session.state.type === 'embed' ? validateEmbedState(session.state) : validateComponentsV2State(session.state);
+      if (!validation.valid) {
+        return interaction.reply({ content: `Cannot quick send: validation failed.\n${validation.errors.slice(0, 5).map(e => `- ${e}`).join('\n')}`.slice(0, 2000), flags: 64 });
+      }
+      try {
+        const payload = buildPayloadForSession(session);
+        if (session.editingMessage) {
+          const channel = await interaction.client.channels.fetch(session.editingMessage.channelId);
+          const target = await channel.messages.fetch(session.editingMessage.messageId);
+          const permErr = canSendToChannel(channel, interaction.client.user);
+          if (permErr) return interaction.reply({ content: `Cannot quick send (edit): ${permErr}`, flags: 64 });
+          const msg = await editExisting(target, payload);
+          if (session.state.type === 'components_v2') {
+            try { require('../utils/published-runtime').collectActionsFromState(session.state, msg.id, { ownerId: interaction.user.id, guildId: interaction.guildId, channelId: channel.id }); } catch {}
+          }
+          return interaction.reply({ content: `✅ Message edited (quick send): ${msg.url}`, flags: 64 });
+        }
+        if (!session.publishChannelId) {
+          return interaction.reply({ content: 'Quick send needs a destination. Use **Enviar Personalizado** to select a channel (or set an edit target) first.', flags: 64 });
+        }
+        const channel = await interaction.client.channels.fetch(session.publishChannelId);
+        const permErr = canSendToChannel(channel, interaction.client.user);
+        if (permErr) return interaction.reply({ content: `Cannot quick send: ${permErr}`, flags: 64 });
+        const msg = await publishNew(channel, payload);
+        if (session.state.type === 'components_v2') {
+          try { require('../utils/published-runtime').collectActionsFromState(session.state, msg.id, { ownerId: interaction.user.id, guildId: interaction.guildId, channelId: channel.id }); } catch {}
+        }
+        return interaction.reply({ content: `✅ Published (quick send): ${msg.url}`, flags: 64 });
+      } catch (e) {
+        return interaction.reply({ content: `Quick send failed: ${e.message || 'Unknown error'}`, flags: 64 });
+      }
+    }
     case 'new_embed':
       pushHistory(session);
       session.state = createDefaultEmbedState();
@@ -371,6 +495,8 @@ async function handleNavigation(interaction, { sid }) {
       return interaction.update(buildSaveMenu(session));
     case 'publish_menu': {
       const { buildPublishMenu } = require('./publishing');
+      session.view = 'publish';
+      saveSession(session);
       return interaction.update(buildPublishMenu(session));
     }
     case 'back_editor':
@@ -378,7 +504,7 @@ async function handleNavigation(interaction, { sid }) {
     case 'undo':
       if (!popHistory(session)) return interaction.reply({ content: 'Nothing to undo.', flags: 64 });
       saveSession(session);
-      return interaction.update(currentEditor(session));
+      return interaction.update(session.view === 'home' ? buildMainPanel(session) : currentEditor(session));
     case 'preview':
       try {
         let payload;
@@ -440,4 +566,4 @@ async function handleNavigation(interaction, { sid }) {
   }
 }
 
-module.exports = { handleNavigation, buildHome, buildEmbedEditor, buildCv2Editor, currentEditor };
+module.exports = { handleNavigation, buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor, currentEditor };

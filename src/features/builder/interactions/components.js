@@ -5,7 +5,7 @@ const { COMPONENT_FACTORIES, createContainer } = require('../schemas/components-
 const { buildCv2Editor } = require('./navigation');
 
 async function handleComponents(interaction, { sid }) {
-  const { session, error } = requireSession(sid, interaction.user.id);
+  const { session, error } = requireSession(sid, interaction.user.id, interaction.guildId);
   if (error) return interaction.reply({ content: error, flags: 64 });
   if (session.state.type !== 'components_v2') return interaction.reply({ content: 'Not in Components V2 mode.', flags: 64 });
 
