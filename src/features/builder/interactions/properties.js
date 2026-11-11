@@ -305,9 +305,7 @@ async function handleProperties(interaction, { sid }) {
         }
       } catch (e) { /* keep partial */ }
       // If editing was initiated from ephemeral container editor, return to it when possible
-      const { findParentInfo } = require('../utils/component-tree');
       const { buildContainerEditor } = require('./container-editor');
-      let parent = info && info.parent;
       if (session.containerEditorContainerId) {
         // If edited node is the container itself or a child, prefer container editor
         const cid = session.containerEditorContainerId;
