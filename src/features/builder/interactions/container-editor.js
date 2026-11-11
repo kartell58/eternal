@@ -47,6 +47,8 @@ function buildContainerEditor(session) {
   const container = getSelectedContainer(session);
   if (!container) {
     return {
+      content: null,
+      embeds: [],
       flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
       components: [
         new TextDisplayBuilder().setContent('## Editing Container\nThe selected container could not be found.'),
@@ -96,6 +98,8 @@ function buildContainerEditor(session) {
   ];
 
   return {
+    content: null,
+    embeds: [],
     flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
     components
   };
@@ -105,6 +109,8 @@ function buildContainerDeleteConfirm(session) {
   const container = getSelectedContainer(session);
   const name = container ? `this container` : 'this container';
   return {
+    content: null,
+    embeds: [],
     flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
     components: [
       new TextDisplayBuilder().setContent(`## Delete Container\nAre you sure you want to delete ${name}? This cannot be undone.`),
@@ -118,6 +124,8 @@ function buildContainerDeleteConfirm(session) {
 
 function buildContainerEditorClosed() {
   return {
+    content: null,
+    embeds: [],
     flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
     components: [new TextDisplayBuilder().setContent('Container editor closed. Use the main Builder panel to continue.')]
   };
