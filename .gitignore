@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local/runtime configuration (may contain tokens, IDs, or machine-specific data)
+config.json
+settings.json
+
+# Builder runtime persistence/state
+builder-drafts.json
+builder-templates.json
+builder-published-actions.json
+builder-*.json
+*.lock
+*.corrupt.*
+*.bak
+*.tmp
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build/distribution
+dist/
+build/
+out/
+coverage/
+
+# Caches/temp
+.cache/
+.tmp/
+tmp/
+temp/
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS-generated
+.DS_Store
+Thumbs.db
+desktop.ini
+Hydra & 13M - Autoquest.zip

@@ -1,44 +1,65 @@
 const { EmbedBuilder } = require("discord.js");
+const { get } = require("../settings");
+
+function formatDateTime(date) {
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  const hh = String(date.getHours()).padStart(2, "0");
+  const min = String(date.getMinutes()).padStart(2, "0");
+  return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+}
 
 module.exports = {
   name: "guildMemberAdd",
 
   async execute(member) {
-    const channel = member.guild.channels.cache.get("1518065638382243880");
+    const guild = member.guild;
 
-    // AUTO ROLE
-    const role = member.guild.roles.cache.get("1518057315872280587");
+    // Auto role on join
+    const autoRoleId = get(guild.id, "autoRole");
+    const autoRole = autoRoleId ? guild.roles.cache.get(autoRoleId) : null;
 
-    if (role) {
+    if (autoRole) {
       try {
-        await member.roles.add(role);
+        await member.roles.add(autoRole);
       } catch (err) {
-        console.log("Error adding role:", err);
+        console.error("Error adding auto role:", err);
       }
     }
 
-    // WELCOME EMBED
-    if (channel) {
-      const embed = new EmbedBuilder()
-        .setColor(0x5865F2)
-        .setTitle("👋 Welcome!")
-        .setDescription(
-          `Hello ${member}, if you think you've seen this welcome structure before, it's because my owner stole it from Loritta`
-        )
-        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
-        .setAuthor({
-          name: `@${member.user.username}`,
-          iconURL: member.user.displayAvatarURL({ dynamic: true })
-        })
-        .setFooter({
-          text: `User ID: ${member.user.id}`
-        })
-        .setTimestamp();
+    // Welcome message
+    const welcomeChannelId = get(guild.id, "welcomeChannel");
+    const welcomeChannel = welcomeChannelId
+      ? guild.channels.cache.get(welcomeChannelId)
+      : null;
 
-      channel.send({
+    const welcomeEnabled = get(guild.id, "welcomeEnabled") !== false;
+
+    if (!welcomeChannel || !welcomeEnabled) return;
+
+    const avatar = member.user.displayAvatarURL({ dynamic: true });
+
+    const embed = new EmbedBuilder()
+      .setColor(0x5865f2)
+      .setAuthor({
+        name: `@${member.user.username}`,
+        iconURL: avatar
+      })
+      .setTitle("👋 Welcome!")
+      .setDescription(`Hello ${member}, welcome to **${guild.name}**! 🎉`)
+      .setThumbnail(avatar)
+      .setFooter({
+        text: `User ID: ${member.user.id} | ${formatDateTime(new Date())}`
+      });
+
+    try {
+      await welcomeChannel.send({
         content: `${member}`,
         embeds: [embed]
       });
+    } catch (err) {
+      console.error("Error sending welcome message:", err);
     }
   }
 };

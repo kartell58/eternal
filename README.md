@@ -1,28 +1,29 @@
 # Eternal
 
-Eternal is a Discord bot built with Node.js and discord.js.
+Eternal is a Discord bot built with Node.js and discord.js, providing per-server configuration and utility panels.
 
 ## Scope
 
 ### What it does
-- Registers and handles the `/ping` slash command to show bot latency and uptime.
-- Handles `guildMemberAdd` to assign a configured auto role and post a welcome embed in a configured channel (as implemented in the initial version).
-- Includes a `/getid` command utility for listing server IDs.
-- Provides a basic command/event loader and Discord gateway connection bootstrap.
+- Registers slash commands and handles Discord gateway events.
+- Provides `/ping` for latency/uptime and `/config` for a centralized server configuration panel.
+- Supports configurable per-guild settings (stored in `settings.json`) for welcome channel, verification channel/role, honeypot channel, AutoQuest channel, HypeSquad channel, auto role, and rules channel.
+- Posts and handles panels/features for welcome/auto role, member verification, honeypot (anti-selfbot) moderation, rules posting (`rules.txt`), AutoQuest, and HypeSquad.
+- Includes utilities for user-token-backed AutoQuest/HypeSquad interactions and supporting services.
 
 ### What it is not
-- Not a fully configurable multi-guild management bot in this version.
-- Does not include persistent per-guild configuration, moderation panels, or a visual message builder.
+- Not a complete moderation suite or a replacement for dedicated security bots.
+- Does not include the visual `/builder` message editor in this snapshot.
 
 ## Requirements
 - Node.js (CommonJS)
 - `discord.js` v14
-- A Discord application/bot token and client ID
+- Dependencies as declared in `package.json` (e.g. `dotenv`, `axios`)
 
 ## Configuration
-Create a `.env` file with:
-- `TOKEN` — Discord bot token
-- `CLIENT_ID` — Discord application client ID
+- `.env`: `TOKEN` (bot token), `CLIENT_ID` (application client ID)
+- `config.json` may be used by user API utilities where applicable.
+- Runtime per-guild settings are persisted to `settings.json` (gitignored).
 
 ## Build and test
 ```bash
@@ -36,12 +37,14 @@ npm start
 # or
 node .
 ```
+Use `/config` in a server to configure modules and post panels.
 
-The bot logs in, registers application commands, and loads events on startup.
+## Architecture
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) when available; core entry is `index.js` -> `src/connection.js`, with commands/events loaded from `src/commands` and `src/events`.
 
 ## Limitations
-- Some behavior (such as welcome/role channel and role IDs) is hardcoded in this initial snapshot.
-- No automated test suite is included in this version.
+- Feature behavior depends on correct bot permissions and role/channel configuration.
+- Some integrations rely on user-provided tokens and external Discord endpoints; handle secrets carefully.
 
 ## License
 See [LICENSE](LICENSE) if present in this repository.
