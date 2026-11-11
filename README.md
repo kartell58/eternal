@@ -6,9 +6,10 @@ Eternal is a Discord bot built with Node.js and discord.js, providing per-server
 
 ### What it does
 - Registers slash commands and handles Discord gateway events.
-- Provides `/ping`, `/config`, `/quest`, `/clear`, and `/builder`.
+- Provides `/ping`, `/config`, `/quest`, `/clear`, `/builder`, and `/bot` for server/bot management features.
 - Supports configurable per-guild settings (persisted in `settings.json`) for welcome, verification, honeypot (anti-selfbot), rules, AutoQuest, and HypeSquad panels/channels/roles.
 - Includes `/builder`: a visual message editor for creating/editing/previewing/publishing messages with Embeds and Components V2, with drafts/templates and validation (implemented under `src/features/builder/`).
+- Provides `/bot` to manage and configure bot profile and presence (name, avatar, banner, status, activity/thought, bio) via an embed panel.
 - Includes AutoQuest/HypeSquad utilities and supporting services.
 
 ### What it is not
