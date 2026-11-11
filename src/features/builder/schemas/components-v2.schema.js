@@ -77,7 +77,7 @@ function createContainer() {
     type: 'container',
     accent_color: 0x5865F2,
     spoiler: false,
-    components: [createTextDisplay('New container')]
+    components: [createTextDisplay('### Criação de Containers\nLembre-se de usar [formatações de texto](<https://www.youtube.com/watch?v=Nb6xLq8CsKE>)!\n-# Vídeo do Canal Dune de guia de formatação')]
   };
 }
 

@@ -63,13 +63,13 @@ function freshModules() {
     assert.strictEqual(c.accent_color, 0x5865F2);
     assert.ok(Array.isArray(c.components) && c.components.length === 1);
     assert.strictEqual(c.components[0].type, 'text_display');
-    assert.strictEqual(c.components[0].content, 'New container'); // placeholder, not reference content
+    assert.strictEqual(c.components[0].content, '### Criação de Containers\nLembre-se de usar [formatações de texto](<https://www.youtube.com/watch?v=Nb6xLq8CsKE>)!\n-# Vídeo do Canal Dune de guia de formatação');
     const payload = buildComponentsV2Payload({ type: 'components_v2', content: '', root: [c] });
     const j = payload.components[0].toJSON();
     assert.strictEqual(j.type, 17);
     assert.strictEqual(j.accent_color, 0x5865F2);
     assert.strictEqual(j.components[0].type, 10);
-    assert.strictEqual(j.components[0].content, 'New container');
+    assert.strictEqual(j.components[0].content, '### Criação de Containers\nLembre-se de usar [formatações de texto](<https://www.youtube.com/watch?v=Nb6xLq8CsKE>)!\n-# Vídeo do Canal Dune de guia de formatação');
   });
 
   await test('creating a container with a text display child preserves child in preview and publish', () => {

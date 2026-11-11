@@ -34,7 +34,8 @@ function isPristineDefaultState(session) {
   const comps = c.components || [];
   if (comps.length !== 1) return false;
   const t = comps[0];
-  return t && t.type === 'text_display' && t.content === 'New container';
+  const defaultContent = '### Criação de Containers\nLembre-se de usar [formatações de texto](<https://www.youtube.com/watch?v=Nb6xLq8CsKE>)!\n-# Vídeo do Canal Dune de guia de formatação';
+  return t && t.type === 'text_display' && t.content === defaultContent;
 }
 
 function convertV1ToState(doc) {
