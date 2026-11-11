@@ -1,0 +1,34 @@
+{
+  "name": "yoslbr",
+  "version": "0.1.0",
+  "description": "A Discord bot",
+  "keywords": [
+    "Bot",
+    "Discord",
+    "Node",
+    "v24.x.0",
+    "CommonJS",
+    "DiscordJS",
+    "BaseBot"
+  ],
+  "homepage": "https://github.com/kartell58/yoslbr#readme",
+  "bugs": {
+    "url": "https://github.com/kartell58/yoslbr/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kartell58/yoslbr.git"
+  },
+  "license": "MIT",
+  "author": "kartell",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node .",
+    "dev": "node --watch ."
+  },
+  "dependencies": {
+    "discord.js": "^14.26.4",
+    "dotenv": "^17.4.2"
+  }
+}

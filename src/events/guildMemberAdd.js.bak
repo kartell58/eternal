@@ -1,0 +1,44 @@
+const { EmbedBuilder } = require("discord.js");
+
+module.exports = {
+  name: "guildMemberAdd",
+
+  async execute(member) {
+    const channel = member.guild.channels.cache.get("1518065638382243880");
+
+    // AUTO ROLE
+    const role = member.guild.roles.cache.get("1518057315872280587");
+
+    if (role) {
+      try {
+        await member.roles.add(role);
+      } catch (err) {
+        console.log("Error adding role:", err);
+      }
+    }
+
+    // WELCOME EMBED
+    if (channel) {
+      const embed = new EmbedBuilder()
+        .setColor(0x5865F2)
+        .setTitle("👋 Welcome!")
+        .setDescription(
+          `Hello ${member},  **YOSLBR!** 🎉`
+        )
+        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+        .setAuthor({
+          name: `@${member.user.username}`,
+          iconURL: member.user.displayAvatarURL({ dynamic: true })
+        })
+        .setFooter({
+          text: `User ID: ${member.user.id}`
+        })
+        .setTimestamp();
+
+      channel.send({
+        content: `${member}`,
+        embeds: [embed]
+      });
+    }
+  }
+};
