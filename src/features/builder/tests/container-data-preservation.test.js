@@ -60,14 +60,14 @@ function freshModules() {
     const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
     const c = createContainer();
     assert.strictEqual(c.type, 'container');
-    assert.strictEqual(c.accent_color, null);
+    assert.strictEqual(c.accent_color, 0x5865F2);
     assert.ok(Array.isArray(c.components) && c.components.length === 1);
     assert.strictEqual(c.components[0].type, 'text_display');
     assert.strictEqual(c.components[0].content, 'New container'); // placeholder, not reference content
     const payload = buildComponentsV2Payload({ type: 'components_v2', content: '', root: [c] });
     const j = payload.components[0].toJSON();
     assert.strictEqual(j.type, 17);
-    assert.ok(!('accent_color' in j) || j.accent_color == null ? true : true);
+    assert.strictEqual(j.accent_color, 0x5865F2);
     assert.strictEqual(j.components[0].type, 10);
     assert.strictEqual(j.components[0].content, 'New container');
   });
@@ -84,7 +84,7 @@ function freshModules() {
     s.selectedNodeId = c._id;
     const editor = buildContainerEditor(s);
     const preview = findPreviewContainer(editor);
-    assert.deepStrictEqual(preview, { type: 17, spoiler: false, components: [{ type: 10, content: 'Hello **world**' }] });
+    assert.deepStrictEqual(preview, { type: 17, accent_color: 0x5865F2, spoiler: false, components: [{ type: 10, content: 'Hello **world**' }] });
     const pub = toPublishPayload(buildComponentsV2Payload(s.state), 'components_v2');
     assert.deepStrictEqual(pub.components[0].toJSON(), preview);
   });

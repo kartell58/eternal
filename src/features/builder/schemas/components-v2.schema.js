@@ -75,7 +75,7 @@ function createContainer() {
   return {
     _id: uid(),
     type: 'container',
-    accent_color: null,
+    accent_color: 0x5865F2,
     spoiler: false,
     components: [createTextDisplay('New container')]
   };

@@ -29,7 +29,8 @@ function isPristineDefaultState(session) {
   if (root.length !== 1) return false;
   const c = root[0];
   if (!c || c.type !== 'container') return false;
-  if ((c.accent_color != null) || c.spoiler) return false;
+  const defaultAccent = 0x5865F2;
+  if (c.accent_color !== defaultAccent || c.spoiler) return false;
   const comps = c.components || [];
   if (comps.length !== 1) return false;
   const t = comps[0];
