@@ -407,17 +407,39 @@ async function handleNavigation(interaction, { sid }) {
       return interaction.update(buildMainPanel(session));
     }
     case 'json_editor': {
-      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, LabelBuilder, FileUploadBuilder } = require('discord.js');
+      const { getDefaultJsonTemplateString, isPristineDefaultState } = require('../utils/json-document');
+      let defaultValue = getDefaultJsonTemplateString();
+      if (!isPristineDefaultState(session)) {
+        try {
+          defaultValue = JSON.stringify(session.state, null, 2);
+        } catch {
+          defaultValue = getDefaultJsonTemplateString();
+        }
+      }
+      if (defaultValue.length > 4000) defaultValue = defaultValue.slice(0, 4000);
+
       const modal = new ModalBuilder().setCustomId(`bld:${session.id}:prop:json_import`).setTitle('Editor JSON');
-      modal.addComponents(new ActionRowBuilder().addComponents(
-        new TextInputBuilder()
-          .setCustomId('json')
-          .setLabel('Builder JSON document')
-          .setStyle(TextInputStyle.Paragraph)
-          .setRequired(true)
-          .setMaxLength(4000)
-          .setPlaceholder('Paste a complete Builder document JSON (state)')
-      ));
+      const text = new TextInputBuilder()
+        .setCustomId('json')
+        .setLabel('Builder JSON document')
+        .setStyle(TextInputStyle.Paragraph)
+        .setRequired(true)
+        .setMaxLength(4000)
+        .setValue(defaultValue)
+        .setPlaceholder('Paste a complete Builder document JSON');
+      const fileUpload = new FileUploadBuilder()
+        .setCustomId('json_file')
+        .setRequired(false)
+        .setMinValues(0)
+        .setMaxValues(1);
+      const fileLabel = new LabelBuilder()
+        .setLabel('Arquivo (opcional)')
+        .setDescription('Um .txt ou .json com o JSON. Se anexado, substitui o campo de texto.')
+        .setFileUploadComponent(fileUpload);
+
+      modal.addComponents(new ActionRowBuilder().addComponents(text));
+      modal.addLabelComponents(fileLabel);
       return interaction.showModal(modal);
     }
     case 'send_custom': {

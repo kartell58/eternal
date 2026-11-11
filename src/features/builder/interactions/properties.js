@@ -315,30 +315,63 @@ async function handleProperties(interaction, { sid }) {
       return interaction.reply({ content: `Template saved: **${tpl.name}** (${tpl.id})`, flags: 64 });
     }
     if (action === 'json_import') {
-      const raw = interaction.fields.getTextInputValue('json');
+      const axios = require('axios');
+      const path = require('path');
+      const { normalizeImportedDocument } = require('../utils/json-document');
+      const MAX_BYTES = 20 * 1024 * 1024;
+      let raw = interaction.fields.getTextInputValue('json');
+
+      try {
+        const files = typeof interaction.fields.getUploadedFiles === 'function'
+          ? interaction.fields.getUploadedFiles('json_file')
+          : null;
+        const attachment = files && typeof files.first === 'function' ? files.first() : (files && files.size ? files.values().next().value : null);
+        if (attachment) {
+          const name = String(attachment.name || '').toLowerCase();
+          const ext = path.extname(name);
+          if (ext !== '.json' && ext !== '.txt') {
+            return interaction.reply({ content: 'Unsupported file extension. Only .json and .txt files are allowed.', flags: 64 });
+          }
+          const size = Number(attachment.size || 0);
+          if (size > MAX_BYTES) {
+            return interaction.reply({ content: 'File is too large. Maximum allowed size is 20 MB.', flags: 64 });
+          }
+          let res;
+          try {
+            res = await axios.get(attachment.url, { responseType: 'text', timeout: 20000, maxContentLength: MAX_BYTES, maxBodyLength: MAX_BYTES, validateStatus: () => true });
+          } catch (e) {
+            return interaction.reply({ content: `Could not read uploaded file: ${e.message}`, flags: 64 });
+          }
+          if (res.status !== 200) {
+            return interaction.reply({ content: `Could not read uploaded file (status ${res.status}).`, flags: 64 });
+          }
+          const content = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+          if (!content || !String(content).trim()) {
+            return interaction.reply({ content: 'Uploaded file is empty.', flags: 64 });
+          }
+          raw = content;
+        }
+      } catch (e) {
+        return interaction.reply({ content: `Failed to process uploaded file: ${e.message}`, flags: 64 });
+      }
+
+      if (!raw || !String(raw).trim()) {
+        return interaction.reply({ content: 'No JSON content provided.', flags: 64 });
+      }
+
       let parsed;
       try {
         parsed = JSON.parse(raw);
       } catch (e) {
-        return interaction.reply({ content: `Invalid JSON: ${e.message}`, flags: 64 });
+        return interaction.reply({ content: `Invalid JSON: ${e.message} (existing data preserved).`, flags: 64 });
       }
-      // Accept complete builder document/state
-      let candidate = parsed;
-      if (parsed && typeof parsed === 'object' && parsed.state && typeof parsed.state === 'object') {
-        candidate = parsed.state;
+
+      const normalized = normalizeImportedDocument(parsed);
+      if (normalized.error) {
+        return interaction.reply({ content: `${normalized.error} (existing data preserved).`, flags: 64 });
       }
-      if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
-        return interaction.reply({ content: 'Unsupported JSON structure: expected a builder document/state object.', flags: 64 });
-      }
-      if (candidate.type !== 'embed' && candidate.type !== 'components_v2') {
-        return interaction.reply({ content: 'Unsupported JSON structure: missing or invalid `type` (expected `embed` or `components_v2`).', flags: 64 });
-      }
-      if (candidate.type === 'components_v2' && !Array.isArray(candidate.root)) {
-        return interaction.reply({ content: 'Unsupported Components V2 document: `root` must be an array.', flags: 64 });
-      }
-      if (candidate.type === 'embed' && (typeof candidate.embed !== 'object' || candidate.embed == null || Array.isArray(candidate.embed))) {
-        return interaction.reply({ content: 'Unsupported embed document: `embed` must be an object.', flags: 64 });
-      }
+      const candidate = normalized.state;
+
       // Validate before applying; preserve existing data on failure
       const { validateEmbedState, validateComponentsV2State } = require('../utils/validator');
       const validation = candidate.type === 'embed' ? validateEmbedState(candidate) : validateComponentsV2State(candidate);
