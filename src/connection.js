@@ -12,12 +12,15 @@ const { loadCommands, loadEvents } = require("./loader");
 
 const { messageHandler } = require("./middlewares/messageHandler");
 
+const INTENTS = [
+  GatewayIntentBits.Guilds,
+  GatewayIntentBits.GuildMembers, // required for welcome
+  GatewayIntentBits.GuildMessages // required for messageCreate (honeypot)
+];
+
 async function connect() {
   const client = new Client({
-    intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMembers // required for welcome
-    ]
+    intents: INTENTS
   });
 
   const commands = loadCommands();
@@ -50,4 +53,4 @@ async function connect() {
   return client;
 }
 
-module.exports = { connect };
+module.exports = { connect, INTENTS };
