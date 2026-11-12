@@ -384,6 +384,27 @@ async function handleProperties(interaction, { sid }) {
       saveSession(session);
       return interaction.update(buildContainerEditor(session));
     }
+    if (action === 'ce_color_save') {
+      const { buildContainerColorScreen } = require('./container-editor');
+      const { saveColor } = require('../services/colors.service');
+      const cid = session.containerEditorContainerId || session.selectedNodeId;
+      const container = (session.state.root || []).find(c => c._id === cid && c.type === 'container');
+      if (!container) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
+      const name = interaction.fields.getTextInputValue('name').trim();
+      const hex = interaction.fields.getTextInputValue('hex').trim();
+      let saved;
+      try {
+        saved = saveColor(session.guildId, session.userId, name, hex);
+      } catch (e) {
+        return interaction.reply({ content: `Não foi possível salvar a cor: ${e.message}`, flags: 64 });
+      }
+      pushHistory(session);
+      container.accent_color = saved.color;
+      session.selectedNodeId = container._id;
+      session.containerEditorContainerId = container._id;
+      saveSession(session);
+      return interaction.update(buildContainerColorScreen(session));
+    }
     if (action === 'json_import') {
       const axios = require('axios');
       const path = require('path');

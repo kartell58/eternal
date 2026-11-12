@@ -177,24 +177,25 @@ function freshModules() {
     assert.strictEqual(session.containerEditorContainerId, c._id, 'container context preserved');
   });
 
-  await test('select color opens modal and updates accent color and preview in same message', async () => {
+  await test('select color opens color screen and updates accent color in same message', async () => {
     freshModules();
     const { createSession, getSession } = require('../services/session.service');
     const { handleNavigation } = require('../interactions/navigation');
-    const { handleProperties } = require('../interactions/properties');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     const c = s.state.root[0];
     s.selectedNodeId = c._id; s.containerEditorContainerId = c._id;
     const open = mockInteraction(s, `bld:${s.id}:nav:ce_color`);
     await handleNavigation(open, { sid: s.id });
-    assert.ok(open.shownModal, 'color modal shown');
-    const fields = { getTextInputValue: (k) => k === 'accent_color' ? '#5865F2' : '' };
-    const submit = mockInteraction(s, `bld:${s.id}:prop:ce_color_modal`, { isModal: true, fields });
-    await handleProperties(submit, { sid: s.id });
+    assert.ok(open.updated && hasFlag(open.updated, MessageFlags.Ephemeral), 'color screen shown');
+    const ids = walkIds(open.updated.components);
+    assert.ok(ids.some(id => id.endsWith(':nav:ce_color_select')), 'color select present');
+    assert.ok(ids.some(id => id.endsWith(':nav:ce_color_back')), 'back present');
+    const pick = mockInteraction(s, `bld:${s.id}:nav:ce_color_select`, { isSelect: true, values: ['discord_blue'] });
+    await handleNavigation(pick, { sid: s.id });
     const session = getSession(s.id);
     const container = session.state.root.find(x => x._id === c._id);
     assert.strictEqual(container.accent_color, 0x5865F2);
-    assert.ok(submit.updated && hasFlag(submit.updated, MessageFlags.Ephemeral), 'editor updated');
+    assert.ok(pick.updated && hasFlag(pick.updated, MessageFlags.Ephemeral), 'screen updated');
   });
 
   await test('delete container requires confirmation and preserves other containers then returns to main panel', async () => {
@@ -220,26 +221,22 @@ function freshModules() {
     assert.ok(allText(confirm.updated.components).includes('Container Creation Panel'), 'returned to main panel');
   });
 
-  await test('deleting last container returns to a valid main panel state (no containers)', async () => {
+  await test('delete container is disabled and blocked when only one container exists', async () => {
     freshModules();
     const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
-    const { buildMainPanel } = require('../interactions/navigation');
+    const { handleNavigation, buildContainerEditor } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     const c = s.state.root[0];
     s.selectedNodeId = c._id; s.containerEditorContainerId = c._id;
-    const confirm = mockInteraction(s, `bld:${s.id}:nav:ce_delete_confirm`);
-    await handleNavigation(confirm, { sid: s.id });
+    const view = buildContainerEditor(s);
+    let delBtn = null;
+    function walk(n){ if(!n) return; if(Array.isArray(n)) return n.forEach(walk); const j=typeof n.toJSON==='function'?n.toJSON():n; if(j&&j.custom_id&&j.custom_id.endsWith(':nav:ce_delete')) delBtn=j; if(j&&Array.isArray(j.components)) j.components.forEach(walk); if(Array.isArray(n.components)) n.components.forEach(walk);} walk(view.components||[]);
+    assert.ok(delBtn && delBtn.disabled === true, 'delete button disabled with one container');
+    const del = mockInteraction(s, `bld:${s.id}:nav:ce_delete`);
+    await handleNavigation(del, { sid: s.id });
     const session = getSession(s.id);
-    assert.strictEqual(session.state.root.length, 0);
-    assert.strictEqual(session.view, 'home');
-    assert.ok(confirm.updated && allText(confirm.updated.components).includes('Container Creation Panel'));
-    const main = buildMainPanel(session);
-    const select = walkIds(main.components) ? null : null; // placeholder, find select below
-    function findSelect(view, ends){ let found=null; function walk(n){ if(found||!n) return; if(Array.isArray(n)) return n.forEach(walk); const j=typeof n.toJSON==='function'?n.toJSON():n; if(j&&j.custom_id&&j.custom_id.endsWith(ends)) found=j; if(j&&Array.isArray(j.components)) j.components.forEach(walk); if(Array.isArray(n.components)) n.components.forEach(walk);} walk(view.components||[]); return found; }
-    const sel = findSelect(main, ':nav:container_select');
-    assert.strictEqual(sel.placeholder, 'Select a container to edit');
-    assert.ok(sel.disabled === true);
+    assert.strictEqual(session.state.root.length, 1, 'container not removed');
+    assert.ok(del.repliedPayload && del.repliedPayload.flags === 64, 'action blocked');
   });
 
   await test('back returns to main panel in same message without losing changes', async () => {

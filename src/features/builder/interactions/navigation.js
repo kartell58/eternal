@@ -20,7 +20,7 @@ const { buildComponentsV2Payload } = require('../builders/components-v2.builder'
 const { toPublishPayload, publishNew, editExisting, canSendToChannel } = require('../services/publisher.service');
 const { validateEmbedState, validateComponentsV2State, parseColor } = require('../utils/validator');
 const { allowedChildTypes } = require('../utils/component-tree');
-const { buildContainerEditor, buildContainerDeleteConfirm, getSelectedContainer } = require('./container-editor');
+const { buildContainerEditor, buildContainerDeleteConfirm, buildContainerColorScreen, getSelectedContainer } = require('./container-editor');
 
 
 function cv2Screen(components, accent = 0x5865f2) {
@@ -455,6 +455,69 @@ async function handleNavigation(interaction, { sid }) {
         return interaction.reply({ content: `Could not open item editor: ${e.message}`, flags: 64 });
       }
     }
+    if (action === 'ce_color_select') {
+      const container = getSelectedContainer(session);
+      if (!container) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
+      const val = interaction.values[0];
+      if (val === 'new') {
+        session.selectedNodeId = container._id;
+        session.containerEditorContainerId = container._id;
+        saveSession(session);
+        const modal = new ModalBuilder()
+          .setCustomId(`bld:${session.id}:prop:ce_color_save`)
+          .setTitle('Nova cor');
+        modal.addComponents(
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('name')
+              .setLabel('Nome da cor')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
+              .setMaxLength(50)
+              .setPlaceholder('Ex.: Roxo Eternal')
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('hex')
+              .setLabel('Codigo HEX')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
+              .setMaxLength(7)
+              .setPlaceholder('#5865F2')
+          )
+        );
+        return interaction.showModal(modal);
+      }
+      if (val === 'discord_blue') {
+        pushHistory(session);
+        container.accent_color = 0x5865F2;
+        session.selectedNodeId = container._id;
+        session.containerEditorContainerId = container._id;
+        saveSession(session);
+        return interaction.update(buildContainerColorScreen(session));
+      }
+      if (val === 'none') {
+        pushHistory(session);
+        container.accent_color = null;
+        session.selectedNodeId = container._id;
+        session.containerEditorContainerId = container._id;
+        saveSession(session);
+        return interaction.update(buildContainerColorScreen(session));
+      }
+      if (val.startsWith('saved:')) {
+        const id = val.slice('saved:'.length);
+        const { getColorById } = require('../services/colors.service');
+        const saved = getColorById(session.guildId, session.userId, id);
+        if (!saved) return interaction.reply({ content: 'A cor salva não foi encontrada.', flags: 64 });
+        pushHistory(session);
+        container.accent_color = saved.color;
+        session.selectedNodeId = container._id;
+        session.containerEditorContainerId = container._id;
+        saveSession(session);
+        return interaction.update(buildContainerColorScreen(session));
+      }
+      return interaction.reply({ content: 'Opção de cor inválida.', flags: 64 });
+    }
     if (action === 'ce_add_item') {
       const type = interaction.values[0];
       const container = getSelectedContainer(session);
@@ -670,22 +733,22 @@ async function handleNavigation(interaction, { sid }) {
       session.containerEditorContainerId = container._id;
       session.selectedNodeId = container._id;
       saveSession(session);
-      const modal = new ModalBuilder().setCustomId(`bld:${session.id}:prop:ce_color_modal`).setTitle('Select Color');
-      const current = container.accent_color != null ? '#' + Number(container.accent_color).toString(16).padStart(6, '0') : '';
-      modal.addComponents(new ActionRowBuilder().addComponents(
-        new TextInputBuilder()
-          .setCustomId('accent_color')
-          .setLabel('Accent color (hex, e.g. #5865F2)')
-          .setStyle(TextInputStyle.Short)
-          .setRequired(false)
-          .setValue(current)
-          .setPlaceholder('Leave empty to remove the accent color')
-      ));
-      return interaction.showModal(modal);
+      return interaction.update(buildContainerColorScreen(session));
+    }
+    case 'ce_color_back': {
+      const container = getSelectedContainer(session);
+      if (!container) return interaction.update(buildMainPanel(session));
+      session.containerEditorContainerId = container._id;
+      session.selectedNodeId = container._id;
+      saveSession(session);
+      return interaction.update(buildContainerEditor(session));
     }
     case 'ce_delete': {
       const container = getSelectedContainer(session);
       if (!container) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
+      if (getContainers(session).length <= 1) {
+        return interaction.reply({ content: 'Você precisa ter mais de um container para apagar.', flags: 64 });
+      }
       return interaction.update(buildContainerDeleteConfirm(session));
     }
     case 'ce_delete_cancel': {
@@ -696,6 +759,12 @@ async function handleNavigation(interaction, { sid }) {
     case 'ce_delete_confirm': {
       const container = getSelectedContainer(session);
       if (!container) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
+      if (getContainers(session).length <= 1) {
+        session.selectedNodeId = container._id;
+        session.containerEditorContainerId = container._id;
+        saveSession(session);
+        return interaction.update(buildContainerEditor(session));
+      }
       pushHistory(session);
       session.state.root = (session.state.root || []).filter(c => c._id !== container._id);
       const remaining = getContainers(session);
@@ -764,10 +833,11 @@ async function handleNavigation(interaction, { sid }) {
           }
           return interaction.reply({ content: `✅ Message edited (quick send): ${msg.url}`, flags: 64 });
         }
-        if (!session.publishChannelId) {
-          return interaction.reply({ content: 'Quick send needs a destination. Use **Custom Send** to select a channel (or set an edit target) first.', flags: 64 });
+        const targetChannelId = session.channelId || interaction.channelId;
+        if (!targetChannelId) {
+          return interaction.reply({ content: 'Quick send could not determine the target channel for this session.', flags: 64 });
         }
-        const channel = await interaction.client.channels.fetch(session.publishChannelId);
+        const channel = await interaction.client.channels.fetch(targetChannelId);
         const permErr = canSendToChannel(channel, interaction.client.user);
         if (permErr) return interaction.reply({ content: `Cannot quick send: ${permErr}`, flags: 64 });
         const msg = await publishNew(channel, payload);

@@ -99,6 +99,8 @@ function buildContainerEditor(session) {
     description: `Add a ${type.replace(/_/g, ' ')} to this container`.slice(0, 100)
   }));
 
+  const canDelete = getContainers(session).length > 1;
+
   const components = [
     new TextDisplayBuilder().setContent('## Editing Container'),
     buildContainerPreviewComponent(container),
@@ -117,8 +119,63 @@ function buildContainerEditor(session) {
     ),
     new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_color`).setLabel('Select Color').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_delete`).setLabel('Delete Container').setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_delete`).setLabel('Delete Container').setStyle(ButtonStyle.Danger).setDisabled(!canDelete),
       new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_back`).setLabel('Back').setStyle(ButtonStyle.Secondary)
+    )
+  ];
+
+  return {
+    content: null,
+    embeds: [],
+    flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
+    components
+  };
+}
+
+function buildContainerColorScreen(session) {
+  const container = getSelectedContainer(session);
+  if (!container) {
+    return {
+      content: null,
+      embeds: [],
+      flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
+      components: [
+        new TextDisplayBuilder().setContent('## Select Color\nThe selected container could not be found.'),
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_color_back`).setLabel('Back').setStyle(ButtonStyle.Secondary)
+        )
+      ]
+    };
+  }
+
+  const { listColors } = require('../services/colors.service');
+  const saved = listColors(session.guildId, session.userId);
+  const options = [
+    { label: 'Nova cor', value: 'new', description: 'Salve uma cor com nome e codigo HEX' },
+    { label: 'Sem cor', value: 'none', description: 'Container sem accent color' },
+    { label: 'Azul Discord', value: 'discord_blue', description: '#5865F2' }
+  ];
+  for (const c of saved) {
+    if (options.length >= 25) break;
+    options.push({
+      label: String(c.name).slice(0, 100),
+      value: `saved:${c.id}`,
+      description: c.hex.slice(0, 100)
+    });
+  }
+
+  const components = [
+    new TextDisplayBuilder().setContent('## Select Color'),
+    buildContainerPreviewComponent(container),
+    new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId(`bld:${session.id}:nav:ce_color_select`)
+        .setPlaceholder('Selecionar uma cor')
+        .addOptions(options)
+    ),
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_color_back`).setLabel('Back').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setLabel('HTML Color Codes').setStyle(ButtonStyle.Link).setURL('https://htmlcolorcodes.com/')
     )
   ];
 
@@ -156,4 +213,4 @@ function buildContainerEditorClosed() {
   };
 }
 
-module.exports = { buildContainerEditor, buildContainerDeleteConfirm, buildContainerEditorClosed, getSelectedContainer, getContainers };
+module.exports = { buildContainerEditor, buildContainerDeleteConfirm, buildContainerEditorClosed, buildContainerColorScreen, getSelectedContainer, getContainers };
