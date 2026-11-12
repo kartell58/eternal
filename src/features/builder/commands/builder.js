@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, MessageFlags } = require('discord.js');
-const { buildHome } = require('../interactions/navigation');
+const { buildSelectionScreen } = require('../interactions/navigation');
 const { createSession } = require('../services/session.service');
 
 module.exports = {
@@ -10,9 +10,8 @@ module.exports = {
   async execute(interaction) {
     try {
       const session = createSession(interaction.user.id, interaction.guildId, interaction.channelId, 'components_v2');
-      session.view = 'home';
-      session.selectedNodeId = session.state.root?.[0]?._id || null;
-      const view = buildHome(session);
+      session.view = 'selection';
+      const view = buildSelectionScreen(session);
       await interaction.reply({ ...view, flags: (view.flags || 0) | MessageFlags.Ephemeral });
     } catch (e) {
       // Interaction may have expired/been acknowledged elsewhere; avoid crashing the process

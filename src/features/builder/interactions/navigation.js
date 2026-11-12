@@ -62,6 +62,21 @@ function getContainers(session) {
   return (session.state?.root || []).filter(n => n && n.type === 'container');
 }
 
+function buildSelectionScreen(session) {
+  const { TextDisplayBuilder } = require('discord.js');
+  const info = infoContainer(
+    'Visual Builder',
+    'Choose which builder you want to use for this session.\n\n**Embed Builder** — Create and edit Discord embed messages.\n**Components V2 Builder** — Create and edit messages using Components V2 containers and components.',
+    [],
+    'Only the session owner can use this builder.'
+  );
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:select_embed`).setLabel('Embed Builder').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:select_cv2`).setLabel('Components V2 Builder').setStyle(ButtonStyle.Primary),
+  );
+  return cv2Screen([info, row]);
+}
+
 function buildMainPanel(session) {
   const containers = getContainers(session);
   const { ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, MessageFlags } = require('discord.js');
@@ -97,6 +112,7 @@ function buildMainPanel(session) {
   const actionsRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:add_container_main`).setLabel('Add Container').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:open_templates`).setLabel('Templates').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:back_selection`).setLabel('Builder Selection').setStyle(ButtonStyle.Secondary),
   );
 
   const jsonRow = new ActionRowBuilder().addComponents(
@@ -183,6 +199,7 @@ function buildEmbedEditor(session) {
   const back = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:home`).setLabel('Home').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:undo`).setLabel('Undo').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:back_selection`).setLabel('Builder Selection').setStyle(ButtonStyle.Secondary),
   );
   return cv2Screen([info, nav, editRow, actions, back]);
 }
@@ -453,7 +470,49 @@ async function handleNavigation(interaction, { sid }) {
   if (!interaction.isButton()) return;
 
   switch (action) {
+    case 'select_embed': {
+      // Switch to embed editing experience in the same session/message
+      if (!session.state || session.state.type !== 'embed') {
+        session.state = createDefaultEmbedState();
+      }
+      session.type = 'embed';
+      session.view = 'editor';
+      session.embedSection = session.embedSection || 'basic';
+      session.containerEditorContainerId = null;
+      saveSession(session);
+      return interaction.update(buildEmbedEditor(session));
+    }
+    case 'select_cv2': {
+      // Switch to Components V2 workflow (container selection/main panel)
+      if (!session.state || session.state.type !== 'components_v2' || !Array.isArray(session.state.root)) {
+        session.state = createDefaultComponentsV2State();
+      }
+      session.type = 'components_v2';
+      session.view = 'home';
+      session.containerEditorContainerId = null;
+      if (!getContainers(session).length) {
+        // ensure valid CV2 state has at least a container
+        session.state.root = [createContainer()];
+      }
+      session.selectedNodeId = session.selectedNodeId && getContainers(session).some(c => c._id === session.selectedNodeId)
+        ? session.selectedNodeId
+        : (getContainers(session)[0]?._id || null);
+      saveSession(session);
+      return interaction.update(buildMainPanel(session));
+    }
+    case 'back_selection': {
+      session.view = 'selection';
+      session.containerEditorContainerId = null;
+      saveSession(session);
+      return interaction.update(buildSelectionScreen(session));
+    }
     case 'home':
+      session.containerEditorContainerId = null;
+      if (session.state && session.state.type === 'embed') {
+        session.view = 'editor';
+        saveSession(session);
+        return interaction.update(buildEmbedEditor(session));
+      }
       session.view = 'home';
       saveSession(session);
       return interaction.update(buildMainPanel(session));
@@ -653,6 +712,7 @@ async function handleNavigation(interaction, { sid }) {
     case 'undo':
       if (!popHistory(session)) return interaction.reply({ content: 'Nothing to undo.', flags: 64 });
       saveSession(session);
+      if (session.view === 'selection') return interaction.update(buildSelectionScreen(session));
       return interaction.update(session.view === 'home' ? buildMainPanel(session) : currentEditor(session));
     case 'preview':
       try {
@@ -714,4 +774,4 @@ async function handleNavigation(interaction, { sid }) {
   }
 }
 
-module.exports = { handleNavigation, buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor, currentEditor, buildContainerEditor };
+module.exports = { handleNavigation, buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor, currentEditor, buildContainerEditor, buildSelectionScreen };

@@ -120,6 +120,17 @@ const { createDefaultComponentsV2State, createContainer } = require('../schemas/
     assert.ok(!(j.options || []).some(o => o.default), 'no default after selection in session');
   });
 
+  await test('CV2 main panel and embed editor provide a way back to builder selection', () => {
+    const s = createSession('u1', 'g1', 'c1', 'components_v2');
+    s.state = createDefaultComponentsV2State();
+    const cv2 = buildMainPanel(s);
+    assert.ok(customIds(cv2).includes(`bld:${s.id}:nav:back_selection`), 'cv2 back to selection');
+    const e = createSession('u1', 'g1', 'c1', 'embed');
+    e.state = createDefaultEmbedState();
+    const embed = buildEmbedEditor(e);
+    assert.ok(customIds(embed).includes(`bld:${e.id}:nav:back_selection`), 'embed back to selection');
+  });
+
   await test('embed editor has section navigation, actions, and back controls', () => {
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.state = createDefaultEmbedState();
