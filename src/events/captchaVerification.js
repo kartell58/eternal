@@ -9,11 +9,19 @@ const settings = require("../settings");
 const captcha = require("../features/verification/captcha");
 const { assignVerificationRole, resolveVerificationRole } = require("../features/verification/role");
 
-const WHY_VERIFY_TEXT = [
-  "**Por que ter uma verificação de conta...**",
-  "A verificação de conta é para prevenir que contas indesejadas entre em nosso servidor, assim deixando uma comunidade mais segura e sem SPAM desnecessários em sua DM.",
-  "Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35"
-].join("\n");
+const WHY_TITLE = "Por que ter uma verificação de conta...";
+const WHY_TITLE_MD = `**${WHY_TITLE}**`;
+const WHY_BODY = "A verificação de conta é para prevenir que contas indesejadas entre em nosso servidor, assim deixando uma comunidade mais segura e sem SPAM desnecessários em sua DM.";
+const WHY_CREDIT = "Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35";
+const WHY_DIVIDER = "─".repeat(38);
+const WHY_VERIFY_TEXT = [WHY_TITLE_MD, WHY_BODY, WHY_CREDIT].join("\n");
+
+function buildWhyVerifyEmbed() {
+  return new EmbedBuilder()
+    .setColor(0x2b2d31)
+    .setDescription(`${WHY_TITLE_MD}\n\n${WHY_BODY}\n\n${WHY_DIVIDER}`)
+    .setFooter({ text: WHY_CREDIT });
+}
 
 function challengeEmbed(entry, { title = "🛡️ Verification", statusLine = null } = {}) {
   const expiresAt = Math.floor(entry.expiresAt / 1000);
@@ -53,7 +61,7 @@ function staticEmbed({ color, title, description }) {
 }
 
 async function handleWhy(interaction) {
-  await interaction.reply({ content: WHY_VERIFY_TEXT, flags: 64 });
+  await interaction.reply({ embeds: [buildWhyVerifyEmbed()], flags: 64 });
 }
 
 async function handleRespond(interaction, { getSetting } = {}) {
@@ -155,6 +163,11 @@ async function handleAnswer(interaction, { assignRole } = {}) {
 module.exports = {
   name: Events.InteractionCreate,
   WHY_VERIFY_TEXT,
+  WHY_TITLE,
+  WHY_TITLE_MD,
+  WHY_BODY,
+  WHY_CREDIT,
+  buildWhyVerifyEmbed,
   challengeEmbed,
   challengeComponents,
   handleWhy,

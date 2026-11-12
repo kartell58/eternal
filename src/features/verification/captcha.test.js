@@ -262,22 +262,29 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
     captcha.clearChallenges();
   });
 
-  await test("handleWhy answers with the exact legacy text", async () => {
+  await test("handleWhy answers with the TOOLS-style embed and exact text", async () => {
     const interaction = mockButtonInteraction("captcha_why", {});
     await handleWhy(interaction);
-    const expected =
+    assert.strictEqual(interaction.repliedPayload.flags, MessageFlags.Ephemeral);
+    assert.strictEqual(interaction.repliedPayload.content, undefined);
+    assert.strictEqual(interaction.repliedPayload.embeds.length, 1);
+    const embed = interaction.repliedPayload.embeds[0].toJSON();
+    assert.strictEqual(embed.title, undefined);
+    assert.ok(embed.description.startsWith("**Por que ter uma verificação de conta...**\n\n"));
+    assert.ok(embed.description.includes("A verificação de conta é para prevenir que contas indesejadas entre em nosso servidor, assim deixando uma comunidade mais segura e sem SPAM desnecessários em sua DM."));
+    assert.strictEqual(embed.footer.text, "Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35");
+    assert.strictEqual(
+      WHY_VERIFY_TEXT,
       "**Por que ter uma verificação de conta...**\n" +
       "A verificação de conta é para prevenir que contas indesejadas entre em nosso servidor, assim deixando uma comunidade mais segura e sem SPAM desnecessários em sua DM.\n" +
-      "Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35";
-    assert.strictEqual(interaction.repliedPayload.content, expected);
-    assert.strictEqual(interaction.repliedPayload.flags, MessageFlags.Ephemeral);
-    assert.strictEqual(WHY_VERIFY_TEXT, expected);
+      "Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35"
+    );
   });
 
   await test("execute routes captcha buttons and the answer select", async () => {
     const why = mockButtonInteraction("captcha_why", {});
     await execute(why);
-    assert.strictEqual(why.repliedPayload.content, WHY_VERIFY_TEXT);
+    assert.ok(why.repliedPayload.embeds[0].toJSON().description.startsWith("**Por que ter uma verificação de conta...**"));
 
     const unrelated = mockButtonInteraction("btn_verify", {});
     await execute(unrelated);

@@ -15,7 +15,7 @@ function buildCaptchaPanel(guildName) {
     .setTitle("🛡️ Verification")
     .setDescription(
       "Before you can access the server, you need to verify that you are not a bot.\n\n" +
-      "Click **Respond** below to complete the CAPTCHA and receive your verified role."
+      "Click **Respond** below to complete the **`CAPTCHA`** and receive your verified role."
     )
     .setFooter({ text: guildName ? String(guildName).slice(0, 100) : "Verification" });
 
