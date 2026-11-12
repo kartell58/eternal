@@ -13,7 +13,6 @@ const {
  */
 function buildCaptchaPanel() {
   const container = new ContainerBuilder()
-    .setAccentColor(0x5865f2)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent("🛡️ **Verification**"),
       new TextDisplayBuilder().setContent(

@@ -25,7 +25,6 @@ const EPHEMERAL_CV2_FLAGS = MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 
 function buildWhyVerifyContainer() {
   return new ContainerBuilder()
-    .setAccentColor(0x5865f2)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(WHY_TITLE_MD),
       new TextDisplayBuilder().setContent(WHY_BODY)
@@ -52,7 +51,6 @@ function buildChallengeContainer(entry, { statusLine = null } = {}) {
     : "Carefully analyze the image below and select the menu option matching the displayed code.";
 
   const container = new ContainerBuilder()
-    .setAccentColor(0x5865f2)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent("**Verification — CAPTCHA Challenge**"),
       new TextDisplayBuilder().setContent(instruction)
@@ -80,9 +78,8 @@ function challengeFiles(entry) {
   return [new AttachmentBuilder(entry.image, { name: "captcha.png" })];
 }
 
-function staticContainer({ accent, title, body }) {
+function staticContainer({ title, body }) {
   return new ContainerBuilder()
-    .setAccentColor(accent)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(`**${title}**`),
       new TextDisplayBuilder().setContent(body)
@@ -142,7 +139,6 @@ async function handleAnswer(interaction, { assignRole } = {}) {
   if (!entry) {
     await interaction.update({
       components: [staticContainer({
-        accent: 0xeab308,
         title: "⏱️ Challenge expired",
         body: "This CAPTCHA has expired. Click **Respond** on the verification panel to try again."
       })],
@@ -160,7 +156,6 @@ async function handleAnswer(interaction, { assignRole } = {}) {
     const ok = result.status === "assigned" || result.status === "already";
     await interaction.update({
       components: [staticContainer({
-        accent: ok ? 0x57f287 : 0xed4245,
         title: ok ? "✅ Verified!" : "⚠️ Verification issue",
         body: result.message
       })],
@@ -176,7 +171,6 @@ async function handleAnswer(interaction, { assignRole } = {}) {
     captcha.deleteChallenge(guildId, userId);
     await interaction.update({
       components: [staticContainer({
-        accent: 0xed4245,
         title: "❌ Verification failed",
         body: "You used all 3 attempts. Click **Respond** on the verification panel to get a new code."
       })],
