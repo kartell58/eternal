@@ -20,17 +20,42 @@ function getSelectedContainer(session) {
   return found || null;
 }
 
-function childLabel(node, index) {
+const CHILD_TYPE_LABELS = {
+  text_display: 'Text',
+  button: 'Button',
+  separator: 'Separator',
+  action_row: 'Action Row',
+  section: 'Section',
+  thumbnail: 'Thumbnail',
+  media_gallery: 'Media Gallery',
+  file: 'File',
+  string_select: 'String Select',
+  user_select: 'User Select',
+  role_select: 'Role Select',
+  channel_select: 'Channel Select',
+  mentionable_select: 'Mentionable Select'
+};
+
+function childTypeLabel(node, index) {
   if (!node) return `Item ${index + 1}`;
-  const type = String(node.type || 'item').replace(/_/g, ' ');
-  let detail = '';
-  if (node.type === 'text_display' && node.content) detail = String(node.content).slice(0, 30).replace(/\s+/g, ' ').trim();
-  else if (node.type === 'button' && node.label) detail = String(node.label).slice(0, 30);
-  else if (node.type && node.type.endsWith('_select') && node.placeholder) detail = String(node.placeholder).slice(0, 30);
-  else if (node.type === 'section') detail = `${(node.components || []).length} text(s)`;
-  else if (node.type === 'action_row') detail = `${(node.components || []).length} component(s)`;
-  const label = detail ? `${type}: ${detail}` : type;
-  return label.slice(0, 100) || `Item ${index + 1}`;
+  const type = CHILD_TYPE_LABELS[node.type] || String(node.type || 'Item').replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase());
+  return `${type} ${index + 1}`;
+}
+
+function childDescription(node) {
+  if (!node) return '';
+  if (node.type === 'text_display') {
+    const text = String(node.content || '').replace(/\s+/g, ' ').trim();
+    return text.length > 30 ? `${text.slice(0, 30)}...` : text;
+  }
+  if (node.type === 'button') return String(node.label || node.custom_id || '').slice(0, 100).trim();
+  if (node.type && node.type.endsWith('_select')) return String(node.placeholder || '').slice(0, 100).trim();
+  if (node.type === 'section') return `${(node.components || []).length} text(s)`;
+  if (node.type === 'action_row') return `${(node.components || []).length} component(s)`;
+  if (node.type === 'media_gallery') return `${(node.items || []).length} item(s)`;
+  if (node.type === 'thumbnail') return String(node.description || node.url || '').slice(0, 100).trim();
+  if (node.type === 'file') return String(node.file || '').slice(0, 100).trim();
+  return '';
 }
 
 function buildContainerPreviewComponent(container) {
@@ -62,9 +87,9 @@ function buildContainerEditor(session) {
   const children = Array.isArray(container.components) ? container.components : [];
   const editOptions = children.length
     ? children.slice(0, 25).map((child, i) => ({
-        label: childLabel(child, i),
+        label: childTypeLabel(child, i),
         value: child._id,
-        description: String(child.type || 'item').replace(/_/g, ' ').slice(0, 100)
+        description: childDescription(child) || undefined
       }))
     : [{ label: 'No items available', value: 'none', description: 'Add an item to edit it' }];
 
