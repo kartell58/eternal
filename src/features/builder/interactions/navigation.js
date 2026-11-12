@@ -2,7 +2,6 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  EmbedBuilder,
   StringSelectMenuBuilder,
   ChannelType,
   ModalBuilder,
@@ -191,58 +190,37 @@ function buildHome(session) {
   return buildMainPanel(session);
 }
 
-function summarizeEmbed(state) {
-  const e = getSelectedEmbed(state) || {};
-  const lines = [];
-  lines.push(`Title: ${e.title ? String(e.title).slice(0, 60) : '—'}`);
-  lines.push(`Description: ${e.description ? String(e.description).slice(0, 80) : '—'}`);
-  lines.push(`Fields: ${(e.fields || []).length}/25`);
-  const total = Array.isArray(state.embeds) ? state.embeds.length : 1;
-  if (total > 1) lines.unshift(`Embeds: ${total}`);
-  if (state.content) lines.push(`Content: ${String(state.content).slice(0, 60)}`);
-  return lines.join('\n').slice(0, 1024);
-}
-
-function sectionLabel(key) {
-  const map = {
-    basic: 'Title & description',
-    author: 'Author',
-    footer: 'Footer & timestamp',
-    images: 'Images',
-    fields: 'Fields',
-    content: 'Message content'
-  };
-  return map[key] || key;
-}
-
 function buildEmbedEditor(session) {
   normalizeEmbedState(session.state);
-  const section = session.embedSection || 'basic';
+  const e = getSelectedEmbed(session.state) || {};
   const idx = session.state.selectedEmbedIndex || 0;
   const total = session.state.embeds.length;
-  const info = infoContainer('Embed Editor', `**Editing:** ${editorContext(session)}\n**Embed:** ${idx + 1} of ${total}\n**Section:** ${sectionLabel(section)}`, [{ name: 'Summary', value: summarizeEmbed(session.state) }], 'Select a section, edit it, then preview or publish.');
+  const accent = parseColor(e.color);
+  const { ContainerBuilder, TextDisplayBuilder } = require('discord.js');
 
-  const nav = new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId(`bld:${sid(session)}:nav:embed_section`)
-      .setPlaceholder('Choose section')
-      .addOptions([
-        { label: 'Title & description', value: 'basic', description: 'Title, URL, description, color', default: section === 'basic' },
-        { label: 'Message content', value: 'content', description: 'Text above the embed', default: section === 'content' },
-        { label: 'Author', value: 'author', description: 'Author name, URL, icon', default: section === 'author' },
-        { label: 'Images', value: 'images', description: 'Thumbnail and main image', default: section === 'images' },
-        { label: 'Footer & timestamp', value: 'footer', description: 'Footer text, icon, timestamp', default: section === 'footer' },
-        { label: 'Fields', value: 'fields', description: 'Add, edit, reorder fields', default: section === 'fields' },
-      ])
+  const preview = new ContainerBuilder()
+    .setAccentColor(accent != null ? accent : 0x5865f2)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`## ${e.title || 'Embed Title'}`),
+      new TextDisplayBuilder().setContent(String(e.description || '*No description yet*').slice(0, 4000)),
+      new TextDisplayBuilder().setContent(`-# Embed ${idx + 1} of ${total} • ${editorContext(session)}`)
+    );
+
+  const sectionRow1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_title`).setLabel('Title').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_description`).setLabel('Description').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_color`).setLabel('Color').setStyle(ButtonStyle.Secondary),
   );
-
-  const isFields = section === 'fields';
-  const editRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_edit`).setLabel('Edit Section').setStyle(ButtonStyle.Primary).setDisabled(isFields),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_add_field`).setLabel('Add Field').setStyle(ButtonStyle.Secondary).setDisabled(!isFields),
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:embed_field_tools`).setLabel('Field Tools').setStyle(ButtonStyle.Secondary).setDisabled(!isFields),
+  const sectionRow2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_author`).setLabel('Author').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_content`).setLabel('Message Content').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_footer`).setLabel('Footer').setStyle(ButtonStyle.Secondary),
   );
-
+  const sectionRow3 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:embed_field_tools`).setLabel('Edit Fields').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_add_field`).setLabel('Add Field').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:prop:embed_images`).setLabel('Image & Thumbnail').setStyle(ButtonStyle.Secondary),
+  );
   const actions = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:preview`).setLabel('Preview').setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:save_menu`).setLabel('Save').setStyle(ButtonStyle.Secondary),
@@ -252,8 +230,11 @@ function buildEmbedEditor(session) {
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:embed_back_panel`).setLabel('Back').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:undo`).setLabel('Undo').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:back_selection`).setLabel('Builder Selection').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:json_editor`).setLabel('Import JSON').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:export_json`).setLabel('Export JSON').setStyle(ButtonStyle.Primary),
   );
-  return cv2Screen([info, nav, editRow, actions, back]);
+  const heading = new TextDisplayBuilder().setContent('## Embed Editor');
+  return cv2Screen([heading, preview, sectionRow1, sectionRow2, sectionRow3, actions, back]);
 }
 
 function listNodes(nodes, depth = 0, out = []) {
@@ -867,7 +848,7 @@ async function handleNavigation(interaction, { sid }) {
       if (session.state?.type === 'embed') normalizeEmbedState(session.state);
       const e = session.state?.type === 'embed' ? getSelectedEmbed(session.state) : (session.state.embed || {});
       const fields = (e && e.fields) || [];
-      const info = infoContainer('Field Tools', fields.length ? fields.map((f, i) => `${i + 1}. ${String(f.name || '(unnamed)').slice(0, 80)}`).join('\n').slice(0, 4000) : 'No fields yet. Go back and use "Add Field" first.');
+      const info = infoContainer('Field Tools', fields.length ? fields.map((f, i) => `${i + 1}. ${String(f.name || '(unnamed)').slice(0, 80)}`).join('\n').slice(0, 4000) : 'No fields yet. Use "Add Field" to create one.');
       const opts = fields.map((f, i) => ({ label: `${i + 1}. ${String(f.name || 'Field').slice(0, 90)}`.slice(0, 100), value: String(i) })).slice(0, 25);
       if (!opts.length) opts.push({ label: 'No fields', value: 'none' });
       const components = [
@@ -877,6 +858,7 @@ async function handleNavigation(interaction, { sid }) {
           new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_edit`).setLabel('Edit').setStyle(ButtonStyle.Primary),
           new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_remove`).setLabel('Remove').setStyle(ButtonStyle.Danger),
           new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_dup`).setLabel('Duplicate').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId(`bld:${session.id}:prop:embed_add_field`).setLabel('Add Field').setStyle(ButtonStyle.Secondary),
         ),
         new ActionRowBuilder().addComponents(
           new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_up`).setLabel('Move Up').setStyle(ButtonStyle.Secondary),
@@ -885,6 +867,19 @@ async function handleNavigation(interaction, { sid }) {
         )
       ];
       return interaction.update(cv2Screen(components));
+    }
+    case 'export_json': {
+      try {
+        const json = JSON.stringify(session.state, null, 2);
+        const buffer = Buffer.from(json, 'utf8');
+        return interaction.reply({
+          content: 'Exported the current builder state as JSON.',
+          files: [{ attachment: buffer, name: 'builder-state.json' }],
+          flags: 64
+        });
+      } catch (e) {
+        return interaction.reply({ content: `Export failed: ${e.message}`, flags: 64 });
+      }
     }
     default:
       return interaction.reply({ content: 'Unhandled navigation action.', flags: 64 });

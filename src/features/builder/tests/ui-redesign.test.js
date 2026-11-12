@@ -164,35 +164,41 @@ const { createDefaultComponentsV2State, createContainer } = require('../schemas/
     assert.ok(ids.includes(`bld:${s.id}:nav:back_selection`), 'back to selection');
   });
 
-  await test('embed editor has section navigation, actions, and back controls', () => {
+  await test('embed editor matches Rio-style section buttons, preview, actions, and navigation', () => {
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.state = createDefaultEmbedState();
-    s.embedSection = 'basic';
+    s.state.embeds[0].title = 'Hello';
+    s.state.embeds[0].description = 'World';
     const view = buildEmbedEditor(s);
     const ids = customIds(view);
-    assert.ok(ids.some(id => id.endsWith(':nav:embed_section')), 'section select');
-    assert.ok(ids.includes(`bld:${s.id}:prop:embed_edit`));
+    assert.ok(!ids.some(id => id.endsWith(':nav:embed_section')), 'no legacy section select');
+    for (const action of ['embed_title','embed_description','embed_color','embed_author','embed_content','embed_footer','embed_images','embed_add_field']) {
+      assert.ok(ids.includes(`bld:${s.id}:prop:${action}`), `button ${action}`);
+    }
+    assert.ok(ids.includes(`bld:${s.id}:nav:embed_field_tools`), 'edit fields');
     assert.ok(ids.includes(`bld:${s.id}:nav:preview`));
     assert.ok(ids.includes(`bld:${s.id}:nav:save_menu`));
     assert.ok(ids.includes(`bld:${s.id}:nav:publish_menu`));
     assert.ok(ids.includes(`bld:${s.id}:nav:embed_back_panel`));
     assert.ok(ids.includes(`bld:${s.id}:nav:undo`));
     assert.ok(ids.includes(`bld:${s.id}:nav:back_selection`));
+    assert.ok(ids.includes(`bld:${s.id}:nav:json_editor`), 'import json');
+    assert.ok(ids.includes(`bld:${s.id}:nav:export_json`), 'export json');
+    const text = allText(view);
+    assert.ok(text.includes('Hello') && text.includes('World'), 'preview card shows selected embed title/description');
+    assert.ok(/Embed 1 of 1/.test(text), 'selected embed index shown');
   });
 
-  await test('embed editor field section enables field tools', () => {
+  await test('embed editor exposes field tools and add field without a section select', () => {
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.state = createDefaultEmbedState();
-    s.embedSection = 'fields';
     const view = buildEmbedEditor(s);
     const all = [];
     function walk(node){ if(!node) return; if(Array.isArray(node)) return node.forEach(walk); const j=typeof node.toJSON==='function'?node.toJSON():node; if(j&&j.custom_id) all.push(j); if(j&&Array.isArray(j.components)) j.components.forEach(walk); if(Array.isArray(node.components)) node.components.forEach(walk);} walk(view.components||[]);
     const add = all.find(c => c.custom_id === `bld:${s.id}:prop:embed_add_field`);
     const tools = all.find(c => c.custom_id === `bld:${s.id}:nav:embed_field_tools`);
-    const edit = all.find(c => c.custom_id === `bld:${s.id}:prop:embed_edit`);
     assert.ok(add && !add.disabled, 'add field enabled');
     assert.ok(tools && !tools.disabled, 'field tools enabled');
-    assert.ok(edit && edit.disabled, 'edit section disabled for fields');
   });
 
   await test('components v2 editor has node selection and management controls', () => {

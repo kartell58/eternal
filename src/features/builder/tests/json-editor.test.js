@@ -2,6 +2,7 @@ const assert = require('assert');
 const { createSession } = require('../services/session.service');
 const { getDefaultJsonTemplateString, isPristineDefaultState, normalizeImportedDocument, DEFAULT_JSON_TEMPLATE } = require('../utils/json-document');
 const { createDefaultComponentsV2State } = require('../schemas/components-v2.schema');
+const { createDefaultEmbedState } = require('../schemas/embed.schema');
 const { validateComponentsV2State } = require('../utils/validator');
 
 (async () => {
@@ -46,6 +47,20 @@ const { validateComponentsV2State } = require('../utils/validator');
     assert.ok(!r1.error && r1.state.type === 'components_v2');
     const r2 = normalizeImportedDocument({ state: st });
     assert.ok(!r2.error && r2.state.type === 'components_v2');
+  });
+
+  await test('normalize imports multi-embed state and preserves selected embed', () => {
+    const st = createDefaultEmbedState();
+    st.embeds[0].title = 'First';
+    st.embeds.push({ ...st.embeds[0], title: 'Second' });
+    st.selectedEmbedIndex = 1;
+    const res = normalizeImportedDocument(st);
+    assert.ok(!res.error, res.error);
+    assert.strictEqual(res.state.type, 'embed');
+    assert.ok(Array.isArray(res.state.embeds) && res.state.embeds.length === 2);
+    assert.strictEqual(res.state.selectedEmbedIndex, 1);
+    assert.strictEqual(res.state.embeds[1].title, 'Second');
+    assert.strictEqual(res.state.embed.title, 'Second');
   });
 
   await test('normalize rejects unsupported structures', () => {

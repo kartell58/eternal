@@ -21,18 +21,30 @@ function modalField(id, label, style, value, required = false, opts = {}) {
   return input;
 }
 
-function showEmbedModal(interaction, session) {
+function showEmbedModal(interaction, session, section = 'basic') {
   normalizeEmbedState(session.state);
-  const section = session.embedSection || 'basic';
   const e = getSelectedEmbed(session.state) || {};
-  const titles = { basic: "Title & Description", author: "Author", footer: "Footer & Timestamp", images: "Images", content: "Message Content" };
+  const titles = { title: "Title", description: "Description", color: "Color", basic: "Title & Description", author: "Author", footer: "Footer & Timestamp", images: "Images", content: "Message Content" };
   const modal = new ModalBuilder().setCustomId(tid(session, 'embed_modal', section)).setTitle((titles[section] || `Edit: ${section}`).slice(0, 45));
-  if (section === 'basic') {
+  if (section === 'title') {
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(modalField('title', 'Title', TextInputStyle.Short, e.title || '', false, { max: 256 })),
+      new ActionRowBuilder().addComponents(modalField('url', 'Title URL', TextInputStyle.Short, e.url || '', false)),
+    );
+  } else if (section === 'description') {
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(modalField('description', 'Description', TextInputStyle.Paragraph, e.description || '', false, { max: 4000 })),
+    );
+  } else if (section === 'color') {
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(modalField('color', 'Color (hex, e.g. #5865F2)', TextInputStyle.Short, (e.color != null && e.color !== '') ? (typeof e.color === 'number' ? '#' + e.color.toString(16).padStart(6,'0') : e.color) : '', false)),
+    );
+  } else if (section === 'basic') {
     modal.addComponents(
       new ActionRowBuilder().addComponents(modalField('title', 'Title', TextInputStyle.Short, e.title || '', false, { max: 256 })),
       new ActionRowBuilder().addComponents(modalField('url', 'Title URL', TextInputStyle.Short, e.url || '', false)),
       new ActionRowBuilder().addComponents(modalField('description', 'Description', TextInputStyle.Paragraph, e.description || '', false, { max: 4000 })),
-      new ActionRowBuilder().addComponents(modalField('color', 'Color (hex, e.g. #5865F2)', TextInputStyle.Short, e.color ? (typeof e.color === 'number' ? '#' + e.color.toString(16).padStart(6,'0') : e.color) : '', false)),
+      new ActionRowBuilder().addComponents(modalField('color', 'Color (hex, e.g. #5865F2)', TextInputStyle.Short, (e.color != null && e.color !== '') ? (typeof e.color === 'number' ? '#' + e.color.toString(16).padStart(6,'0') : e.color) : '', false)),
     );
   } else if (section === 'author') {
     modal.addComponents(
@@ -154,7 +166,15 @@ async function handleProperties(interaction, { sid }) {
       pushHistory(session);
       normalizeEmbedState(session.state);
       const e = getSelectedEmbed(session.state);
-      if (sub === 'basic') {
+      if (sub === 'title') {
+        e.title = interaction.fields.getTextInputValue('title');
+        e.url = interaction.fields.getTextInputValue('url');
+      } else if (sub === 'description') {
+        e.description = interaction.fields.getTextInputValue('description');
+      } else if (sub === 'color') {
+        const c = interaction.fields.getTextInputValue('color');
+        e.color = c ? parseColor(c) : null;
+      } else if (sub === 'basic') {
         e.title = interaction.fields.getTextInputValue('title');
         e.url = interaction.fields.getTextInputValue('url');
         e.description = interaction.fields.getTextInputValue('description');
@@ -410,6 +430,7 @@ async function handleProperties(interaction, { sid }) {
       if (!validation.valid) {
         return interaction.reply({ content: `JSON validation failed (existing data preserved):\n${validation.errors.slice(0, 8).map(e => `- ${e}`).join('\n')}`.slice(0, 2000), flags: 64 });
       }
+      const previousView = session.view;
       pushHistory(session);
       session.state = JSON.parse(JSON.stringify(candidate));
       session.type = candidate.type;
@@ -417,9 +438,13 @@ async function handleProperties(interaction, { sid }) {
       session.templateId = null;
       session.selectedNodeId = candidate.type === 'components_v2' ? (candidate.root?.[0]?._id || null) : null;
       saveSession(session);
-      const { buildMainPanel, buildEmbedMainPanel } = require('./navigation');
+      const { buildMainPanel, buildEmbedMainPanel, buildEmbedEditor } = require('./navigation');
       if (candidate.type === 'embed') {
         normalizeEmbedState(session.state);
+        if (previousView === 'editor') {
+          session.view = 'editor';
+          return interaction.update(buildEmbedEditor(session));
+        }
         session.view = 'embed_home';
         return interaction.update(buildEmbedMainPanel(session));
       }
@@ -483,8 +508,11 @@ async function handleProperties(interaction, { sid }) {
   // Buttons / selects
   if (action === 'embed_edit') {
     if (session.state.type !== 'embed') return interaction.reply({ content: 'Not in embed mode.', flags: 64 });
-    if (session.embedSection === 'fields') return interaction.reply({ content: 'Use Field Tools to edit fields.', flags: 64 });
-    return showEmbedModal(interaction, session);
+    return showEmbedModal(interaction, session, 'basic');
+  }
+  if (['embed_title','embed_description','embed_color','embed_author','embed_images','embed_footer','embed_content'].includes(action)) {
+    if (session.state?.type !== 'embed') return interaction.reply({ content: 'Not in embed mode.', flags: 64 });
+    return showEmbedModal(interaction, session, action.replace('embed_', ''));
   }
   if (action === 'embed_add_field') {
     if (session.state.type !== 'embed') return interaction.reply({ content: 'Not in embed mode.', flags: 64 });
@@ -546,6 +574,7 @@ async function handleProperties(interaction, { sid }) {
         new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_edit`).setLabel('Edit').setStyle(ButtonStyle.Primary),
         new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_remove`).setLabel('Remove').setStyle(ButtonStyle.Danger),
         new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_dup`).setLabel('Duplicate').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId(`bld:${session.id}:prop:embed_add_field`).setLabel('Add Field').setStyle(ButtonStyle.Secondary),
       ),
       new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId(`bld:${session.id}:prop:field_up`).setLabel('Move Up').setStyle(ButtonStyle.Secondary),

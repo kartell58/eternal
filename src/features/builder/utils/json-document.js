@@ -1,5 +1,5 @@
 const { createDefaultComponentsV2State, createContainer, createTextDisplay } = require('../schemas/components-v2.schema');
-const { createDefaultEmbedState } = require('../schemas/embed.schema');
+const { createDefaultEmbedState, normalizeEmbedState } = require('../schemas/embed.schema');
 
 const DEFAULT_JSON_TEMPLATE = {
   version: '1.0',
@@ -87,8 +87,15 @@ function normalizeImportedDocument(parsed) {
   if (candidate.type === 'components_v2' && !Array.isArray(candidate.root)) {
     return { error: 'Unsupported Components V2 document: `root` must be an array.' };
   }
-  if (candidate.type === 'embed' && (typeof candidate.embed !== 'object' || candidate.embed == null || Array.isArray(candidate.embed))) {
-    return { error: 'Unsupported embed document: `embed` must be an object.' };
+  if (candidate.type === 'embed') {
+    const hasEmbeds = Array.isArray(candidate.embeds);
+    const hasEmbed = typeof candidate.embed === 'object' && candidate.embed != null && !Array.isArray(candidate.embed);
+    if (!hasEmbeds && !hasEmbed) {
+      return { error: 'Unsupported embed document: `embed` or `embeds` is required.' };
+    }
+    const state = JSON.parse(JSON.stringify(candidate));
+    normalizeEmbedState(state);
+    return { state };
   }
   return { state: JSON.parse(JSON.stringify(candidate)) };
 }
