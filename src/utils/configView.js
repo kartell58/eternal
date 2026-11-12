@@ -172,8 +172,8 @@ function buildPanel(guild, editingKey = DEFAULT_MODULE) {
 
   const postRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId("btn_post_verification")
-      .setLabel("Post verification panel")
+      .setCustomId("btn_post_captcha")
+      .setLabel("Post CAPTCHA panel")
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
       .setCustomId("btn_post_honeypot")
@@ -200,9 +200,16 @@ function buildPanel(guild, editingKey = DEFAULT_MODULE) {
       .setStyle(ButtonStyle.Success)
   );
 
+  const legacyRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("btn_post_verification")
+      .setLabel("Post verification panel")
+      .setStyle(ButtonStyle.Secondary)
+  );
+
   return {
     embeds: [embed],
-    components: [moduleRow, valueRow, postRow, modulePostRow]
+    components: [moduleRow, valueRow, postRow, modulePostRow, legacyRow]
   };
 }
 

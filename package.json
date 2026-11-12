@@ -29,6 +29,7 @@
     "dev:nodemon": "nodemon"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^1.1.0",
     "axios": "^1.21.1",
     "better-sqlite3": "^13.0.3",
     "discord.js": "^14.26.4",

@@ -9,6 +9,7 @@ const fs = require("fs");
 const path = require("path");
 const { get, set } = require("../settings");
 const { MODULES, buildPanel } = require("../utils/configView");
+const { buildCaptchaPanel } = require("../features/verification/panel");
 
 async function postVerificationPanel(guild) {
   const channelId = get(guild.id, "verificationChannel");
@@ -33,6 +34,18 @@ async function postVerificationPanel(guild) {
   );
 
   await channel.send({ embeds: [embed], components: [row] });
+  return { ok: true, status: "posted", channel };
+}
+
+async function postCaptchaPanel(guild) {
+  const channelId = get(guild.id, "verificationChannel");
+  const roleId = get(guild.id, "verificationRole");
+  const channel = channelId ? guild.channels.cache.get(channelId) : null;
+  const role = roleId ? guild.roles.cache.get(roleId) : null;
+  if (!channel) return { ok: false, status: "skipped", reason: "verification channel not configured" };
+  if (!role) return { ok: false, status: "skipped", reason: "verification role not configured" };
+
+  await channel.send(buildCaptchaPanel(guild.name));
   return { ok: true, status: "posted", channel };
 }
 
@@ -153,8 +166,23 @@ async function postHypeSquadPanel(guild) {
   return { ok: true, status: "posted", channel };
 }
 
+const SEND_ALL_PANELS = [
+  ["CAPTCHA Verification", postCaptchaPanel],
+  ["Honeypot", postHoneypotNotice],
+  ["Rules", postRulesPanel],
+  ["AutoQuest", postAutoQuestPanel],
+  ["HypeSquad", postHypeSquadPanel]
+];
+
 module.exports = {
   name: Events.InteractionCreate,
+  SEND_ALL_PANELS,
+  postCaptchaPanel,
+  postVerificationPanel,
+  postHoneypotNotice,
+  postRulesPanel,
+  postAutoQuestPanel,
+  postHypeSquadPanel,
 
   async execute(interaction) {
     if (interaction.isChatInputCommand()) return;
@@ -188,6 +216,28 @@ module.exports = {
 
       set(interaction.guild.id, module.setting, value);
       await interaction.update(buildPanel(interaction.guild, moduleKey));
+      return;
+    }
+
+    // ---------- Button: Post CAPTCHA panel ----------
+    if (customId === "btn_post_captcha") {
+      try {
+        const result = await postCaptchaPanel(interaction.guild);
+        if (!result.ok) {
+          const msg = result.reason === "verification role not configured"
+            ? "Verification role is not configured. Select it in the panel before posting."
+            : "Verification channel is not configured. Select it in the panel before posting.";
+          await interaction.reply({ content: msg, flags: 64 });
+          return;
+        }
+        await interaction.reply({ content: `CAPTCHA panel posted in ${result.channel}.`, flags: 64 });
+      } catch (err) {
+        console.error("Error posting CAPTCHA panel:", err);
+        await interaction.reply({
+          content: "Could not post the CAPTCHA panel. Check the bot's permissions.",
+          flags: 64
+        });
+      }
       return;
     }
 
@@ -305,13 +355,7 @@ module.exports = {
     if (customId === "btn_post_all") {
       await interaction.deferReply({ flags: 64 });
 
-      const tasks = [
-        ["Verification", postVerificationPanel],
-        ["Honeypot", postHoneypotNotice],
-        ["Rules", postRulesPanel],
-        ["AutoQuest", postAutoQuestPanel],
-        ["HypeSquad", postHypeSquadPanel]
-      ];
+      const tasks = SEND_ALL_PANELS;
 
       const posted = [];
       const skipped = [];
