@@ -79,6 +79,37 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
     return row.toJSON().components.map(c => c.custom_id);
   }
 
+  const EPH_CV2 = MessageFlags.Ephemeral | MessageFlags.IsComponentsV2;
+
+  function flattenNodes(components) {
+    const out = [];
+    function walk(n) {
+      if (!n) return;
+      if (Array.isArray(n)) return n.forEach(walk);
+      const j = typeof n.toJSON === "function" ? n.toJSON() : n;
+      if (!j) return;
+      out.push(j);
+      if (Array.isArray(j.components)) j.components.forEach(walk);
+    }
+    walk(components || []);
+    return out;
+  }
+  function textContents(components) {
+    return flattenNodes(components).filter(n => n.type === 10).map(n => n.content);
+  }
+  function buttonNodes(components) {
+    return flattenNodes(components).filter(n => n.type === 2);
+  }
+  function selectNodes(components) {
+    return flattenNodes(components).filter(n => n.type === 3);
+  }
+  function mediaItems(components) {
+    return flattenNodes(components).filter(n => n.type === 12).flatMap(g => g.items || []);
+  }
+  function separatorCount(components) {
+    return flattenNodes(components).filter(n => n.type === 14).length;
+  }
+
   await test("generateCode returns 6 alphabet characters", async () => {
     for (let i = 0; i < 100; i += 1) {
       const code = captcha.generateCode();
@@ -141,33 +172,45 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
     captcha.clearChallenges();
   });
 
-  await test("buildCaptchaPanel exposes Respond and Why verify? buttons", async () => {
-    const payload = buildCaptchaPanel("Test Guild");
-    assert.strictEqual(payload.embeds.length, 1);
+  await test("buildCaptchaPanel exposes a cv2 container with Respond and Why verify? buttons", async () => {
+    const payload = buildCaptchaPanel();
+    assert.strictEqual(payload.embeds, undefined);
     assert.strictEqual(payload.components.length, 1);
-    const row = payload.components[0].toJSON();
-    assert.deepStrictEqual(row.components.map(b => b.custom_id), ["captcha_respond", "captcha_why"]);
-    assert.deepStrictEqual(row.components.map(b => b.label), ["Respond", "Why verify?"]);
-    assert.strictEqual(row.components[0].style, 3); // Success
-    assert.ok(payload.embeds[0].toJSON().title);
+    assert.strictEqual(payload.components[0].toJSON().type, 17);
+    assert.strictEqual(payload.flags & MessageFlags.IsComponentsV2, MessageFlags.IsComponentsV2);
+    assert.deepStrictEqual(payload.allowedMentions, { parse: [] });
+    const texts = textContents(payload.components).join("\n");
+    assert.match(texts, /Verification/);
+    assert.match(texts, /\*\*`CAPTCHA`\*\*/);
+    const buttons = buttonNodes(payload.components);
+    assert.deepStrictEqual(buttons.map(b => b.custom_id), ["captcha_respond", "captcha_why"]);
+    assert.deepStrictEqual(buttons.map(b => b.label), ["Respond", "Why verify?"]);
+    assert.deepStrictEqual(buttons.map(b => b.style), [1, 2]); // Primary, Secondary
   });
 
-  await test("handleRespond replies ephemeral with image and six options", async () => {
+  await test("handleRespond replies ephemeral cv2 with image and six options", async () => {
     captcha.clearChallenges();
     const guild = mockGuild();
     const member = mockMember();
     const interaction = mockButtonInteraction("captcha_respond", { guild, member });
     await handleRespond(interaction, { getSetting: () => "r1" });
     assert.ok(interaction.repliedPayload, "reply sent");
-    assert.strictEqual(interaction.repliedPayload.flags, MessageFlags.Ephemeral);
+    assert.strictEqual(interaction.repliedPayload.flags, EPH_CV2);
+    assert.strictEqual(interaction.repliedPayload.embeds, undefined);
     assert.strictEqual(interaction.repliedPayload.files.length, 1);
     assert.strictEqual(interaction.repliedPayload.files[0].name, "captcha.png");
-    const embed = interaction.repliedPayload.embeds[0].toJSON();
-    assert.strictEqual(embed.image.url, "attachment://captcha.png");
-    const row = interaction.repliedPayload.components[0].toJSON();
-    assert.strictEqual(row.components[0].custom_id, "captcha_answer");
-    assert.strictEqual(row.components[0].options.length, 6);
-    assert.strictEqual(new Set(row.components[0].options.map(o => o.value)).size, 6);
+    const media = mediaItems(interaction.repliedPayload.components);
+    assert.strictEqual(media.length, 1);
+    assert.strictEqual(media[0].media.url, "attachment://captcha.png");
+    assert.ok(media[0].description, "media item carries a description (ALT badge)");
+    const texts = textContents(interaction.repliedPayload.components).join("\n");
+    assert.match(texts, /Verification — CAPTCHA Challenge/);
+    assert.match(texts, /Attempts left: 3\/3/);
+    assert.match(texts, /Time limit: 2 minutes/);
+    const select = selectNodes(interaction.repliedPayload.components)[0];
+    assert.strictEqual(select.custom_id, "captcha_answer");
+    assert.strictEqual(select.options.length, 6);
+    assert.strictEqual(new Set(select.options.map(o => o.value)).size, 6);
     captcha.clearChallenges();
   });
 
@@ -201,8 +244,10 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
       assignRole: async () => { assignCalls.push(true); return { status: "assigned", message: "Congratulations! You received the <@&r1> role." }; }
     });
     assert.strictEqual(assignCalls.length, 1);
-    assert.strictEqual(interaction.updated.components.length, 0);
-    assert.strictEqual(interaction.updated.embeds[0].toJSON().title, "✅ Verified!");
+    const texts = textContents(interaction.updated.components).join("\n");
+    assert.match(texts, /✅ Verified!/);
+    assert.match(texts, /Congratulations!/);
+    assert.strictEqual(selectNodes(interaction.updated.components).length, 0, "select removed after success");
     assert.strictEqual(captcha.getChallenge("g1", "u1"), null);
   });
 
@@ -216,8 +261,11 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
     const entry = captcha.getChallenge("g1", "u1");
     assert.ok(entry, "challenge kept");
     assert.strictEqual(entry.attemptsLeft, 2);
-    assert.match(interaction.updated.embeds[0].toJSON().description, /2\/3/);
-    assert.strictEqual(interaction.updated.components.length, 1);
+    const texts = textContents(interaction.updated.components).join("\n");
+    assert.match(texts, /2\/3/);
+    assert.match(texts, /❌ Incorrect code/);
+    assert.strictEqual(selectNodes(interaction.updated.components).length, 1, "select kept for another attempt");
+    assert.ok(mediaItems(interaction.updated.components).length === 1, "image kept");
     captcha.clearChallenges();
   });
 
@@ -231,8 +279,9 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
       const interaction = mockSelectInteraction("captcha_answer", { member, values: [wrong] });
       await handleAnswer(interaction, { assignRole: async () => { throw new Error("assignRole must not be called"); } });
       if (i < 2) continue;
-      assert.strictEqual(interaction.updated.embeds[0].toJSON().title, "❌ Verification failed");
-      assert.strictEqual(interaction.updated.components.length, 0);
+      const texts = textContents(interaction.updated.components).join("\n");
+      assert.match(texts, /❌ Verification failed/);
+      assert.strictEqual(selectNodes(interaction.updated.components).length, 0);
     }
     assert.strictEqual(captcha.getChallenge("g1", "u1"), null);
     captcha.clearChallenges();
@@ -245,7 +294,8 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
     const member = mockMember();
     const interaction = mockSelectInteraction("captcha_answer", { member, values: [entry.displayCode] });
     await handleAnswer(interaction, { assignRole: async () => { throw new Error("assignRole must not be called"); } });
-    assert.strictEqual(interaction.updated.embeds[0].toJSON().title, "⏱️ Challenge expired");
+    const texts = textContents(interaction.updated.components).join("\n");
+    assert.match(texts, /⏱️ Challenge expired/);
     assert.strictEqual(captcha.getChallenge("g1", "u1"), null);
   });
 
@@ -258,21 +308,22 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
     await handleAnswer(interaction, {
       assignRole: async () => ({ status: "hierarchy", message: "I cannot assign this role due to role hierarchy." })
     });
-    assert.strictEqual(interaction.updated.embeds[0].toJSON().title, "⚠️ Verification issue");
+    const texts = textContents(interaction.updated.components).join("\n");
+    assert.match(texts, /⚠️ Verification issue/);
     captcha.clearChallenges();
   });
 
-  await test("handleWhy answers with the TOOLS-style embed and exact text", async () => {
+  await test("handleWhy answers with the TOOLS-style cv2 container and exact text", async () => {
     const interaction = mockButtonInteraction("captcha_why", {});
     await handleWhy(interaction);
-    assert.strictEqual(interaction.repliedPayload.flags, MessageFlags.Ephemeral);
+    assert.strictEqual(interaction.repliedPayload.flags, EPH_CV2);
     assert.strictEqual(interaction.repliedPayload.content, undefined);
-    assert.strictEqual(interaction.repliedPayload.embeds.length, 1);
-    const embed = interaction.repliedPayload.embeds[0].toJSON();
-    assert.strictEqual(embed.title, undefined);
-    assert.ok(embed.description.startsWith("**Por que ter uma verificação de conta...**\n\n"));
-    assert.ok(embed.description.includes("A verificação de conta é para prevenir que contas indesejadas entre em nosso servidor, assim deixando uma comunidade mais segura e sem SPAM desnecessários em sua DM."));
-    assert.strictEqual(embed.footer.text, "Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35");
+    assert.strictEqual(interaction.repliedPayload.embeds, undefined);
+    const texts = textContents(interaction.repliedPayload.components);
+    assert.strictEqual(texts[0], "**Por que ter uma verificação de conta...**");
+    assert.strictEqual(texts[1], "A verificação de conta é para prevenir que contas indesejadas entre em nosso servidor, assim deixando uma comunidade mais segura e sem SPAM desnecessários em sua DM.");
+    assert.strictEqual(texts[texts.length - 1], "-# Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35");
+    assert.strictEqual(separatorCount(interaction.repliedPayload.components), 1, "separator between body and credit");
     assert.strictEqual(
       WHY_VERIFY_TEXT,
       "**Por que ter uma verificação de conta...**\n" +
@@ -284,7 +335,7 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
   await test("execute routes captcha buttons and the answer select", async () => {
     const why = mockButtonInteraction("captcha_why", {});
     await execute(why);
-    assert.ok(why.repliedPayload.embeds[0].toJSON().description.startsWith("**Por que ter uma verificação de conta...**"));
+    assert.ok(textContents(why.repliedPayload.components)[0].startsWith("**Por que ter uma verificação de conta...**"));
 
     const unrelated = mockButtonInteraction("btn_verify", {});
     await execute(unrelated);

@@ -1,9 +1,14 @@
 const {
   Events,
-  EmbedBuilder,
+  ContainerBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
   ActionRowBuilder,
   StringSelectMenuBuilder,
-  AttachmentBuilder
+  AttachmentBuilder,
+  MessageFlags
 } = require("discord.js");
 const settings = require("../settings");
 const captcha = require("../features/verification/captcha");
@@ -13,55 +18,83 @@ const WHY_TITLE = "Por que ter uma verificação de conta...";
 const WHY_TITLE_MD = `**${WHY_TITLE}**`;
 const WHY_BODY = "A verificação de conta é para prevenir que contas indesejadas entre em nosso servidor, assim deixando uma comunidade mais segura e sem SPAM desnecessários em sua DM.";
 const WHY_CREDIT = "Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35";
-const WHY_DIVIDER = "─".repeat(38);
 const WHY_VERIFY_TEXT = [WHY_TITLE_MD, WHY_BODY, WHY_CREDIT].join("\n");
 
-function buildWhyVerifyEmbed() {
-  return new EmbedBuilder()
-    .setColor(0x2b2d31)
-    .setDescription(`${WHY_TITLE_MD}\n\n${WHY_BODY}\n\n${WHY_DIVIDER}`)
-    .setFooter({ text: WHY_CREDIT });
+const CV2_FLAGS = MessageFlags.IsComponentsV2;
+const EPHEMERAL_CV2_FLAGS = MessageFlags.Ephemeral | MessageFlags.IsComponentsV2;
+
+function buildWhyVerifyContainer() {
+  return new ContainerBuilder()
+    .setAccentColor(0x5865f2)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(WHY_TITLE_MD),
+      new TextDisplayBuilder().setContent(WHY_BODY)
+    )
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`-# ${WHY_CREDIT}`)
+    );
 }
 
-function challengeEmbed(entry, { title = "🛡️ Verification", statusLine = null } = {}) {
+function challengeSelectRow(entry) {
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId("captcha_answer")
+      .setPlaceholder("Select the option matching the code...")
+      .addOptions(entry.options.map(option => ({ label: option, value: option })))
+  );
+}
+
+function buildChallengeContainer(entry, { statusLine = null } = {}) {
   const expiresAt = Math.floor(entry.expiresAt / 1000);
-  const lines = statusLine
-    ? [statusLine]
-    : ["Select the code shown in the image below."];
-  lines.push("");
-  lines.push(`**Attempts left:** ${entry.attemptsLeft}/${captcha.MAX_ATTEMPTS}`);
-  lines.push(`**Time limit:** 2 minutes`);
-  lines.push("");
-  lines.push(`This challenge expires <t:${expiresAt}:R>.`);
+  const instruction = statusLine
+    ? statusLine
+    : "Carefully analyze the image below and select the menu option matching the displayed code.";
 
-  const embed = new EmbedBuilder()
-    .setColor(0x5865f2)
-    .setTitle(title)
-    .setDescription(lines.join("\n"))
-    .setImage("attachment://captcha.png");
+  const container = new ContainerBuilder()
+    .setAccentColor(0x5865f2)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent("**Verification — CAPTCHA Challenge**"),
+      new TextDisplayBuilder().setContent(instruction)
+    )
+    .addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems(
+        new MediaGalleryItemBuilder()
+          .setURL("attachment://captcha.png")
+          .setDescription("CAPTCHA code")
+      )
+    )
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        `-# Attempts left: ${entry.attemptsLeft}/${captcha.MAX_ATTEMPTS} • Time limit: 2 minutes\n` +
+        `-# This challenge expires <t:${expiresAt}:R>.`
+      )
+    )
+    .addActionRowComponents(challengeSelectRow(entry));
 
-  return embed;
-}
-
-function challengeComponents(entry) {
-  const select = new StringSelectMenuBuilder()
-    .setCustomId("captcha_answer")
-    .setPlaceholder("Select the code shown in the image")
-    .addOptions(entry.options.map(option => ({ label: option, value: option })));
-
-  return [new ActionRowBuilder().addComponents(select)];
+  return container;
 }
 
 function challengeFiles(entry) {
   return [new AttachmentBuilder(entry.image, { name: "captcha.png" })];
 }
 
-function staticEmbed({ color, title, description }) {
-  return new EmbedBuilder().setColor(color).setTitle(title).setDescription(description);
+function staticContainer({ accent, title, body }) {
+  return new ContainerBuilder()
+    .setAccentColor(accent)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`**${title}**`),
+      new TextDisplayBuilder().setContent(body)
+    );
 }
 
 async function handleWhy(interaction) {
-  await interaction.reply({ embeds: [buildWhyVerifyEmbed()], flags: 64 });
+  await interaction.reply({
+    components: [buildWhyVerifyContainer()],
+    flags: EPHEMERAL_CV2_FLAGS,
+    allowedMentions: { parse: [] }
+  });
 }
 
 async function handleRespond(interaction, { getSetting } = {}) {
@@ -88,10 +121,10 @@ async function handleRespond(interaction, { getSetting } = {}) {
   const entry = captcha.createChallenge(interaction.guild.id, interaction.user.id);
 
   await interaction.reply({
-    embeds: [challengeEmbed(entry)],
-    components: challengeComponents(entry),
+    components: [buildChallengeContainer(entry)],
     files: challengeFiles(entry),
-    flags: 64
+    flags: EPHEMERAL_CV2_FLAGS,
+    allowedMentions: { parse: [] }
   });
 }
 
@@ -108,13 +141,13 @@ async function handleAnswer(interaction, { assignRole } = {}) {
 
   if (!entry) {
     await interaction.update({
-      embeds: [staticEmbed({
-        color: 0xeab308,
+      components: [staticContainer({
+        accent: 0xeab308,
         title: "⏱️ Challenge expired",
-        description: "This CAPTCHA has expired. Click **Respond** on the verification panel to try again."
+        body: "This CAPTCHA has expired. Click **Respond** on the verification panel to try again."
       })],
-      components: [],
-      files: []
+      flags: CV2_FLAGS,
+      allowedMentions: { parse: [] }
     });
     return;
   }
@@ -126,13 +159,13 @@ async function handleAnswer(interaction, { assignRole } = {}) {
     const result = await assign(interaction);
     const ok = result.status === "assigned" || result.status === "already";
     await interaction.update({
-      embeds: [staticEmbed({
-        color: ok ? 0x57f287 : 0xed4245,
+      components: [staticContainer({
+        accent: ok ? 0x57f287 : 0xed4245,
         title: ok ? "✅ Verified!" : "⚠️ Verification issue",
-        description: result.message
+        body: result.message
       })],
-      components: [],
-      files: []
+      flags: CV2_FLAGS,
+      allowedMentions: { parse: [] }
     });
     return;
   }
@@ -142,21 +175,22 @@ async function handleAnswer(interaction, { assignRole } = {}) {
   if (entry.attemptsLeft <= 0) {
     captcha.deleteChallenge(guildId, userId);
     await interaction.update({
-      embeds: [staticEmbed({
-        color: 0xed4245,
+      components: [staticContainer({
+        accent: 0xed4245,
         title: "❌ Verification failed",
-        description: "You used all 3 attempts. Click **Respond** on the verification panel to get a new code."
+        body: "You used all 3 attempts. Click **Respond** on the verification panel to get a new code."
       })],
-      components: [],
-      files: []
+      flags: CV2_FLAGS,
+      allowedMentions: { parse: [] }
     });
     return;
   }
 
   await interaction.update({
-    embeds: [challengeEmbed(entry, { statusLine: "❌ Incorrect code, please try again." })],
-    components: challengeComponents(entry),
-    files: challengeFiles(entry)
+    components: [buildChallengeContainer(entry, { statusLine: "❌ Incorrect code, please try again." })],
+    files: challengeFiles(entry),
+    flags: CV2_FLAGS,
+    allowedMentions: { parse: [] }
   });
 }
 
@@ -167,9 +201,8 @@ module.exports = {
   WHY_TITLE_MD,
   WHY_BODY,
   WHY_CREDIT,
-  buildWhyVerifyEmbed,
-  challengeEmbed,
-  challengeComponents,
+  buildWhyVerifyContainer,
+  buildChallengeContainer,
   handleWhy,
   handleRespond,
   handleAnswer,

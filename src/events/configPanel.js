@@ -45,7 +45,7 @@ async function postCaptchaPanel(guild) {
   if (!channel) return { ok: false, status: "skipped", reason: "verification channel not configured" };
   if (!role) return { ok: false, status: "skipped", reason: "verification role not configured" };
 
-  await channel.send(buildCaptchaPanel(guild.name));
+  await channel.send(buildCaptchaPanel());
   return { ok: true, status: "posted", channel };
 }
 
