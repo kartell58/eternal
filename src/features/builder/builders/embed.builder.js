@@ -1,8 +1,8 @@
 const { EmbedBuilder } = require('discord.js');
 const { parseColor } = require('../utils/validator');
+const { normalizeEmbedState } = require('../schemas/embed.schema');
 
-function buildEmbedPayload(state) {
-  const e = state.embed || {};
+function buildSingleEmbed(e) {
   const embed = new EmbedBuilder();
 
   if (e.title) embed.setTitle(e.title);
@@ -35,11 +35,28 @@ function buildEmbedPayload(state) {
   }));
   if (fields.length) embed.addFields(fields);
 
+  return embed;
+}
+
+function hasEmbedContent(e) {
+  if (!e) return false;
+  if (e.title || e.description || e.url || e.timestamp) return true;
+  if (e.color != null && e.color !== '') return true;
+  if (e.author?.name || e.author?.url || e.author?.icon_url) return true;
+  if (e.footer?.text || e.footer?.icon_url) return true;
+  if (e.thumbnail?.url || e.image?.url) return true;
+  if (Array.isArray(e.fields) && e.fields.some(f => f && (f.name || f.value))) return true;
+  return false;
+}
+
+function buildEmbedPayload(state) {
+  normalizeEmbedState(state);
+  const embeds = (state.embeds || []).filter(hasEmbedContent).map(buildSingleEmbed);
   return {
     content: state.content || undefined,
-    embeds: [embed],
+    embeds,
     components: []
   };
 }
 
-module.exports = { buildEmbedPayload };
+module.exports = { buildEmbedPayload, buildSingleEmbed, hasEmbedContent };

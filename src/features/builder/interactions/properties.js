@@ -4,6 +4,7 @@ const { findParentInfo } = require('../utils/component-tree');
 const templateService = require('../services/template.service');
 const { buildEmbedEditor, buildCv2Editor } = require('./navigation');
 const { parseColor } = require('../utils/validator');
+const { normalizeEmbedState, getSelectedEmbed, createDefaultEmbedState } = require('../schemas/embed.schema');
 
 function tid(s, a, extra = '') { return `bld:${s.id}:prop:${a}${extra ? ':' + extra : ''}`; }
 
@@ -21,8 +22,9 @@ function modalField(id, label, style, value, required = false, opts = {}) {
 }
 
 function showEmbedModal(interaction, session) {
+  normalizeEmbedState(session.state);
   const section = session.embedSection || 'basic';
-  const e = session.state.embed || {};
+  const e = getSelectedEmbed(session.state) || {};
   const titles = { basic: "Title & Description", author: "Author", footer: "Footer & Timestamp", images: "Images", content: "Message Content" };
   const modal = new ModalBuilder().setCustomId(tid(session, 'embed_modal', section)).setTitle((titles[section] || `Edit: ${section}`).slice(0, 45));
   if (section === 'basic') {
@@ -150,7 +152,8 @@ async function handleProperties(interaction, { sid }) {
     const sub = interaction.customId.split(':')[4];
     if (action === 'embed_modal') {
       pushHistory(session);
-      const e = session.state.embed;
+      normalizeEmbedState(session.state);
+      const e = getSelectedEmbed(session.state);
       if (sub === 'basic') {
         e.title = interaction.fields.getTextInputValue('title');
         e.url = interaction.fields.getTextInputValue('url');
@@ -181,7 +184,9 @@ async function handleProperties(interaction, { sid }) {
     }
     if (action === 'field_add') {
       pushHistory(session);
-      const fields = session.state.embed.fields || (session.state.embed.fields = []);
+      normalizeEmbedState(session.state);
+      const e = getSelectedEmbed(session.state);
+      const fields = e.fields || (e.fields = []);
       if (fields.length >= 25) return interaction.reply({ content: 'Maximum 25 fields.', flags: 64 });
       fields.push({
         name: interaction.fields.getTextInputValue('name'),
@@ -193,7 +198,9 @@ async function handleProperties(interaction, { sid }) {
     }
     if (action === 'field_edit_modal') {
       const idx = Number(interaction.customId.split(':')[4]);
-      const fields = session.state.embed.fields || [];
+      normalizeEmbedState(session.state);
+      const e = getSelectedEmbed(session.state);
+      const fields = e.fields || [];
       if (!fields[idx]) return interaction.reply({ content: 'Field not found.', flags: 64 });
       pushHistory(session);
       fields[idx] = {
@@ -409,9 +416,14 @@ async function handleProperties(interaction, { sid }) {
       session.draftId = null;
       session.templateId = null;
       session.selectedNodeId = candidate.type === 'components_v2' ? (candidate.root?.[0]?._id || null) : null;
-      session.view = 'home';
       saveSession(session);
-      const { buildMainPanel } = require('./navigation');
+      const { buildMainPanel, buildEmbedMainPanel } = require('./navigation');
+      if (candidate.type === 'embed') {
+        normalizeEmbedState(session.state);
+        session.view = 'embed_home';
+        return interaction.update(buildEmbedMainPanel(session));
+      }
+      session.view = 'home';
       return interaction.update(buildMainPanel(session));
     }
     if (action === 'edit_existing_modal') {
@@ -432,10 +444,9 @@ async function handleProperties(interaction, { sid }) {
           saveSession(session);
           return interaction.update({ content: 'Loaded Components V2 message as edit target. Full visual reconstruction of existing CV2 messages is not supported; the editor started a new CV2 draft that will replace the target message when you publish edit. You can now build the replacement.', embeds: buildCv2Editor(session).embeds, components: buildCv2Editor(session).components });
         } else if (msg.embeds && msg.embeds.length) {
-          const em = msg.embeds[0];
-          const st = require('../schemas/embed.schema').createDefaultEmbedState();
+          const st = createDefaultEmbedState();
           st.content = msg.content || '';
-          st.embed = {
+          st.embeds = msg.embeds.slice(0, 10).map(em => ({
             author: { name: em.author?.name || '', icon_url: em.author?.iconURL || '', url: em.author?.url || '' },
             title: em.title || '',
             url: em.url || '',
@@ -446,15 +457,22 @@ async function handleProperties(interaction, { sid }) {
             image: { url: em.image?.url || '' },
             footer: { text: em.footer?.text || '', icon_url: em.footer?.iconURL || '' },
             timestamp: em.timestamp ? new Date(em.timestamp).toISOString() : null
-          };
+          }));
+          st.selectedEmbedIndex = 0;
+          normalizeEmbedState(st);
           session.state = st; session.type = 'embed';
+          session.view = 'embed_home';
+          saveSession(session);
+          const { buildEmbedMainPanel } = require('./navigation');
+          return interaction.update(buildEmbedMainPanel(session));
         } else {
-          session.state = require('../schemas/embed.schema').createDefaultEmbedState();
-          session.state.content = msg.content || '';
-          session.type = 'embed';
+          const st = createDefaultEmbedState();
+          st.content = msg.content || '';
+          session.state = st; session.type = 'embed'; session.view = 'embed_home';
+          saveSession(session);
+          const { buildEmbedMainPanel } = require('./navigation');
+          return interaction.update(buildEmbedMainPanel(session));
         }
-        saveSession(session);
-        return interaction.update(buildEmbedEditor(session));
       } catch (e) {
         return interaction.reply({ content: `Failed to load message: ${e.message}`, flags: 64 });
       }
@@ -492,8 +510,10 @@ async function handleProperties(interaction, { sid }) {
     return interaction.deferUpdate();
   }
   if (['field_edit','field_remove','field_dup','field_up','field_down'].includes(action)) {
+    normalizeEmbedState(session.state);
+    const e = getSelectedEmbed(session.state);
     const idx = session.selectedFieldIndex;
-    const fields = session.state.embed.fields || [];
+    const fields = e.fields || [];
     if (idx == null || !fields[idx]) return interaction.reply({ content: 'Select a field first.', flags: 64 });
     if (action === 'field_edit') {
       const f = fields[idx];

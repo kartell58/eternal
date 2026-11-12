@@ -12,7 +12,7 @@ const {
   FileUploadBuilder
 } = require('discord.js');
 const { requireSession, saveSession, pushHistory, popHistory } = require('../services/session.service');
-const { createDefaultEmbedState } = require('../schemas/embed.schema');
+const { createDefaultEmbedState, createEmptyEmbed, normalizeEmbedState, getSelectedEmbed } = require('../schemas/embed.schema');
 const { createDefaultComponentsV2State, createContainer, COMPONENT_FACTORIES } = require('../schemas/components-v2.schema');
 const draftService = require('../services/draft.service');
 const templateService = require('../services/template.service');
@@ -60,6 +60,53 @@ function editorContext(session) {
 
 function getContainers(session) {
   return (session.state?.root || []).filter(n => n && n.type === 'container');
+}
+
+
+function getEmbedOptions(session) {
+  normalizeEmbedState(session.state);
+  const embeds = session.state.embeds || [];
+  if (!embeds.length) return [{ label: 'No embeds available', value: 'none', description: 'Add an embed to get started' }];
+  return embeds.slice(0, 25).map((e, i) => ({
+    label: `Embed ${i + 1}`.slice(0, 100),
+    value: String(i)
+  }));
+}
+
+function buildEmbedMainPanel(session) {
+  const { TextDisplayBuilder } = require('discord.js');
+  normalizeEmbedState(session.state);
+  const embeds = session.state.embeds || [];
+  const options = getEmbedOptions(session);
+
+  const info = infoContainer(
+    'Embed Builder',
+    'Create and edit embed messages for this builder draft. Select an embed to edit, add a new embed, or publish your message.'
+  );
+
+  const selectRow = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(`bld:${sid(session)}:nav:embed_select`)
+      .setPlaceholder('Select an Embed to edit')
+      .setDisabled(embeds.length === 0)
+      .addOptions(options)
+  );
+
+  const addRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:add_embed_main`).setLabel('Add Embed').setStyle(ButtonStyle.Secondary)
+  );
+
+  const actionsRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:embed_add_button`).setLabel('Add Button').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:send_custom`).setLabel('Send Custom').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:quick_send`).setLabel('Quick Send').setStyle(ButtonStyle.Success),
+  );
+
+  const backRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:back_selection`).setLabel('Builder Selection').setStyle(ButtonStyle.Secondary)
+  );
+
+  return cv2Screen([info, selectRow, addRow, actionsRow, backRow]);
 }
 
 function buildSelectionScreen(session) {
@@ -145,11 +192,13 @@ function buildHome(session) {
 }
 
 function summarizeEmbed(state) {
-  const e = state.embed || {};
+  const e = getSelectedEmbed(state) || {};
   const lines = [];
   lines.push(`Title: ${e.title ? String(e.title).slice(0, 60) : '—'}`);
   lines.push(`Description: ${e.description ? String(e.description).slice(0, 80) : '—'}`);
   lines.push(`Fields: ${(e.fields || []).length}/25`);
+  const total = Array.isArray(state.embeds) ? state.embeds.length : 1;
+  if (total > 1) lines.unshift(`Embeds: ${total}`);
   if (state.content) lines.push(`Content: ${String(state.content).slice(0, 60)}`);
   return lines.join('\n').slice(0, 1024);
 }
@@ -167,8 +216,11 @@ function sectionLabel(key) {
 }
 
 function buildEmbedEditor(session) {
+  normalizeEmbedState(session.state);
   const section = session.embedSection || 'basic';
-  const info = infoContainer('Embed Editor', `**Editing:** ${editorContext(session)}\n**Section:** ${sectionLabel(section)}`, [{ name: 'Summary', value: summarizeEmbed(session.state) }], 'Select a section, edit it, then preview or publish.');
+  const idx = session.state.selectedEmbedIndex || 0;
+  const total = session.state.embeds.length;
+  const info = infoContainer('Embed Editor', `**Editing:** ${editorContext(session)}\n**Embed:** ${idx + 1} of ${total}\n**Section:** ${sectionLabel(section)}`, [{ name: 'Summary', value: summarizeEmbed(session.state) }], 'Select a section, edit it, then preview or publish.');
 
   const nav = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
@@ -197,7 +249,7 @@ function buildEmbedEditor(session) {
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:publish_menu`).setLabel('Publish').setStyle(ButtonStyle.Primary),
   );
   const back = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:home`).setLabel('Home').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:embed_back_panel`).setLabel('Back').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:undo`).setLabel('Undo').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bld:${sid(session)}:nav:back_selection`).setLabel('Builder Selection').setStyle(ButtonStyle.Secondary),
   );
@@ -336,7 +388,12 @@ function buildEditExisting(session) {
 }
 
 function currentEditor(session) {
-  return session.state.type === 'embed' ? buildEmbedEditor(session) : buildCv2Editor(session);
+  if (session.state && session.state.type === 'embed') {
+    normalizeEmbedState(session.state);
+    if (session.view === 'embed_home') return buildEmbedMainPanel(session);
+    return buildEmbedEditor(session);
+  }
+  return buildCv2Editor(session);
 }
 
 function buildPayloadForSession(session) {
@@ -362,6 +419,20 @@ async function handleNavigation(interaction, { sid }) {
   const action = interaction.customId.split(':')[3];
 
   if (interaction.isStringSelectMenu()) {
+    if (action === 'embed_select') {
+      if (session.state?.type !== 'embed') session.state = createDefaultEmbedState();
+      normalizeEmbedState(session.state);
+      const idx = parseInt(interaction.values[0], 10);
+      if (Number.isNaN(idx) || idx < 0 || idx >= session.state.embeds.length) {
+        return interaction.reply({ content: 'The selected embed could not be found.', flags: 64 });
+      }
+      session.state.selectedEmbedIndex = idx;
+      session.state.embed = session.state.embeds[idx];
+      session.type = 'embed';
+      session.view = 'editor';
+      saveSession(session);
+      return interaction.update(buildEmbedEditor(session));
+    }
     if (action === 'container_select') {
       const val = interaction.values[0];
       if (val === 'none') return interaction.deferUpdate();
@@ -471,16 +542,58 @@ async function handleNavigation(interaction, { sid }) {
 
   switch (action) {
     case 'select_embed': {
-      // Switch to embed editing experience in the same session/message
+      // Switch to embed builder main panel in the same session/message
       if (!session.state || session.state.type !== 'embed') {
         session.state = createDefaultEmbedState();
+      } else {
+        normalizeEmbedState(session.state);
       }
       session.type = 'embed';
-      session.view = 'editor';
+      session.view = 'embed_home';
       session.embedSection = session.embedSection || 'basic';
       session.containerEditorContainerId = null;
       saveSession(session);
+      return interaction.update(buildEmbedMainPanel(session));
+    }
+    case 'embed_select': {
+      if (session.state?.type !== 'embed') session.state = createDefaultEmbedState();
+      normalizeEmbedState(session.state);
+      const idx = parseInt(interaction.values[0], 10);
+      if (Number.isNaN(idx) || idx < 0 || idx >= session.state.embeds.length) {
+        return interaction.reply({ content: 'The selected embed could not be found.', flags: 64 });
+      }
+      session.state.selectedEmbedIndex = idx;
+      session.state.embed = session.state.embeds[idx];
+      session.type = 'embed';
+      session.view = 'editor';
+      saveSession(session);
       return interaction.update(buildEmbedEditor(session));
+    }
+    case 'add_embed_main': {
+      if (session.state?.type !== 'embed') session.state = createDefaultEmbedState();
+      normalizeEmbedState(session.state);
+      if (session.state.embeds.length >= 10) {
+        return interaction.reply({ content: 'A message can have at most 10 embeds.', flags: 64 });
+      }
+      pushHistory(session);
+      const e = createEmptyEmbed();
+      session.state.embeds.push(e);
+      session.state.selectedEmbedIndex = session.state.embeds.length - 1;
+      session.state.embed = e;
+      session.type = 'embed';
+      session.view = 'editor';
+      saveSession(session);
+      return interaction.update(buildEmbedEditor(session));
+    }
+    case 'embed_back_panel': {
+      if (session.state?.type !== 'embed') session.state = createDefaultEmbedState();
+      normalizeEmbedState(session.state);
+      session.view = 'embed_home';
+      saveSession(session);
+      return interaction.update(buildEmbedMainPanel(session));
+    }
+    case 'embed_add_button': {
+      return interaction.reply({ content: 'Adding message buttons is not available in the Embed Builder. Use the Components V2 Builder for button components.', flags: 64 });
     }
     case 'select_cv2': {
       // Switch to Components V2 workflow (container selection/main panel)
@@ -509,9 +622,10 @@ async function handleNavigation(interaction, { sid }) {
     case 'home':
       session.containerEditorContainerId = null;
       if (session.state && session.state.type === 'embed') {
-        session.view = 'editor';
+        session.view = 'embed_home';
+        normalizeEmbedState(session.state);
         saveSession(session);
-        return interaction.update(buildEmbedEditor(session));
+        return interaction.update(buildEmbedMainPanel(session));
       }
       session.view = 'home';
       saveSession(session);
@@ -713,6 +827,7 @@ async function handleNavigation(interaction, { sid }) {
       if (!popHistory(session)) return interaction.reply({ content: 'Nothing to undo.', flags: 64 });
       saveSession(session);
       if (session.view === 'selection') return interaction.update(buildSelectionScreen(session));
+      if (session.view === 'embed_home') return interaction.update(buildEmbedMainPanel(session));
       return interaction.update(session.view === 'home' ? buildMainPanel(session) : currentEditor(session));
     case 'preview':
       try {
@@ -749,7 +864,9 @@ async function handleNavigation(interaction, { sid }) {
       return interaction.showModal(modal);
     }
     case 'embed_field_tools': {
-      const fields = session.state.embed.fields || [];
+      if (session.state?.type === 'embed') normalizeEmbedState(session.state);
+      const e = session.state?.type === 'embed' ? getSelectedEmbed(session.state) : (session.state.embed || {});
+      const fields = (e && e.fields) || [];
       const info = infoContainer('Field Tools', fields.length ? fields.map((f, i) => `${i + 1}. ${String(f.name || '(unnamed)').slice(0, 80)}`).join('\n').slice(0, 4000) : 'No fields yet. Go back and use "Add Field" first.');
       const opts = fields.map((f, i) => ({ label: `${i + 1}. ${String(f.name || 'Field').slice(0, 90)}`.slice(0, 100), value: String(i) })).slice(0, 25);
       if (!opts.length) opts.push({ label: 'No fields', value: 'none' });
@@ -774,4 +891,4 @@ async function handleNavigation(interaction, { sid }) {
   }
 }
 
-module.exports = { handleNavigation, buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor, currentEditor, buildContainerEditor, buildSelectionScreen };
+module.exports = { handleNavigation, buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor, currentEditor, buildContainerEditor, buildSelectionScreen, buildEmbedMainPanel };

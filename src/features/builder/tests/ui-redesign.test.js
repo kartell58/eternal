@@ -1,7 +1,7 @@
 const assert = require('assert');
 const { MessageFlags } = require('discord.js');
 const { createSession } = require('../services/session.service');
-const { buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor } = require('../interactions/navigation');
+const { buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor, buildSelectionScreen, buildEmbedMainPanel } = require('../interactions/navigation');
 const { buildPublishMenu } = require('../interactions/publishing');
 const { createDefaultEmbedState } = require('../schemas/embed.schema');
 const { createDefaultComponentsV2State, createContainer } = require('../schemas/components-v2.schema');
@@ -131,6 +131,39 @@ const { createDefaultComponentsV2State, createContainer } = require('../schemas/
     assert.ok(customIds(embed).includes(`bld:${e.id}:nav:back_selection`), 'embed back to selection');
   });
 
+  await test('selection screen offers Embed and Components V2 builders in one ephemeral CV2 message', () => {
+    const s = createSession('u1', 'g1', 'c1', 'components_v2');
+    s.view = 'selection';
+    const view = buildSelectionScreen(s);
+    assert.ok(hasFlag(view, MessageFlags.Ephemeral), 'ephemeral');
+    assert.ok(hasFlag(view, MessageFlags.IsComponentsV2), 'components v2 message');
+    const ids = customIds(view).join(' ');
+    assert.ok(ids.includes(`bld:${s.id}:nav:select_embed`), 'embed option');
+    assert.ok(ids.includes(`bld:${s.id}:nav:select_cv2`), 'cv2 option');
+  });
+
+  await test('embed builder main panel follows Rio-style layout without auto-selection', () => {
+    const s = createSession('u1', 'g1', 'c1', 'embed');
+    s.state = createDefaultEmbedState(); // includes one default embed but panel must not auto-select
+    s.view = 'embed_home';
+    const view = buildEmbedMainPanel(s);
+    assert.ok(hasFlag(view, MessageFlags.Ephemeral), 'ephemeral');
+    assert.ok(hasFlag(view, MessageFlags.IsComponentsV2), 'cv2-compatible');
+    const text = allText(view);
+    assert.ok(text.includes('Embed Builder'), 'heading');
+    const sel = findSelect(view, ':nav:embed_select');
+    assert.ok(sel, 'embed selector');
+    assert.strictEqual(sel.placeholder, 'Select an Embed to edit', 'placeholder');
+    assert.ok(!(sel.options || []).some(o => o.default), 'no default selection');
+    const ids = customIds(view).join(' ');
+    assert.ok(ids.includes(`bld:${s.id}:nav:add_embed_main`), 'add embed');
+    assert.ok(ids.includes(`bld:${s.id}:nav:embed_add_button`), 'add button');
+    assert.ok(ids.includes(`bld:${s.id}:nav:send_custom`), 'send custom');
+    assert.ok(ids.includes(`bld:${s.id}:nav:quick_send`), 'quick send');
+    assert.ok(!ids.includes('generate_embed_ai') && !text.toLowerCase().includes('generate embed with ai'), 'no AI action');
+    assert.ok(ids.includes(`bld:${s.id}:nav:back_selection`), 'back to selection');
+  });
+
   await test('embed editor has section navigation, actions, and back controls', () => {
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.state = createDefaultEmbedState();
@@ -142,8 +175,9 @@ const { createDefaultComponentsV2State, createContainer } = require('../schemas/
     assert.ok(ids.includes(`bld:${s.id}:nav:preview`));
     assert.ok(ids.includes(`bld:${s.id}:nav:save_menu`));
     assert.ok(ids.includes(`bld:${s.id}:nav:publish_menu`));
-    assert.ok(ids.includes(`bld:${s.id}:nav:home`));
+    assert.ok(ids.includes(`bld:${s.id}:nav:embed_back_panel`));
     assert.ok(ids.includes(`bld:${s.id}:nav:undo`));
+    assert.ok(ids.includes(`bld:${s.id}:nav:back_selection`));
   });
 
   await test('embed editor field section enables field tools', () => {
@@ -182,8 +216,8 @@ const { createDefaultComponentsV2State, createContainer } = require('../schemas/
   await test('publish menu reflects validation and destination state', () => {
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.state = createDefaultEmbedState();
-    s.state.embed.title = 'Hello';
-    s.state.embed.description = 'World';
+    s.state.embeds[0].title = 'Hello';
+    s.state.embeds[0].description = 'World';
     const view = buildPublishMenu(s);
     const ids = customIds(view).join(' ');
     assert.ok(ids.includes(':pub:channel'), 'channel select for new message');

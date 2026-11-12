@@ -24,21 +24,21 @@ function parseColor(str) {
   return Number.isNaN(n) ? null : n;
 }
 
-function validateEmbedState(state) {
+function validateSingleEmbed(e, prefix = '') {
   const errors = [];
-  const e = state.embed || {};
+  const p = prefix ? `${prefix}: ` : '';
   const totalLen = (s) => (s ? String(s).length : 0);
-  if (totalLen(e.title) > EMBED_LIMITS.title) errors.push(`Title exceeds ${EMBED_LIMITS.title} chars.`);
-  if (totalLen(e.description) > EMBED_LIMITS.description) errors.push(`Description exceeds ${EMBED_LIMITS.description} chars.`);
-  if (totalLen(e.footer?.text) > EMBED_LIMITS.footerText) errors.push(`Footer text exceeds ${EMBED_LIMITS.footerText} chars.`);
-  if (totalLen(e.author?.name) > EMBED_LIMITS.authorName) errors.push(`Author name exceeds ${EMBED_LIMITS.authorName} chars.`);
+  if (totalLen(e.title) > EMBED_LIMITS.title) errors.push(`${p}Title exceeds ${EMBED_LIMITS.title} chars.`);
+  if (totalLen(e.description) > EMBED_LIMITS.description) errors.push(`${p}Description exceeds ${EMBED_LIMITS.description} chars.`);
+  if (totalLen(e.footer?.text) > EMBED_LIMITS.footerText) errors.push(`${p}Footer text exceeds ${EMBED_LIMITS.footerText} chars.`);
+  if (totalLen(e.author?.name) > EMBED_LIMITS.authorName) errors.push(`${p}Author name exceeds ${EMBED_LIMITS.authorName} chars.`);
   const fields = e.fields || [];
-  if (fields.length > EMBED_LIMITS.fields) errors.push(`Too many fields (max ${EMBED_LIMITS.fields}).`);
+  if (fields.length > EMBED_LIMITS.fields) errors.push(`${p}Too many fields (max ${EMBED_LIMITS.fields}).`);
   fields.forEach((f, i) => {
-    if (totalLen(f.name) > EMBED_LIMITS.fieldName) errors.push(`Field ${i + 1} name exceeds ${EMBED_LIMITS.fieldName} chars.`);
-    if (totalLen(f.value) > EMBED_LIMITS.fieldValue) errors.push(`Field ${i + 1} value exceeds ${EMBED_LIMITS.fieldValue} chars.`);
-    if (!f.name || !String(f.name).trim()) errors.push(`Field ${i + 1} requires a name.`);
-    if (!f.value || !String(f.value).trim()) errors.push(`Field ${i + 1} requires a value.`);
+    if (totalLen(f.name) > EMBED_LIMITS.fieldName) errors.push(`${p}Field ${i + 1} name exceeds ${EMBED_LIMITS.fieldName} chars.`);
+    if (totalLen(f.value) > EMBED_LIMITS.fieldValue) errors.push(`${p}Field ${i + 1} value exceeds ${EMBED_LIMITS.fieldValue} chars.`);
+    if (!f.name || !String(f.name).trim()) errors.push(`${p}Field ${i + 1} requires a name.`);
+    if (!f.value || !String(f.value).trim()) errors.push(`${p}Field ${i + 1} requires a value.`);
   });
   const urls = [
     ['Author URL', e.author?.url],
@@ -49,13 +49,43 @@ function validateEmbedState(state) {
     ['Footer icon', e.footer?.icon_url]
   ];
   for (const [label, u] of urls) {
-    if (u && !isValidUrl(u)) errors.push(`${label} is not a valid URL.`);
+    if (u && !isValidUrl(u)) errors.push(`${p}${label} is not a valid URL.`);
   }
-  if (e.color != null && e.color !== '' && !isHexColor(e.color)) errors.push('Embed color must be a valid hex color.');
+  if (e.color != null && e.color !== '' && !isHexColor(e.color)) errors.push(`${p}Embed color must be a valid hex color.`);
   let total = 0;
   total += totalLen(e.title) + totalLen(e.description) + totalLen(e.footer?.text) + totalLen(e.author?.name);
   fields.forEach(f => { total += totalLen(f.name) + totalLen(f.value); });
-  if (total > EMBED_LIMITS.total) errors.push(`Total embed length exceeds ${EMBED_LIMITS.total} chars.`);
+  if (total > EMBED_LIMITS.total) errors.push(`${p}Total embed length exceeds ${EMBED_LIMITS.total} chars.`);
+  return errors;
+}
+
+function hasAnyEmbedContent(e) {
+  if (!e) return false;
+  if (e.title || e.description || e.url || e.timestamp) return true;
+  if (e.color != null && e.color !== '') return true;
+  if (e.author?.name || e.author?.url || e.author?.icon_url) return true;
+  if (e.footer?.text || e.footer?.icon_url) return true;
+  if (e.thumbnail?.url || e.image?.url) return true;
+  if (Array.isArray(e.fields) && e.fields.some(f => f && (f.name || f.value))) return true;
+  return false;
+}
+
+function validateEmbedState(state) {
+  const { normalizeEmbedState } = require('../schemas/embed.schema');
+  normalizeEmbedState(state);
+  const errors = [];
+  const embeds = Array.isArray(state.embeds) ? state.embeds : (state.embed ? [state.embed] : []);
+  if (embeds.length > 10) errors.push('A message can have at most 10 embeds.');
+  const toValidate = embeds.filter((e, i) => hasAnyEmbedContent(e) || embeds.length === 1 || i === (state.selectedEmbedIndex || 0));
+  if (embeds.length > 1) {
+    toValidate.forEach((e) => {
+      const idx = embeds.indexOf(e);
+      errors.push(...validateSingleEmbed(e || {}, `Embed ${idx + 1}`));
+    });
+  } else {
+    errors.push(...validateSingleEmbed(embeds[0] || {}, ''));
+  }
+  if (state.content && String(state.content).length > 2000) errors.push('Message content exceeds 2000 chars.');
   return { valid: errors.length === 0, errors };
 }
 
