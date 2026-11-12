@@ -366,6 +366,24 @@ async function handleProperties(interaction, { sid }) {
       saveSession(session);
       return interaction.update(buildContainerEditor(session));
     }
+    if (action === 'ce_add_text_display') {
+      const { buildContainerEditor } = require('./container-editor');
+      const { COMPONENT_FACTORIES } = require('../schemas/components-v2.schema');
+      const cid = session.containerEditorContainerId || session.selectedNodeId;
+      const container = (session.state.root || []).find(c => c._id === cid && c.type === 'container');
+      if (!container) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
+      const content = interaction.fields.getTextInputValue('content');
+      if (!String(content || '').trim()) return interaction.reply({ content: 'Text content cannot be empty.', flags: 64 });
+      pushHistory(session);
+      const node = COMPONENT_FACTORIES.text_display();
+      node.content = content;
+      container.components = container.components || [];
+      container.components.push(node);
+      session.selectedNodeId = container._id;
+      session.containerEditorContainerId = container._id;
+      saveSession(session);
+      return interaction.update(buildContainerEditor(session));
+    }
     if (action === 'json_import') {
       const axios = require('axios');
       const path = require('path');

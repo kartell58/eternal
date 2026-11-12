@@ -463,6 +463,24 @@ async function handleNavigation(interaction, { sid }) {
       if (!allowed.includes(type)) return interaction.reply({ content: `Cannot add ${type.replace(/_/g, ' ')} to a container.`, flags: 64 });
       const factory = COMPONENT_FACTORIES[type];
       if (!factory) return interaction.reply({ content: 'Unknown component type.', flags: 64 });
+      if (type === 'text_display') {
+        session.selectedNodeId = container._id;
+        session.containerEditorContainerId = container._id;
+        saveSession(session);
+        const modal = new ModalBuilder()
+          .setCustomId(`bld:${session.id}:prop:ce_add_text_display`)
+          .setTitle('Add Text Display');
+        modal.addComponents(new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('content')
+            .setLabel('Text content')
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(true)
+            .setMaxLength(4000)
+            .setPlaceholder('Enter the text to add')
+        ));
+        return interaction.showModal(modal);
+      }
       pushHistory(session);
       const node = factory();
       container.components = container.components || [];

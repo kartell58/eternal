@@ -119,14 +119,43 @@ function freshModules() {
     s.selectedNodeId = c._id;
     s.containerEditorContainerId = c._id;
     const before = c.components.length;
-    const i = mockInteraction(s, `bld:${s.id}:nav:ce_add_item`, { isSelect: true, values: ['text_display'] });
+    const i = mockInteraction(s, `bld:${s.id}:nav:ce_add_item`, { isSelect: true, values: ['separator'] });
     await handleNavigation(i, { sid: s.id });
     const session = getSession(s.id);
     const container = session.state.root.find(x => x._id === c._id);
     assert.strictEqual(container.components.length, before + 1);
-    assert.strictEqual(container.components[container.components.length - 1].type, 'text_display');
+    assert.strictEqual(container.components[container.components.length - 1].type, 'separator');
     assert.ok(i.updated && hasFlag(i.updated, MessageFlags.Ephemeral), 'ephemeral editor updated');
     assert.ok(!i.repliedPayload, 'no extra reply');
+  });
+
+  await test('add text display opens modal and adds edited text on submit', async () => {
+    freshModules();
+    const { createSession, getSession } = require('../services/session.service');
+    const { handleNavigation } = require('../interactions/navigation');
+    const { handleProperties } = require('../interactions/properties');
+    const s = createSession('u1', 'g1', 'c1', 'components_v2');
+    const c = s.state.root[0];
+    s.selectedNodeId = c._id;
+    s.containerEditorContainerId = c._id;
+    const before = c.components.length;
+    const i = mockInteraction(s, `bld:${s.id}:nav:ce_add_item`, { isSelect: true, values: ['text_display'] });
+    await handleNavigation(i, { sid: s.id });
+    assert.ok(i.shownModal, 'text display modal shown');
+    let session = getSession(s.id);
+    let container = session.state.root.find(x => x._id === c._id);
+    assert.strictEqual(container.components.length, before, 'not added before submit');
+    const submit = mockInteraction(s, `bld:${s.id}:prop:ce_add_text_display`, {
+      isModal: true,
+      fields: { getTextInputValue: (k) => k === 'content' ? 'Custom text' : '' }
+    });
+    await handleProperties(submit, { sid: s.id });
+    session = getSession(s.id);
+    container = session.state.root.find(x => x._id === c._id);
+    assert.strictEqual(container.components.length, before + 1, 'added after submit');
+    assert.strictEqual(container.components[container.components.length - 1].type, 'text_display');
+    assert.strictEqual(container.components[container.components.length - 1].content, 'Custom text');
+    assert.ok(submit.updated && hasFlag(submit.updated, MessageFlags.Ephemeral), 'container editor updated');
   });
 
   await test('edit item select opens existing item modal for correct item', async () => {
