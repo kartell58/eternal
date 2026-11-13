@@ -17,9 +17,11 @@ const {
 const MODAL_ID = "aq_login_modal";
 const runningFarms = new Set();
 
-function truncate(text, max = 3900) {
+function truncate(text, max = 3900, suffix = "\n… (truncated)") {
   const value = String(text || "").trim();
-  return value.length > max ? `${value.slice(0, max - 20)}\n… (truncated)` : value;
+  if (value.length <= max) return value;
+  const cut = Math.max(0, max - suffix.length);
+  return `${value.slice(0, cut)}${suffix}`;
 }
 
 function getFarmChannel(interaction) {
@@ -28,19 +30,36 @@ function getFarmChannel(interaction) {
   return interaction.guild.channels.cache.get(channelId) || interaction.channel;
 }
 
-async function sendFarmLog(channel, title, description, color) {
+async function sendFarmLog(channel, title, description, color, options = {}) {
   if (!channel) return;
+  const suffix = options.suffix || "\n… (truncated)";
   try {
     const embed = new EmbedBuilder()
       .setColor(color)
       .setTitle(title)
-      .setDescription(truncate(description))
+      .setDescription(truncate(description, 3900, suffix))
       .setTimestamp();
 
     await channel.send({ embeds: [embed] });
   } catch (err) {
     console.error("Error sending AutoQuest log:", err.message);
   }
+}
+
+async function getUserCtx(interaction) {
+  const lang = interaction && interaction.client ? interaction.client.language : null;
+  const locale = lang
+    ? await lang.resolve({ userId: interaction.user.id, guildId: interaction.guildId || null })
+    : "en-US";
+  const t = (key, vars) => (lang ? lang.t(key, vars, locale) : key);
+  return { lang, locale, t };
+}
+
+async function getGuildCtx(guild) {
+  const lang = guild && guild.client ? guild.client.language : null;
+  const locale = lang ? await lang.resolve({ guildId: guild.id }) : "en-US";
+  const t = (key, vars) => (lang ? lang.t(key, vars, locale) : key);
+  return { lang, locale, t };
 }
 
 module.exports = {
@@ -52,15 +71,16 @@ module.exports = {
 
     // ---------- Button: Configure account ----------
     if (customId === "aq_config" && interaction.isButton()) {
+      const { t } = await getUserCtx(interaction);
       const modal = new ModalBuilder()
         .setCustomId(MODAL_ID)
-        .setTitle("Login - AutoQuest");
+        .setTitle(t("events.autoquest.modal.title"));
 
       const input = new TextInputBuilder()
         .setCustomId("token_input")
-        .setLabel("Discord user token")
+        .setLabel(t("events.autoquest.modal.token_label"))
         .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder("Paste your token here...")
+        .setPlaceholder(t("events.autoquest.modal.token_placeholder"))
         .setMinLength(20)
         .setMaxLength(200)
         .setRequired(true);
@@ -72,6 +92,7 @@ module.exports = {
 
     // ---------- Modal: save token ----------
     if (customId === MODAL_ID && interaction.isModalSubmit()) {
+      const { t } = await getUserCtx(interaction);
       const token = interaction.fields.getTextInputValue("token_input").trim();
 
       await interaction.deferReply({ flags: 64 });
@@ -79,7 +100,7 @@ module.exports = {
       const user = await getUserInfo(token);
       if (!user) {
         await interaction.editReply({
-          content: "❌ Invalid or expired token. Please check it and try again."
+          content: t("events.autoquest.replies.invalid_token")
         });
         return;
       }
@@ -87,19 +108,21 @@ module.exports = {
       setToken(interaction.user.id, token);
 
       await interaction.editReply({
-        content:
-          `✅ Account connected: **${user.global_name || user.username}** (@${user.username}).\n` +
-          "Use **View quests** to list quests or **Start farm** to automate them."
+        content: t("events.autoquest.replies.connected", {
+          name: user.global_name || user.username,
+          username: user.username
+        })
       });
       return;
     }
 
     // ---------- Button: View quests ----------
     if (customId === "aq_ver" && interaction.isButton()) {
+      const { t } = await getUserCtx(interaction);
       const token = getToken(interaction.user.id);
       if (!token) {
         await interaction.reply({
-          content: "❌ Connect your account first using **Configure account**.",
+          content: t("events.autoquest.replies.connect_first"),
           flags: 64
         });
         return;
@@ -111,25 +134,30 @@ module.exports = {
         const quests = await fetchAvailableQuests(token);
 
         if (!quests.length) {
-          await interaction.editReply({ content: "📭 No quests available." });
+          await interaction.editReply({ content: t("events.autoquest.replies.no_quests") });
           return;
         }
 
         const lines = quests.map((quest, index) =>
-          `**${index + 1}. ${quest.questName}**\n` +
-          `🎁 ${quest.rewardText} • ${quest.taskType} • ${Math.floor(quest.target / 60)}min`
+          t("events.autoquest.replies.quest_line", {
+            index: index + 1,
+            name: quest.questName,
+            reward: quest.rewardText,
+            type: quest.taskType,
+            minutes: Math.floor(quest.target / 60)
+          })
         );
 
         const embed = new EmbedBuilder()
           .setColor(0x57f287)
-          .setTitle("📋 Available quests")
-          .setDescription(truncate(lines.join("\n\n")));
+          .setTitle(t("events.autoquest.replies.quests_title"))
+          .setDescription(truncate(lines.join("\n\n"), 3900, t("events.autoquest.replies.truncated")));
 
         await interaction.editReply({ embeds: [embed] });
       } catch (err) {
         console.error("Error fetching AutoQuest quests:", err);
         await interaction.editReply({
-          content: `❌ Error fetching quests: ${err.message}`
+          content: t("events.autoquest.replies.fetch_error", { error: err.message })
         });
       }
       return;
@@ -137,10 +165,11 @@ module.exports = {
 
     // ---------- Button: Start farm ----------
     if (customId === "aq_farm" && interaction.isButton()) {
+      const { t } = await getUserCtx(interaction);
       const token = getToken(interaction.user.id);
       if (!token) {
         await interaction.reply({
-          content: "❌ Connect your account first using **Configure account**.",
+          content: t("events.autoquest.replies.connect_first"),
           flags: 64
         });
         return;
@@ -148,7 +177,7 @@ module.exports = {
 
       if (runningFarms.has(interaction.user.id)) {
         await interaction.reply({
-          content: "⏳ You already have a farm running. Please wait for it to finish.",
+          content: t("events.autoquest.replies.already_running"),
           flags: 64
         });
         return;
@@ -158,17 +187,24 @@ module.exports = {
 
       const user = interaction.user;
       const channel = getFarmChannel(interaction);
+      const guildCtx = interaction.guild ? await getGuildCtx(interaction.guild) : { t: (k) => k };
+      const guildT = guildCtx.t;
+      const guildSuffix = guildT("events.autoquest.replies.truncated");
 
       await interaction.reply({
-        content: "🔄 Farm started. Progress will be sent to the AutoQuest channel.",
+        content: t("events.autoquest.replies.farm_started_reply"),
         flags: 64
       });
 
       await sendFarmLog(
         channel,
-        "🚀 Farm started",
-        `Account: **${user.global_name || user.username}** (@${user.username})\nStarting automated execution...`,
-        0x5865f2
+        guildT("events.autoquest.logs.started_title"),
+        guildT("events.autoquest.logs.started_body", {
+          name: user.global_name || user.username,
+          username: user.username
+        }),
+        0x5865f2,
+        { suffix: guildSuffix }
       );
 
       runAutoQuest(
@@ -182,30 +218,35 @@ module.exports = {
 
           if (!isStart && !isDone && !isError) return;
 
-          let title = "ℹ️ AutoQuest";
+          let title = guildT("events.autoquest.logs.info_title");
           let color = 0x5865f2;
 
           if (isStart) {
-            title = "🎯 Quest started";
+            title = guildT("events.autoquest.logs.quest_started_title");
           } else if (isDone) {
-            title = "✅ Quest completed";
+            title = guildT("events.autoquest.logs.quest_completed_title");
             color = 0x57f287;
           } else if (isError) {
-            title = "⚠️ AutoQuest";
+            title = guildT("events.autoquest.logs.warning_title");
             color = 0xed4245;
           }
 
-          await sendFarmLog(channel, title, message, color);
+          // Progress message content is produced by runAutoQuest (external); post as-is to guild channel.
+          await sendFarmLog(channel, title, message, color, { suffix: guildSuffix });
         },
         user.id
       )
         .then(async result => {
           await sendFarmLog(
             channel,
-            "🏁 Farm finished",
-            `Account: **${result.user?.global_name || user.username}**\n` +
-              `${result.completed}/${result.total} quests completed.`,
-            0x57f287
+            guildT("events.autoquest.logs.finished_title"),
+            guildT("events.autoquest.logs.finished_body", {
+              name: result.user?.global_name || user.username,
+              completed: result.completed,
+              total: result.total
+            }),
+            0x57f287,
+            { suffix: guildSuffix }
           );
         })
         .catch(async err => {
@@ -213,14 +254,19 @@ module.exports = {
 
           await sendFarmLog(
             channel,
-            "❌ Farm error",
-            `Account: **${user.global_name || user.username}**\n${err.message}`,
-            0xed4245
+            guildT("events.autoquest.logs.error_title"),
+            guildT("events.autoquest.logs.error_body", {
+              name: user.global_name || user.username,
+              error: err.message
+            }),
+            0xed4245,
+            { suffix: guildSuffix }
           );
 
           try {
+            // Ephemeral follow-up to the initiating user: use user effective locale.
             await interaction.followUp({
-              content: `❌ Farm error: ${err.message}`,
+              content: t("events.autoquest.replies.farm_error_reply", { error: err.message }),
               flags: 64
             });
           } catch {

@@ -28,7 +28,7 @@ module.exports = {
       }
     }
 
-    // Welcome message
+    // Welcome message (public automated message: use guild locale)
     const welcomeChannelId = get(guild.id, "welcomeChannel");
     const welcomeChannel = welcomeChannelId
       ? guild.channels.cache.get(welcomeChannelId)
@@ -38,6 +38,10 @@ module.exports = {
 
     if (!welcomeChannel || !welcomeEnabled) return;
 
+    const lang = guild.client && guild.client.language ? guild.client.language : null;
+    const locale = lang ? await lang.resolve({ guildId: guild.id }) : "en-US";
+    const t = (key, vars) => (lang ? lang.t(key, vars, locale) : key);
+
     const avatar = member.user.displayAvatarURL({ dynamic: true });
 
     const embed = new EmbedBuilder()
@@ -46,11 +50,11 @@ module.exports = {
         name: `@${member.user.username}`,
         iconURL: avatar
       })
-      .setTitle("👋 Welcome!")
-      .setDescription(`Hello ${member}, welcome to **${guild.name}**! 🎉`)
+      .setTitle(t("events.guild_member_add.welcome_title"))
+      .setDescription(t("events.guild_member_add.welcome_message", { member: `${member}`, guild: guild.name }))
       .setThumbnail(avatar)
       .setFooter({
-        text: `User ID: ${member.user.id} | ${formatDateTime(new Date())}`
+        text: t("events.guild_member_add.footer", { userId: member.user.id, date: formatDateTime(new Date()) })
       });
 
     try {

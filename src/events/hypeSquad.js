@@ -20,14 +20,23 @@ const HOUSES = {
   hs_balance: { id: 3, name: "Balance", emoji: "⚖️" }
 };
 
-function errorMessage(res) {
+function errorMessage(res, t) {
   if (res.status === 401 || res.status === 403) {
-    return "❌ Invalid or expired token. Use **Configure account** to update it.";
+    return t("events.hypesquad.replies.invalid_token_configure");
   }
   if (res.status === 429) {
-    return "⏳ Too many requests. Please wait a few seconds and try again.";
+    return t("events.hypesquad.replies.rate_limited");
   }
-  return `❌ Could not complete the action (status ${res.status}).`;
+  return t("events.hypesquad.replies.action_failed", { status: res.status });
+}
+
+async function getUserCtx(interaction) {
+  const lang = interaction && interaction.client ? interaction.client.language : null;
+  const locale = lang
+    ? await lang.resolve({ userId: interaction.user.id, guildId: interaction.guildId || null })
+    : "en-US";
+  const t = (key, vars) => (lang ? lang.t(key, vars, locale) : key);
+  return { lang, locale, t };
 }
 
 module.exports = {
@@ -39,15 +48,16 @@ module.exports = {
 
     // ---------- Button: Configure account ----------
     if (customId === "hs_config" && interaction.isButton()) {
+      const { t } = await getUserCtx(interaction);
       const modal = new ModalBuilder()
         .setCustomId(MODAL_ID)
-        .setTitle("Login - HypeSquad");
+        .setTitle(t("events.hypesquad.modal.title"));
 
       const input = new TextInputBuilder()
         .setCustomId("token_input")
-        .setLabel("Discord user token")
+        .setLabel(t("events.hypesquad.modal.token_label"))
         .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder("Paste your token here...")
+        .setPlaceholder(t("events.hypesquad.modal.token_placeholder"))
         .setMinLength(20)
         .setMaxLength(200)
         .setRequired(true);
@@ -59,6 +69,7 @@ module.exports = {
 
     // ---------- Modal: save token ----------
     if (customId === MODAL_ID && interaction.isModalSubmit()) {
+      const { t } = await getUserCtx(interaction);
       const token = interaction.fields.getTextInputValue("token_input").trim();
 
       await interaction.deferReply({ flags: 64 });
@@ -66,7 +77,7 @@ module.exports = {
       const user = await getUser(token);
       if (!user) {
         await interaction.editReply({
-          content: "❌ Invalid or expired token. Please check it and try again."
+          content: t("events.hypesquad.replies.invalid_token")
         });
         return;
       }
@@ -74,19 +85,21 @@ module.exports = {
       setToken(interaction.user.id, token);
 
       await interaction.editReply({
-        content:
-          `✅ Account connected: **${user.global_name || user.username}** (@${user.username}).\n` +
-          "Now choose **Bravery**, **Brilliance**, or **Balance**."
+        content: t("events.hypesquad.replies.connected", {
+          name: user.global_name || user.username,
+          username: user.username
+        })
       });
       return;
     }
 
     // ---------- Buttons: join a house ----------
     if (HOUSES[customId] && interaction.isButton()) {
+      const { t } = await getUserCtx(interaction);
       const token = getToken(interaction.user.id);
       if (!token) {
         await interaction.reply({
-          content: "❌ Connect your account first using **Configure account**.",
+          content: t("events.hypesquad.replies.connect_first"),
           flags: 64
         });
         return;
@@ -104,23 +117,24 @@ module.exports = {
 
       if (res.status === 200 || res.status === 204) {
         await interaction.editReply({
-          content: `${house.emoji} HypeSquad updated! You are now in **${house.name}**.`
+          content: t("events.hypesquad.replies.house_updated", { emoji: house.emoji, house: house.name })
         });
       } else {
         if (res.status === 401 || res.status === 403) {
           removeToken(interaction.user.id);
         }
-        await interaction.editReply({ content: errorMessage(res) });
+        await interaction.editReply({ content: errorMessage(res, t) });
       }
       return;
     }
 
     // ---------- Button: leave HypeSquad ----------
     if (customId === "hs_remove" && interaction.isButton()) {
+      const { t } = await getUserCtx(interaction);
       const token = getToken(interaction.user.id);
       if (!token) {
         await interaction.reply({
-          content: "❌ Connect your account first using **Configure account**.",
+          content: t("events.hypesquad.replies.connect_first"),
           flags: 64
         });
         return;
@@ -132,13 +146,13 @@ module.exports = {
 
       if (res.status === 200 || res.status === 204) {
         await interaction.editReply({
-          content: "✅ You have left HypeSquad."
+          content: t("events.hypesquad.replies.left")
         });
       } else {
         if (res.status === 401 || res.status === 403) {
           removeToken(interaction.user.id);
         }
-        await interaction.editReply({ content: errorMessage(res) });
+        await interaction.editReply({ content: errorMessage(res, t) });
       }
       return;
     }

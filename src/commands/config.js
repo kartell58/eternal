@@ -7,7 +7,11 @@ module.exports = {
     .setDescription("Centralized server configuration panel"),
 
   async execute(interaction) {
-    const panel = buildPanel(interaction.guild, "welcome");
+    const lang = interaction.client.language;
+    const locale = lang
+      ? await lang.resolve({ userId: interaction.user.id, guildId: interaction.guildId || null })
+      : "en-US";
+    const panel = await buildPanel(interaction.guild, "welcome", { lang, locale });
 
     await interaction.reply({
       ...panel,

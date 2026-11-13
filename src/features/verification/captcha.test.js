@@ -406,7 +406,7 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
   });
 
   await test("config panel lays out CAPTCHA first, legacy verification last", async () => {
-    const panel = buildPanel(mockGuild());
+    const panel = await buildPanel(mockGuild());
     assert.strictEqual(panel.components.length, 5);
     assert.deepStrictEqual(buttonIds(panel.components[2]), ["btn_post_captcha", "btn_post_honeypot", "btn_post_regras"]);
     assert.deepStrictEqual(buttonIds(panel.components[3]), ["btn_post_autoquest", "btn_post_hypesquad", "btn_post_all"]);
@@ -417,9 +417,15 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
 
   await test("Send all posts the CAPTCHA panel as the primary verification panel", async () => {
     const names = SEND_ALL_PANELS.map(([name]) => name);
-    assert.deepStrictEqual(names, ["CAPTCHA Verification", "Honeypot", "Rules", "AutoQuest", "HypeSquad"]);
+    assert.deepStrictEqual(names, [
+      "events.config.replies.task_captcha",
+      "events.config.replies.task_honeypot",
+      "events.config.replies.task_rules",
+      "events.config.replies.task_autoquest",
+      "events.config.replies.task_hypesquad"
+    ]);
     assert.strictEqual(SEND_ALL_PANELS[0][1], postCaptchaPanel);
-    assert.ok(!names.some(n => n === "Verification"), "legacy panel is not part of Send all");
+    assert.ok(!names.some(n => n.includes("verification") && n.includes("legacy") === false && n.endsWith("task_captcha") === false), "legacy panel is not part of Send all");
   });
 
   console.log(JSON.stringify(results, null, 2));

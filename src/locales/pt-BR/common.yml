@@ -3,11 +3,14 @@ common:
   enabled: "Ativado"
   disabled: "Desativado"
   not_configured: "Não configurado"
+  not_set: "Não definido"
   unknown: "Desconhecido"
+  unknown_error: "Erro desconhecido"
   cancel: "Cancelar"
   confirm: "Confirmar"
   back: "Voltar"
   none: "Nenhum"
+  set: "Definido"
 
 locale:
   name:

@@ -7,6 +7,31 @@ commands:
     uptime: "Tempo ativo"
     response: "Pong! Latência: {{latency}}ms."
 
+  clear:
+    description: "Exclui mensagens recentes no canal atual."
+    no_permission: "❌ Você não tem permissão para gerenciar mensagens."
+    cannot_delete: "❌ Não é possível excluir mensagens neste canal."
+    deleted: "🧹 {{count}} mensagem(ns) excluída(s)."
+    error: "❌ Não foi possível excluir as mensagens. Verifique minhas permissões e se as mensagens têm menos de 14 dias."
+
+  config:
+    description: "Painel centralizado de configuração do servidor."
+
+  bot:
+    description: "Gerencie e configure o perfil e a presença do bot."
+
+  quest:
+    description: "Painel de controle do AutoQuest."
+    title: "AutoQuest"
+    panel_description: "Conecte sua conta para farmar missões automaticamente.\nClique em **Configurar conta**, depois em **Ver missões** ou **Iniciar farm**."
+    configure: "Configurar conta"
+    view: "Ver missões"
+    farm: "Iniciar farm"
+
+  builder:
+    description: "Abra o construtor visual de mensagens para criar, editar, visualizar e publicar mensagens."
+    open_error: "Não foi possível abrir o construtor. Tente novamente."
+
   language:
     description: "Gerencie seu idioma e o idioma deste servidor."
     title: "Configurações de idioma"

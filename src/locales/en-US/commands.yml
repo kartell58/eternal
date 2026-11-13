@@ -7,6 +7,31 @@ commands:
     uptime: "Uptime"
     response: "Pong! Latency: {{latency}}ms."
 
+  clear:
+    description: "Deletes recent messages in the current channel."
+    no_permission: "❌ You do not have permission to manage messages."
+    cannot_delete: "❌ Cannot delete messages in this channel."
+    deleted: "🧹 Deleted {{count}} message(s)."
+    error: "❌ Could not delete messages. Check my permissions and ensure messages are less than 14 days old."
+
+  config:
+    description: "Centralized server configuration panel."
+
+  bot:
+    description: "Manage and configure the bot profile and presence."
+
+  quest:
+    description: "AutoQuest control panel."
+    title: "AutoQuest"
+    panel_description: "Connect your account to farm quests automatically.\nClick **Configure account**, then **View quests** or **Start farm**."
+    configure: "Configure account"
+    view: "View quests"
+    farm: "Start farm"
+
+  builder:
+    description: "Open the visual message builder to create, edit, preview, and publish messages."
+    open_error: "Could not open the builder. Please try again."
+
   language:
     description: "Manage your language and this server's language."
     title: "Language settings"

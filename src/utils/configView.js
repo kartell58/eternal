@@ -66,6 +66,58 @@ const MODULES = {
 
 const DEFAULT_MODULE = "welcome";
 
+function getTranslator(ctx = {}) {
+  const { t, lang, locale } = ctx || {};
+  if (typeof t === "function") return t;
+  if (lang) return (key, vars) => lang.t(key, vars, locale);
+  return (key, vars) => {
+    const map = {
+      "common.not_configured": "Not configured",
+      "events.config.panel.no_options": "No options available",
+      "events.config.panel.select_placeholder": "Select the {{module}}",
+      "events.config.panel.title": "⚙️ Configuration Panel",
+      "events.config.panel.intro": "Choose what to configure below. Selections are saved automatically.",
+      "events.config.panel.editing": "Editing: {{module}}",
+      "events.config.panel.footer": "Server: {{guild}} | Today at {{time}}",
+      "events.config.panel.modules.welcome": "Welcome channel",
+      "events.config.panel.modules.verificationChannel": "Verification channel",
+      "events.config.panel.modules.verificationRole": "Verification role",
+      "events.config.panel.modules.honeypot": "Honeypot (anti-selfbot)",
+      "events.config.panel.modules.autoQuest": "AutoQuest",
+      "events.config.panel.modules.hypeSquad": "HypeSquad",
+      "events.config.panel.modules.autoRole": "Auto role on join",
+      "events.config.panel.modules.rules": "Rules channel",
+      "events.config.panel.settings.welcome": "👋 Welcome channel: {{value}}",
+      "events.config.panel.settings.verificationChannel": "✅ Verification channel: {{value}}",
+      "events.config.panel.settings.verificationRole": "🛡️ Verification role: {{value}}",
+      "events.config.panel.settings.honeypot": "🍯 Honeypot (anti-selfbot): {{value}}",
+      "events.config.panel.settings.autoQuest": "🚜 AutoQuest channel: {{value}}",
+      "events.config.panel.settings.hypeSquad": "🏡 HypeSquad channel: {{value}}",
+      "events.config.panel.settings.autoRole": "🧩 Auto role on join: {{value}}",
+      "events.config.panel.settings.rules": "📜 Rules channel: {{value}}",
+      "events.config.panel.buttons.post_captcha": "Post CAPTCHA panel",
+      "events.config.panel.buttons.post_honeypot": "Post honeypot notice",
+      "events.config.panel.buttons.post_rules": "Post rules",
+      "events.config.panel.buttons.post_autoquest": "Post AutoQuest panel",
+      "events.config.panel.buttons.post_hypesquad": "Post HypeSquad panel",
+      "events.config.panel.buttons.send_all": "Send all",
+      "events.config.panel.buttons.post_verification": "Post verification panel"
+    };
+    let v = map[key] != null ? map[key] : key;
+    if (vars && typeof v === "string") {
+      for (const [k, val] of Object.entries(vars)) v = v.replace(new RegExp(`\\{\\{\\s*${k}\\s*\\}\\}`, "g"), String(val));
+    }
+    return v;
+  };
+}
+
+function moduleLabel(key, ctx = {}) {
+  const tr = getTranslator(ctx);
+  const translated = tr(`events.config.panel.modules.${key}`);
+  if (translated && translated !== `events.config.panel.modules.${key}`) return translated;
+  return (MODULES[key] || MODULES[DEFAULT_MODULE]).label;
+}
+
 function timeNow() {
   const d = new Date();
   const hh = String(d.getHours()).padStart(2, "0");
@@ -73,22 +125,27 @@ function timeNow() {
   return `${hh}:${mm}`;
 }
 
-function formatChannel(guild, id) {
-  if (!id) return "Not configured";
+function formatChannel(guild, id, ctx = {}) {
+  const tr = getTranslator(ctx);
+  const notConfigured = tr("common.not_configured");
+  if (!id) return notConfigured;
   const channel = guild.channels.cache.get(id);
-  return channel ? `<#${id}>` : "Not configured";
+  return channel ? `<#${id}>` : notConfigured;
 }
 
-function formatRole(guild, id) {
-  if (!id) return "Not configured";
+function formatRole(guild, id, ctx = {}) {
+  const tr = getTranslator(ctx);
+  const notConfigured = tr("common.not_configured");
+  if (!id) return notConfigured;
   const role = guild.roles.cache.get(id);
-  return role ? `<@&${id}>` : "Not configured";
+  return role ? `<@&${id}>` : notConfigured;
 }
 
 /**
  * Builds the select with the available channels or roles for the module.
  */
-function buildValueSelect(guild, moduleKey) {
+function buildValueSelect(guild, moduleKey, ctx = {}) {
+  const tr = getTranslator(ctx);
   const module = MODULES[moduleKey] || MODULES[DEFAULT_MODULE];
 
   let options;
@@ -114,97 +171,80 @@ function buildValueSelect(guild, moduleKey) {
   }
 
   if (options.length === 0) {
-    options = [{ label: "No options available", value: "none" }];
+    options = [{ label: tr("events.config.panel.no_options"), value: "none" }];
   }
 
-  const lowerLabel = module.label.charAt(0).toLowerCase() + module.label.slice(1);
+  const label = moduleLabel(moduleKey, ctx);
+  const lowerLabel = label.charAt(0).toLowerCase() + label.slice(1);
 
   return new StringSelectMenuBuilder()
     .setCustomId(`config_value:${moduleKey}`)
-    .setPlaceholder(`Select the ${lowerLabel}`)
+    .setPlaceholder(tr("events.config.panel.select_placeholder", { module: lowerLabel }))
     .addOptions(options);
 }
 
 /**
  * Builds the full configuration panel (embed + selects + buttons).
  */
-function buildPanel(guild, editingKey = DEFAULT_MODULE) {
+async function buildPanel(guild, editingKey = DEFAULT_MODULE, ctx = {}) {
+  const tr = getTranslator(ctx);
   const key = MODULES[editingKey] ? editingKey : DEFAULT_MODULE;
   const module = MODULES[key];
+  const label = moduleLabel(key, ctx);
 
   const settingsLines = [
-    `👋 Welcome channel: ${formatChannel(guild, get(guild.id, "welcomeChannel"))}`,
-    `✅ Verification channel: ${formatChannel(guild, get(guild.id, "verificationChannel"))}`,
-    `🛡️ Verification role: ${formatRole(guild, get(guild.id, "verificationRole"))}`,
-    `🍯 Honeypot (anti-selfbot): ${formatChannel(guild, get(guild.id, "honeypotChannel"))}`,
-    `🚜 AutoQuest channel: ${formatChannel(guild, get(guild.id, "autoQuestChannel"))}`,
-    `🏡 HypeSquad channel: ${formatChannel(guild, get(guild.id, "hypeSquadChannel"))}`,
-    `🧩 Auto role on join: ${formatRole(guild, get(guild.id, "autoRole"))}`,
-    `📜 Rules channel: ${formatChannel(guild, get(guild.id, "rulesChannel"))}`
+    tr("events.config.panel.settings.welcome", { value: formatChannel(guild, get(guild.id, "welcomeChannel"), ctx) }),
+    tr("events.config.panel.settings.verificationChannel", { value: formatChannel(guild, get(guild.id, "verificationChannel"), ctx) }),
+    tr("events.config.panel.settings.verificationRole", { value: formatRole(guild, get(guild.id, "verificationRole"), ctx) }),
+    tr("events.config.panel.settings.honeypot", { value: formatChannel(guild, get(guild.id, "honeypotChannel"), ctx) }),
+    tr("events.config.panel.settings.autoQuest", { value: formatChannel(guild, get(guild.id, "autoQuestChannel"), ctx) }),
+    tr("events.config.panel.settings.hypeSquad", { value: formatChannel(guild, get(guild.id, "hypeSquadChannel"), ctx) }),
+    tr("events.config.panel.settings.autoRole", { value: formatRole(guild, get(guild.id, "autoRole"), ctx) }),
+    tr("events.config.panel.settings.rules", { value: formatChannel(guild, get(guild.id, "rulesChannel"), ctx) })
   ];
 
   const description =
-    "Choose what to configure below. Selections are saved automatically.\n\n" +
+    tr("events.config.panel.intro") + "\n\n" +
     settingsLines.join("\n") +
-    `\n\nEditing: ${module.emoji} ${module.label}`;
+    "\n\n" +
+    tr("events.config.panel.editing", { module: `${module.emoji} ${label}` });
 
   const embed = new EmbedBuilder()
     .setColor(0x5865f2)
-    .setTitle("⚙️ Configuration Panel")
+    .setTitle(tr("events.config.panel.title"))
     .setDescription(description)
-    .setFooter({ text: `Server: ${guild.name} | Today at ${timeNow()}` });
+    .setFooter({ text: tr("events.config.panel.footer", { guild: guild.name, time: timeNow() }) });
 
   const moduleSelect = new StringSelectMenuBuilder()
     .setCustomId("config_module")
-    .setPlaceholder(module.label)
+    .setPlaceholder(label)
     .addOptions(
       Object.entries(MODULES).map(([value, item]) => ({
-        label: item.label,
+        label: moduleLabel(value, ctx),
         value,
         emoji: item.emoji
       }))
     );
 
-  const valueSelect = buildValueSelect(guild, key);
+  const valueSelect = buildValueSelect(guild, key, ctx);
 
   const moduleRow = new ActionRowBuilder().addComponents(moduleSelect);
   const valueRow = new ActionRowBuilder().addComponents(valueSelect);
 
   const postRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId("btn_post_captcha")
-      .setLabel("Post CAPTCHA panel")
-      .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
-      .setCustomId("btn_post_honeypot")
-      .setLabel("Post honeypot notice")
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId("btn_post_regras")
-      .setLabel("Post rules")
-      .setStyle(ButtonStyle.Secondary)
+    new ButtonBuilder().setCustomId("btn_post_captcha").setLabel(tr("events.config.panel.buttons.post_captcha")).setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId("btn_post_honeypot").setLabel(tr("events.config.panel.buttons.post_honeypot")).setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId("btn_post_regras").setLabel(tr("events.config.panel.buttons.post_rules")).setStyle(ButtonStyle.Secondary)
   );
 
   const modulePostRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId("btn_post_autoquest")
-      .setLabel("Post AutoQuest panel")
-      .setStyle(ButtonStyle.Primary),
-    new ButtonBuilder()
-      .setCustomId("btn_post_hypesquad")
-      .setLabel("Post HypeSquad panel")
-      .setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder()
-      .setCustomId("btn_post_all")
-      .setLabel("Send all")
-      .setStyle(ButtonStyle.Success)
+    new ButtonBuilder().setCustomId("btn_post_autoquest").setLabel(tr("events.config.panel.buttons.post_autoquest")).setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId("btn_post_hypesquad").setLabel(tr("events.config.panel.buttons.post_hypesquad")).setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("btn_post_all").setLabel(tr("events.config.panel.buttons.send_all")).setStyle(ButtonStyle.Success)
   );
 
   const legacyRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId("btn_post_verification")
-      .setLabel("Post verification panel")
-      .setStyle(ButtonStyle.Secondary)
+    new ButtonBuilder().setCustomId("btn_post_verification").setLabel(tr("events.config.panel.buttons.post_verification")).setStyle(ButtonStyle.Secondary)
   );
 
   return {
@@ -219,5 +259,6 @@ module.exports = {
   buildPanel,
   buildValueSelect,
   formatChannel,
-  formatRole
+  formatRole,
+  moduleLabel
 };

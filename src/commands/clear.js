@@ -7,9 +7,15 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
 
   async execute(interaction) {
+    const lang = interaction.client.language;
+    const locale = lang
+      ? await lang.resolve({ userId: interaction.user.id, guildId: interaction.guildId || null })
+      : "en-US";
+    const t = (key, vars) => (lang ? lang.t(key, vars, locale) : key);
+
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageMessages)) {
       await interaction.reply({
-        content: "❌ You do not have permission to manage messages.",
+        content: t("commands.clear.no_permission"),
         flags: 64
       });
       return;
@@ -19,7 +25,7 @@ module.exports = {
 
     if (!channel || !channel.isTextBased() || !("bulkDelete" in channel)) {
       await interaction.reply({
-        content: "❌ Cannot delete messages in this channel.",
+        content: t("commands.clear.cannot_delete"),
         flags: 64
       });
       return;
@@ -34,13 +40,12 @@ module.exports = {
     try {
       const deleted = await channel.bulkDelete(100, true);
       await interaction.editReply({
-        content: `🧹 Deleted ${deleted.size} message(s).`
+        content: t("commands.clear.deleted", { count: deleted.size })
       }).catch(() => {});
     } catch (err) {
       console.error("Error deleting messages:", err);
       await interaction.editReply({
-        content:
-          "❌ Could not delete messages. Check my permissions and ensure messages are less than 14 days old."
+        content: t("commands.clear.error")
       }).catch(() => {});
     }
   }

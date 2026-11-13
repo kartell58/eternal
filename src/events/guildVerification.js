@@ -8,6 +8,7 @@ module.exports = {
     if (!interaction.isButton()) return;
     if (interaction.customId !== "btn_verify") return;
 
+    // Ephemeral response: use the individual user's effective locale.
     const result = await assignVerificationRole(interaction);
     await interaction.reply({ content: result.message, flags: 64 });
   }

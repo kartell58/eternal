@@ -7,6 +7,31 @@ commands:
     uptime: "Tiempo activo"
     response: "¡Pong! Latencia: {{latency}}ms."
 
+  clear:
+    description: "Elimina mensajes recientes en el canal actual."
+    no_permission: "❌ No tienes permiso para gestionar mensajes."
+    cannot_delete: "❌ No se pueden eliminar mensajes en este canal."
+    deleted: "🧹 Se eliminaron {{count}} mensaje(s)."
+    error: "❌ No se pudieron eliminar los mensajes. Comprueba mis permisos y que los mensajes tengan menos de 14 días."
+
+  config:
+    description: "Panel centralizado de configuración del servidor."
+
+  bot:
+    description: "Administra y configura el perfil y la presencia del bot."
+
+  quest:
+    description: "Panel de control de AutoQuest."
+    title: "AutoQuest"
+    panel_description: "Conecta tu cuenta para farmear misiones automáticamente.\nHaz clic en **Configurar cuenta**, luego en **Ver misiones** o **Iniciar farm**."
+    configure: "Configurar cuenta"
+    view: "Ver misiones"
+    farm: "Iniciar farm"
+
+  builder:
+    description: "Abre el constructor visual de mensajes para crear, editar, previsualizar y publicar mensajes."
+    open_error: "No se pudo abrir el constructor. Inténtalo de nuevo."
+
   language:
     description: "Administra tu idioma y el idioma de este servidor."
     title: "Configuración de idioma"

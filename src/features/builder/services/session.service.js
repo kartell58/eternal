@@ -52,11 +52,19 @@ function deleteSession(id) {
   sessions.delete(id);
 }
 
-function requireSession(sessionId, userId, guildId) {
+function requireSession(sessionId, userId, guildId, t = null) {
+  const tr = typeof t === 'function' ? t : (key) => {
+    const defaults = {
+      'events.builder.errors.session_expired': 'This builder session has expired. Use /builder to start a new session. If you saved a draft or template, open it from the builder home to resume your work.',
+      'events.builder.errors.session_other_user': 'This builder session belongs to another user.',
+      'events.builder.errors.session_invalid_guild': 'This builder session is not valid in this server.'
+    };
+    return defaults[key] || key;
+  };
   const s = getSession(sessionId);
-  if (!s) return { error: 'This builder session has expired. Use /builder to start a new session. If you saved a draft or template, open it from the builder home to resume your work.' };
-  if (s.userId !== userId) return { error: 'This builder session belongs to another user.' };
-  if (guildId && s.guildId && s.guildId !== guildId) return { error: 'This builder session is not valid in this server.' };
+  if (!s) return { error: tr('events.builder.errors.session_expired') };
+  if (s.userId !== userId) return { error: tr('events.builder.errors.session_other_user') };
+  if (guildId && s.guildId && s.guildId !== guildId) return { error: tr('events.builder.errors.session_invalid_guild') };
   return { session: s };
 }
 
