@@ -55,6 +55,10 @@ const ENV_MAP = {
   BTD_IGNORE: (cfg, value) => { cfg.watch.ignored = cfg.watch.ignored.concat(String(value).split(",").map(s => s.trim()).filter(Boolean)); }
 };
 
+// Config files discovered in cwd when BTD_CONFIG is not set (first match wins).
+// Includes nodemon-like names for familiarity alongside the canonical btd file.
+const CONFIG_FILES = ["eternal.btd.json", "btd.json", ".btdrc", ".btdrc.json"];
+
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -78,19 +82,60 @@ function mergeDeep(base, override) {
   return out;
 }
 
+function parseConfigText(raw, file) {
+  const text = String(raw).replace(/^\uFEFF/, "").trim();
+  if (!text) return {};
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (err) {
+    throw new Error(`Cannot parse BetterThanDemons config file ${file}: ${err.message}`);
+  }
+  if (!isPlainObject(parsed)) {
+    throw new Error(`Cannot load BetterThanDemons config file ${file}: expected a JSON object at the top level`);
+  }
+  return parsed;
+}
+
 function readConfigFile(env, cwd) {
   const explicit = env.BTD_CONFIG && String(env.BTD_CONFIG).trim();
-  const candidate = explicit ? path.resolve(cwd, explicit) : path.join(cwd, "eternal.btd.json");
-  try {
-    const raw = fs.readFileSync(candidate, "utf8");
-    const parsed = JSON.parse(raw);
-    if (!isPlainObject(parsed)) {
-      throw new Error("expected a JSON object at the top level");
+  if (explicit) {
+    const candidate = path.resolve(cwd, explicit);
+    try {
+      return { data: parseConfigText(fs.readFileSync(candidate, "utf8"), candidate), file: candidate };
+    } catch (err) {
+      if (err.code === "ENOENT") throw new Error(`Cannot load BetterThanDemons config file ${candidate}: file not found`);
+      throw err;
     }
-    return { data: parsed, file: candidate };
+  }
+
+  for (const name of CONFIG_FILES) {
+    const candidate = path.join(cwd, name);
+    try {
+      return { data: parseConfigText(fs.readFileSync(candidate, "utf8"), candidate), file: candidate };
+    } catch (err) {
+      if (err.code === "ENOENT") continue;
+      throw err;
+    }
+  }
+  return { data: null, file: null };
+}
+
+function readPackageConfig(cwd) {
+  const pkgFile = path.join(cwd, "package.json");
+  try {
+    const raw = fs.readFileSync(pkgFile, "utf8");
+    const pkg = JSON.parse(raw);
+    if (!isPlainObject(pkg)) return { data: null, file: null };
+    const data = pkg.btdConfig || pkg.betterThanDemons;
+    if (data === undefined) return { data: null, file: null };
+    if (!isPlainObject(data)) {
+      throw new Error(`Cannot load BetterThanDemons config from ${pkgFile}: "btdConfig"/"betterThanDemons" must be an object`);
+    }
+    return { data, file: `${pkgFile}#btdConfig` };
   } catch (err) {
     if (err.code === "ENOENT") return { data: null, file: null };
-    throw new Error(`Cannot load BetterThanDemons config file ${candidate}: ${err.message}`);
+    throw err;
   }
 }
 
@@ -100,6 +145,91 @@ function assertNumber(name, value, { min = 0, integer = false } = {}) {
     throw new Error(`Config value "${name}" must be ${integer ? "an integer" : "a number"} >= ${min}, got: ${JSON.stringify(value)}`);
   }
   return num;
+}
+
+function toList(value) {
+  if (Array.isArray(value)) return value.map(v => String(v));
+  if (typeof value === "string") return value.split(",").map(s => s.trim()).filter(Boolean);
+  return value;
+}
+
+function parseDelayMs(value) {
+  if (value === undefined || value === null || value === "") return undefined;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    // nodemon's `delay` is in seconds; accept ms when explicitly suffixed.
+    return Math.round(value * 1000);
+  }
+  const str = String(value).trim().toLowerCase();
+  const match = str.match(/^([0-9]*\.?[0-9]+)\s*(ms|s)?$/);
+  if (!match) return value;
+  const amount = Number(match[1]);
+  if (!Number.isFinite(amount)) return value;
+  const unit = match[2] || "s";
+  return Math.round(unit === "ms" ? amount : amount * 1000);
+}
+
+function normalizeAliases(input) {
+  if (!isPlainObject(input)) return input;
+  const out = mergeDeep({}, input);
+
+  // nodemon-like flat keys -> btd nested schema
+  if (out.watch !== undefined && !isPlainObject(out.watch)) {
+    out.watch = { dirs: toList(out.watch) };
+  } else if (isPlainObject(out.watch)) {
+    // allow `watch: { watch: [...] }` / `watch: ["src"]`-ish shapes inside object
+    if (out.watch.watch !== undefined && out.watch.dirs === undefined) {
+      out.watch.dirs = toList(out.watch.watch);
+    }
+  }
+
+  if (isPlainObject(out.watch)) {
+    if (out.watch.ext !== undefined && out.watch.extensions === undefined) out.watch.extensions = out.watch.ext;
+    if (out.watch.ignore !== undefined && out.watch.ignored === undefined) out.watch.ignored = out.watch.ignore;
+    if (typeof out.watch.extensions === "string" || Array.isArray(out.watch.extensions)) {
+      const list = toList(out.watch.extensions);
+      out.watch.extensions = list.map(ext => (ext.startsWith(".") ? ext : `.${ext}`).toLowerCase());
+    }
+    if (out.watch.ignored !== undefined) out.watch.ignored = toList(out.watch.ignored);
+    if (out.watch.dirs !== undefined) out.watch.dirs = toList(out.watch.dirs);
+  }
+
+  if (out.ext !== undefined) {
+    out.watch = out.watch || {};
+    if (out.watch.extensions === undefined) {
+      const list = toList(out.ext);
+      out.watch.extensions = Array.isArray(list) ? list.map(ext => (ext.startsWith(".") ? ext : `.${ext}`).toLowerCase()) : out.ext;
+    }
+  }
+  if (out.ignore !== undefined) {
+    out.watch = out.watch || {};
+    if (out.watch.ignored === undefined) out.watch.ignored = toList(out.ignore);
+  }
+
+  if (out.exec !== undefined && out.entry === undefined) {
+    if (Array.isArray(out.exec)) {
+      out.entry = out.exec;
+    } else if (typeof out.exec === "string") {
+      const cmd = out.exec.trim();
+      if (cmd.startsWith("node ")) out.entry = cmd.slice(5).trim().split(/\s+/).filter(Boolean);
+      else if (cmd) out.entry = cmd.split(/\s+/).filter(Boolean);
+    }
+  }
+
+  if (out.delay !== undefined) {
+    out.restart = out.restart || {};
+    if (out.restart.debounceMs === undefined) out.restart.debounceMs = parseDelayMs(out.delay);
+  }
+
+  if (out.verbose === true) {
+    out.log = out.log || {};
+    if (out.log.level === undefined) out.log.level = "debug";
+  }
+  if (out.quiet === true) {
+    out.log = out.log || {};
+    if (out.log.level === undefined) out.log.level = "warn";
+  }
+
+  return out;
 }
 
 function validate(config) {
@@ -156,7 +286,13 @@ function normalize(config, cwd) {
 /**
  * Resolves the effective configuration.
  * Order (lowest to highest precedence):
- *   built-in defaults → eternal.btd.json (or $BTD_CONFIG) → userConfig → BTD_* env vars
+ *   built-in defaults → package.json btdConfig/betterThanDemons → config file
+ *   (BTD_CONFIG, or first of eternal.btd.json/btd.json/.btdrc/.btdrc.json)
+ *   → constructor options → BTD_* env vars
+ *
+ * Config files accept btd's nested schema and nodemon-like aliases:
+ *   watch/ext/ignore (flat), exec -> entry, delay -> restart.debounceMs,
+ *   verbose/quiet -> log.level.
  */
 function loadConfig(userConfig = {}, env = process.env) {
   if (!isPlainObject(userConfig)) {
@@ -164,14 +300,20 @@ function loadConfig(userConfig = {}, env = process.env) {
   }
 
   const cwd = typeof userConfig.cwd === "string" && userConfig.cwd.trim() ? userConfig.cwd : process.cwd();
-  const { data: fileConfig, file } = readConfigFile(env, path.resolve(cwd));
+  const root = path.resolve(cwd);
+  const { data: pkgConfig, file: pkgFile } = readPackageConfig(root);
+  const { data: fileConfig, file } = readConfigFile(env, root);
 
   let config = clone(DEFAULTS);
+  if (pkgConfig) {
+    config = mergeDeep(config, normalizeAliases(pkgConfig));
+    config._configFile = pkgFile;
+  }
   if (fileConfig) {
-    config = mergeDeep(config, fileConfig);
+    config = mergeDeep(config, normalizeAliases(fileConfig));
     config._configFile = file;
   }
-  config = mergeDeep(config, userConfig);
+  config = mergeDeep(config, normalizeAliases(userConfig));
 
   for (const [key, apply] of Object.entries(ENV_MAP)) {
     if (env[key] !== undefined && env[key] !== "") apply(config, env[key]);
@@ -181,4 +323,13 @@ function loadConfig(userConfig = {}, env = process.env) {
   return normalize(config, cwd);
 }
 
-module.exports = { loadConfig, DEFAULT_IGNORED, DEFAULT_WATCH_EXTENSIONS };
+module.exports = {
+  loadConfig,
+  normalizeAliases,
+  parseDelayMs,
+  readConfigFile,
+  readPackageConfig,
+  CONFIG_FILES,
+  DEFAULT_IGNORED,
+  DEFAULT_WATCH_EXTENSIONS
+};

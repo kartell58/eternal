@@ -13,7 +13,13 @@
  *   node betterThanDemons.js [entry]
  *
  * Configuration (lowest to highest precedence):
- *   defaults → eternal.btd.json (or $BTD_CONFIG) → constructor options → BTD_* env vars
+ *   defaults → package.json "btdConfig"/"betterThanDemons"
+ *            → config file (BTD_CONFIG, or first found: eternal.btd.json, btd.json, .btdrc, .btdrc.json)
+ *            → constructor options → BTD_* env vars
+ *
+ * Config files accept btd's nested schema and nodemon-like aliases:
+ *   watch (array/string) / ext / ignore, exec -> entry, delay -> restart.debounceMs (s or ms),
+ *   verbose/quiet -> log.level.
  *
  * Constructor options:
  *   entry     string | string[]   app entry point(s) for `node <entry>`

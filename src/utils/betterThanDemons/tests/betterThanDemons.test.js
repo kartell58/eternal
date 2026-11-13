@@ -118,6 +118,62 @@ process.on('SIGTERM', async () => {
     assert.strictEqual(filter.isIgnored("src/app.js"), false);
   });
 
+  // -------------------------------------------------------------- config
+  await test("loadConfig reads nodemon-like btd.json with flat watch/ext/ignore/exec/delay aliases", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "btd-cfg-"));
+    fs.writeFileSync(path.join(dir, "btd.json"), JSON.stringify({
+      watch: ["src", "index.js"],
+      ext: "js,json",
+      ignore: ["data/**", "*.db"],
+      exec: "node index.js",
+      delay: "250ms",
+      verbose: true
+    }));
+    const cfg = BetterThanDemons.loadConfig({ cwd: dir }, {});
+    assert.strictEqual(cfg._configFile, path.join(dir, "btd.json"));
+    assert.deepStrictEqual(cfg.entry, ["index.js"]);
+    assert.ok(cfg.watch.dirs.includes(path.resolve(dir, "src")));
+    assert.ok(cfg.watch.dirs.includes(path.resolve(dir, "index.js")));
+    assert.ok(cfg.watch.extensions.includes(".js"));
+    assert.ok(cfg.watch.extensions.includes(".json"));
+    assert.ok(cfg.watch.ignored.includes("data/**"));
+    assert.strictEqual(cfg.restart.debounceMs, 250);
+    assert.strictEqual(cfg.log.level, "debug");
+  });
+
+  await test("loadConfig supports .btdrc and package.json btdConfig (file overrides package)", () => {
+    const dirA = fs.mkdtempSync(path.join(os.tmpdir(), "btd-cfg-"));
+    fs.writeFileSync(path.join(dirA, ".btdrc"), JSON.stringify({ watch: "src", ext: "ts,js", delay: 0.5 }));
+    const cfgA = BetterThanDemons.loadConfig({ cwd: dirA }, {});
+    assert.strictEqual(cfgA._configFile, path.join(dirA, ".btdrc"));
+    assert.deepStrictEqual(cfgA.watch.dirs, [path.resolve(dirA, "src")]);
+    assert.ok(cfgA.watch.extensions.includes(".ts"));
+    assert.strictEqual(cfgA.restart.debounceMs, 500);
+
+    const dirB = fs.mkdtempSync(path.join(os.tmpdir(), "btd-cfg-"));
+    fs.writeFileSync(path.join(dirB, "package.json"), JSON.stringify({ name: "x", btdConfig: { watch: ["lib"], ext: "js", delay: 1 } }));
+    fs.writeFileSync(path.join(dirB, "btd.json"), JSON.stringify({ watch: ["src"] }));
+    const cfgB = BetterThanDemons.loadConfig({ cwd: dirB }, {});
+    assert.strictEqual(cfgB._configFile, path.join(dirB, "btd.json"));
+    assert.deepStrictEqual(cfgB.watch.dirs, [path.resolve(dirB, "src")]); // file wins over package
+  });
+
+  await test("loadConfig precedence: config file < constructor options < env vars", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "btd-cfg-"));
+    fs.writeFileSync(path.join(dir, "btd.json"), JSON.stringify({ watch: ["src"], delay: "100ms", log: { level: "info" } }));
+    const cfg = BetterThanDemons.loadConfig({ cwd: dir, log: { level: "warn" } }, { BTD_LOG_LEVEL: "error", BTD_DEBOUNCE_MS: "300" });
+    assert.strictEqual(cfg.log.level, "error");
+    assert.strictEqual(cfg.restart.debounceMs, 300);
+  });
+
+  await test("loadConfig reports the config file that was used (eternal.btd.json kept working)", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "btd-cfg-"));
+    fs.writeFileSync(path.join(dir, "eternal.btd.json"), JSON.stringify({ entry: "main.js" }));
+    const cfg = BetterThanDemons.loadConfig({ cwd: dir }, {});
+    assert.strictEqual(cfg._configFile, path.join(dir, "eternal.btd.json"));
+    assert.deepStrictEqual(cfg.entry, ["main.js"]);
+  });
+
   // ------------------------------------------------------- runtime process
   await test("runtime spawns the app and restarts it when a watched file changes", async () => {
     const fixture = await makeFixture({ "app.js": fixtureApp(100) });
