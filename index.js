@@ -8,6 +8,9 @@ async function shutdown(signal, clientPromise) {
   console.error(`${signal} received — shutting down gracefully...`);
   try {
     const client = await clientPromise;
+    if (client && client.language && typeof client.language.close === "function") {
+      client.language.close();
+    }
     if (client) client.destroy();
   } catch (err) {
     console.error("Error while destroying the Discord client:", err);

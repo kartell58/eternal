@@ -1,0 +1,9 @@
+errors:
+  generic: "Ocurrió un error inesperado. Inténtalo de nuevo más tarde."
+  not_in_guild: "Esta acción solo se puede usar en un servidor."
+  missing_permission: "No tienes permiso para hacer eso."
+  invalid_locale: "Idioma no válido o no compatible: {{locale}}."
+  database: "Ocurrió un error en la base de datos al guardar tu preferencia."
+  interaction_failed: "No se pudo responder a esta interacción."
+  unknown_command: "Comando desconocido."
+  timeout: "Esta interacción ha expirado."

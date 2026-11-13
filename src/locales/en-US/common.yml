@@ -1,0 +1,23 @@
+common:
+  app_name: "Eternal"
+  enabled: "Enabled"
+  disabled: "Disabled"
+  not_configured: "Not configured"
+  unknown: "Unknown"
+  cancel: "Cancel"
+  confirm: "Confirm"
+  back: "Back"
+  none: "None"
+
+locale:
+  name:
+    en-US: "English (US)"
+    pt-BR: "Portuguese (Brazil)"
+    es-ES: "Spanish (Spain)"
+  code: "Locale code"
+  effective: "Effective language"
+  user: "Your language"
+  guild: "Server language"
+  default: "Default language"
+  inherited: "Inherited"
+  not_set: "Not set"

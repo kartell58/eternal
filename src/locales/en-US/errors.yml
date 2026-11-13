@@ -1,0 +1,9 @@
+errors:
+  generic: "An unexpected error occurred. Please try again later."
+  not_in_guild: "This action can only be used in a server."
+  missing_permission: "You do not have permission to do that."
+  invalid_locale: "Invalid or unsupported locale: {{locale}}."
+  database: "A database error occurred while saving your preference."
+  interaction_failed: "Could not respond to this interaction."
+  unknown_command: "Unknown command."
+  timeout: "This interaction timed out."

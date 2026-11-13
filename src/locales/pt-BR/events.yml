@@ -1,0 +1,10 @@
+events:
+  ready:
+    logged_in: "Conectado como {{tag}}."
+
+  guild_member_add:
+    welcome_title: "Bem-vindo!"
+    welcome_message: "Olá {{member}}, bem-vindo(a) ao **{{guild}}**!"
+
+  interaction:
+    cooldown: "Aguarde antes de usar isso novamente."

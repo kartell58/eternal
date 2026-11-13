@@ -1,0 +1,40 @@
+commands:
+  ping:
+    description: "Muestra la latencia del bot."
+    title: "¡Pong!"
+    interaction: "Interacción"
+    websocket: "WebSocket"
+    uptime: "Tiempo activo"
+    response: "¡Pong! Latencia: {{latency}}ms."
+
+  language:
+    description: "Administra tu idioma y el idioma de este servidor."
+    title: "Configuración de idioma"
+    current_effective: "Idioma efectivo"
+    current_user: "Tu preferencia"
+    current_guild: "Preferencia del servidor"
+    not_set: "No establecido (usando el predeterminado)"
+    default_locale: "Predeterminado del bot"
+
+    select_user_placeholder: "Selecciona tu idioma personal"
+    select_guild_placeholder: "Selecciona el idioma del servidor"
+
+    set_user_success: "Tu idioma se ha establecido en **{{language}}** ({{code}})."
+    set_guild_success: "El idioma del servidor se ha establecido en **{{language}}** ({{code}})."
+    reset_user_success: "Tu preferencia de idioma personal se ha restablecido. Ahora heredarás el idioma del servidor o el predeterminado."
+    reset_guild_success: "La preferencia de idioma del servidor se ha restablecido. Se usará el idioma predeterminado (**{{language}}**)."
+
+    reset_user_button: "Restablecer mi idioma"
+    reset_guild_button: "Restablecer idioma del servidor"
+
+    no_permission_guild: "Necesitas el permiso de **Administrador** para cambiar el idioma del servidor."
+    guild_only: "El idioma del servidor solo se puede cambiar dentro de un servidor."
+    invalid_locale: "El idioma seleccionado no es compatible."
+    already_set_user: "Tu idioma ya está establecido en **{{language}}**."
+    already_set_guild: "El idioma del servidor ya está establecido en **{{language}}**."
+
+    menu_user_label: "Idioma personal"
+    menu_guild_label: "Idioma del servidor"
+    menu_reset_label: "Restablecer preferencias"
+
+    help: "Elige un idioma personal o (si eres administrador) establece el idioma del servidor. Las preferencias personales tienen prioridad sobre el idioma del servidor."

@@ -11,6 +11,7 @@ require("dotenv").config();
 const { loadCommands, loadEvents } = require("./loader");
 
 const { messageHandler } = require("./middlewares/messageHandler");
+const { createLanguageManager } = require("./core/language");
 
 const INTENTS = [
   GatewayIntentBits.Guilds,
@@ -22,6 +23,9 @@ async function connect() {
   const client = new Client({
     intents: INTENTS
   });
+
+  // Initialize centralized i18n before loading/registering commands and events.
+  client.language = await createLanguageManager();
 
   const commands = loadCommands();
 

@@ -33,7 +33,8 @@
     "axios": "^1.21.1",
     "better-sqlite3": "^13.0.3",
     "discord.js": "^14.26.4",
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "concurrently": "^10.0.7",

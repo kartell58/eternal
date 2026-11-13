@@ -1,0 +1,23 @@
+common:
+  app_name: "Eternal"
+  enabled: "Ativado"
+  disabled: "Desativado"
+  not_configured: "Não configurado"
+  unknown: "Desconhecido"
+  cancel: "Cancelar"
+  confirm: "Confirmar"
+  back: "Voltar"
+  none: "Nenhum"
+
+locale:
+  name:
+    en-US: "Inglês (EUA)"
+    pt-BR: "Português (Brasil)"
+    es-ES: "Espanhol (Espanha)"
+  code: "Código do idioma"
+  effective: "Idioma em uso"
+  user: "Seu idioma"
+  guild: "Idioma do servidor"
+  default: "Idioma padrão"
+  inherited: "Herdado"
+  not_set: "Não definido"

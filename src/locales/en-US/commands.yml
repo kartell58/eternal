@@ -1,0 +1,40 @@
+commands:
+  ping:
+    description: "Shows the bot's latency."
+    title: "Pong!"
+    interaction: "Interaction"
+    websocket: "WebSocket"
+    uptime: "Uptime"
+    response: "Pong! Latency: {{latency}}ms."
+
+  language:
+    description: "Manage your language and this server's language."
+    title: "Language settings"
+    current_effective: "Effective language"
+    current_user: "Your preference"
+    current_guild: "Server preference"
+    not_set: "Not set (using default)"
+    default_locale: "Bot default"
+
+    select_user_placeholder: "Select your personal language"
+    select_guild_placeholder: "Select the server language"
+
+    set_user_success: "Your language has been set to **{{language}}** ({{code}})."
+    set_guild_success: "Server language has been set to **{{language}}** ({{code}})."
+    reset_user_success: "Your personal language preference has been reset. You now inherit the server or default language."
+    reset_guild_success: "The server language preference has been reset. The default language (**{{language}}**) will be used."
+
+    reset_user_button: "Reset my language"
+    reset_guild_button: "Reset server language"
+
+    no_permission_guild: "You need the **Administrator** permission to change the server language."
+    guild_only: "Server language can only be changed inside a server."
+    invalid_locale: "The selected language is not supported."
+    already_set_user: "Your language is already set to **{{language}}**."
+    already_set_guild: "The server language is already set to **{{language}}**."
+
+    menu_user_label: "Personal language"
+    menu_guild_label: "Server language"
+    menu_reset_label: "Reset preferences"
+
+    help: "Choose a personal language, or (if you are an administrator) set the server language. Personal preferences override the server language."
