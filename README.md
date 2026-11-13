@@ -24,7 +24,6 @@ Eternal is a Discord bot built with Node.js and discord.js, providing per-server
 
 ## Configuration
 - `.env`: `TOKEN` (bot token), `CLIENT_ID` (application client ID)
-- `config.json` may be used by user API utilities where applicable.
 - Runtime data (gitignored as configured): `settings.json`, `data/tokens.json`, and builder storage such as `builder-drafts.json`, `builder-templates.json`, `builder-published-actions.json`.
 
 ## Build and test

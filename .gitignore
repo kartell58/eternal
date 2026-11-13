@@ -7,7 +7,6 @@ node_modules/
 !.env.example
 
 # Local/runtime configuration (may contain tokens, IDs, or machine-specific data)
-config.json
 settings.json
 
 # Builder runtime persistence/state
