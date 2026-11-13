@@ -8,3 +8,43 @@ events:
 
   interaction:
     cooldown: "Espera antes de usar esto de nuevo."
+
+  verification:
+    panel:
+      title: "Verificación"
+      description: "Antes de poder acceder al servidor, debes verificar que no eres un bot.\n\nHaz clic en **Responder** abajo para completar el **`CAPTCHA`** y recibir tu rol verificado."
+      respond_button: "Responder"
+      why_button: "¿Por qué verificar?"
+
+    why:
+      title: "¿Por qué tener una verificación de cuenta?"
+      body: "La verificación de cuenta ayuda a evitar que cuentas no deseadas se unan a nuestro servidor, manteniendo la comunidad más segura y reduciendo el spam no deseado en tus MD."
+      credit: "Desarrollado por kartell (2sj5) • discord.gg/mN4Rh4c35"
+
+    challenge:
+      title: "Verificación — Desafío CAPTCHA"
+      instruction: "Analiza cuidadosamente la imagen de abajo y selecciona en el menú la opción que coincida con el código mostrado."
+      placeholder: "Selecciona la opción que coincida con el código..."
+      image_alt: "Código CAPTCHA"
+      attempts_time: "Intentos restantes: {{attemptsLeft}}/{{maxAttempts}} • Límite de tiempo: 2 minutos"
+      expires: "Este desafío expira {{expires}}."
+      incorrect: "❌ Código incorrecto, inténtalo de nuevo."
+
+    expired:
+      title: "Desafío expirado"
+      body: "Este CAPTCHA ha expirado. Haz clic en **Responder** en el panel de verificación para intentarlo de nuevo."
+
+    failed:
+      title: "Verificación fallida"
+      body: "Has usado los {{maxAttempts}} intentos. Haz clic en **Responder** en el panel de verificación para obtener un nuevo código."
+
+    success:
+      title: "¡Verificado!"
+
+    issue:
+      title: "Problema de verificación"
+
+    errors:
+      guild_only: "Esta acción solo se puede usar dentro de un servidor."
+      role_not_configured: "El rol de verificación no está configurado. Avisa a un administrador."
+      already_verified: "¡Ya tienes el rol de verificación!"

@@ -316,7 +316,7 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
     captcha.clearChallenges();
   });
 
-  await test("handleWhy answers with the TOOLS-style cv2 container and exact text", async () => {
+  await test("handleWhy answers with the TOOLS-style cv2 container and English default text", async () => {
     const interaction = mockButtonInteraction("captcha_why", {});
     await handleWhy(interaction);
     assert.strictEqual(interaction.repliedPayload.flags, EPH_CV2);
@@ -324,26 +324,43 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
     assert.strictEqual(interaction.repliedPayload.embeds, undefined);
     const texts = textContents(interaction.repliedPayload.components);
     assert.strictEqual(interaction.repliedPayload.components[0].toJSON().accent_color, undefined, "why verify container renders without an accent color");
-    assert.strictEqual(texts[0], "**Por que ter uma verificação de conta...**");
-    assert.strictEqual(texts[1], "A verificação de conta é para prevenir que contas indesejadas entre em nosso servidor, assim deixando uma comunidade mais segura e sem SPAM desnecessários em sua DM.");
-    assert.strictEqual(texts[texts.length - 1], "-# Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35");
+    assert.strictEqual(texts[0], "**Why have account verification?**");
+    assert.strictEqual(texts[1], "Account verification helps prevent unwanted accounts from joining our server, keeping the community safer and reducing unwanted spam in your DMs.");
+    assert.strictEqual(texts[texts.length - 1], "-# Developed by kartell (2sj5) • discord.gg/mN4Rh4c35");
     assert.strictEqual(separatorCount(interaction.repliedPayload.components), 1, "separator between body and credit");
     assert.strictEqual(
       WHY_VERIFY_TEXT,
-      "**Por que ter uma verificação de conta...**\n" +
-      "A verificação de conta é para prevenir que contas indesejadas entre em nosso servidor, assim deixando uma comunidade mais segura e sem SPAM desnecessários em sua DM.\n" +
-      "Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35"
+      "**Why have account verification?**\n" +
+      "Account verification helps prevent unwanted accounts from joining our server, keeping the community safer and reducing unwanted spam in your DMs.\n" +
+      "Developed by kartell (2sj5) • discord.gg/mN4Rh4c35"
     );
   });
 
   await test("execute routes captcha buttons and the answer select", async () => {
     const why = mockButtonInteraction("captcha_why", {});
     await execute(why);
-    assert.ok(textContents(why.repliedPayload.components)[0].startsWith("**Por que ter uma verificação de conta...**"));
+    assert.ok(textContents(why.repliedPayload.components)[0].startsWith("**Why have account verification?**"));
 
     const unrelated = mockButtonInteraction("btn_verify", {});
     await execute(unrelated);
     assert.strictEqual(unrelated.repliedPayload, undefined);
+  });
+
+  await test("Why verify uses locale translations when language system is available", async () => {
+    const { createLanguageManager } = require("../../core/language");
+    const path = require("path");
+    const os = require("os");
+    const fs = require("fs");
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "captcha-lang-"));
+    const lang = await createLanguageManager({ storageOptions: { dataDir: dir, dbPath: path.join(dir, "language.db") }, logger: { log: () => {}, warn: () => {}, error: () => {} } });
+    const interaction = mockButtonInteraction("captcha_why", {});
+    interaction.client = { language: lang };
+    await lang.setUserLocale(interaction.user.id, "pt-BR");
+    await handleWhy(interaction);
+    const texts = textContents(interaction.repliedPayload.components);
+    assert.strictEqual(texts[0], "**Por que ter uma verificação de conta...**");
+    assert.match(texts[texts.length - 1], /Desenvolvido por kartell/);
+    lang.close();
   });
 
   await test("assignVerificationRole assigns, respects configured role and hierarchy", async () => {

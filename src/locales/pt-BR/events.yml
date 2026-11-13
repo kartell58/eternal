@@ -8,3 +8,43 @@ events:
 
   interaction:
     cooldown: "Aguarde antes de usar isso novamente."
+
+  verification:
+    panel:
+      title: "Verificação"
+      description: "Antes de acessar o servidor, você precisa verificar que não é um bot.\n\nClique em **Responder** abaixo para concluir o **`CAPTCHA`** e receber seu cargo de verificado."
+      respond_button: "Responder"
+      why_button: "Por que verificar?"
+
+    why:
+      title: "Por que ter uma verificação de conta..."
+      body: "A verificação de conta é para prevenir que contas indesejadas entrem em nosso servidor, deixando a comunidade mais segura e reduzindo SPAM desnecessário em sua DM."
+      credit: "Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35"
+
+    challenge:
+      title: "Verificação — Desafio CAPTCHA"
+      instruction: "Analise cuidadosamente a imagem abaixo e selecione no menu a opção que corresponde ao código exibido."
+      placeholder: "Selecione a opção que corresponde ao código..."
+      image_alt: "Código CAPTCHA"
+      attempts_time: "Tentativas restantes: {{attemptsLeft}}/{{maxAttempts}} • Tempo limite: 2 minutos"
+      expires: "Este desafio expira {{expires}}."
+      incorrect: "❌ Código incorreto, tente novamente."
+
+    expired:
+      title: "Desafio expirado"
+      body: "Este CAPTCHA expirou. Clique em **Responder** no painel de verificação para tentar novamente."
+
+    failed:
+      title: "Falha na verificação"
+      body: "Você usou todas as {{maxAttempts}} tentativas. Clique em **Responder** no painel de verificação para obter um novo código."
+
+    success:
+      title: "Verificado!"
+
+    issue:
+      title: "Problema na verificação"
+
+    errors:
+      guild_only: "Esta ação só pode ser usada dentro de um servidor."
+      role_not_configured: "O cargo de verificação não está configurado. Avise um administrador."
+      already_verified: "Você já possui o cargo de verificação!"

@@ -45,7 +45,9 @@ async function postCaptchaPanel(guild) {
   if (!channel) return { ok: false, status: "skipped", reason: "verification channel not configured" };
   if (!role) return { ok: false, status: "skipped", reason: "verification role not configured" };
 
-  await channel.send(buildCaptchaPanel());
+  const lang = guild && guild.client ? guild.client.language : null;
+  const locale = lang ? await lang.resolve({ guildId: guild.id }) : "en-US";
+  await channel.send(buildCaptchaPanel({ lang, locale }));
   return { ok: true, status: "posted", channel };
 }
 

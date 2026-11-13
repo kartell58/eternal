@@ -8,3 +8,43 @@ events:
 
   interaction:
     cooldown: "Please wait before using this again."
+
+  verification:
+    panel:
+      title: "Verification"
+      description: "Before you can access the server, you need to verify that you are not a bot.\n\nClick **Respond** below to complete the **`CAPTCHA`** and receive your verified role."
+      respond_button: "Respond"
+      why_button: "Why verify?"
+
+    why:
+      title: "Why have account verification?"
+      body: "Account verification helps prevent unwanted accounts from joining our server, keeping the community safer and reducing unwanted spam in your DMs."
+      credit: "Developed by kartell (2sj5) • discord.gg/mN4Rh4c35"
+
+    challenge:
+      title: "Verification — CAPTCHA Challenge"
+      instruction: "Carefully analyze the image below and select the menu option matching the displayed code."
+      placeholder: "Select the option matching the code..."
+      image_alt: "CAPTCHA code"
+      attempts_time: "Attempts left: {{attemptsLeft}}/{{maxAttempts}} • Time limit: 2 minutes"
+      expires: "This challenge expires {{expires}}."
+      incorrect: "❌ Incorrect code, please try again."
+
+    expired:
+      title: "Challenge expired"
+      body: "This CAPTCHA has expired. Click **Respond** on the verification panel to try again."
+
+    failed:
+      title: "Verification failed"
+      body: "You used all {{maxAttempts}} attempts. Click **Respond** on the verification panel to get a new code."
+
+    success:
+      title: "Verified!"
+
+    issue:
+      title: "Verification issue"
+
+    errors:
+      guild_only: "This action can only be used inside a server."
+      role_not_configured: "Verification role is not configured. Please notify an administrator."
+      already_verified: "You already have the verification role!"
