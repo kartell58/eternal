@@ -1,31 +1,35 @@
 {
-  "name": "yoslbr",
-  "version": "0.1.0",
-  "description": "A Discord bot",
+  "name": "eternal",
+  "version": "0.5.0",
+  "description": "Discord bot with per-guild configuration panels, verification flows, AutoQuest/HypeSquad utilities, bot profile management, and a visual message builder.",
   "keywords": [
-    "Bot",
-    "Discord",
-    "Node",
-    "v24.x.0",
-    "CommonJS",
-    "DiscordJS",
-    "BaseBot"
+    "discord",
+    "discord-bot",
+    "discord.js",
+    "verification",
+    "captcha",
+    "message-builder",
+    "components-v2"
   ],
-  "homepage": "https://github.com/kartell58/yoslbr#readme",
+  "homepage": "https://github.com/kartell58/eternal#readme",
   "bugs": {
-    "url": "https://github.com/kartell58/yoslbr/issues"
+    "url": "https://github.com/kartell58/eternal/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kartell58/yoslbr.git"
+    "url": "git+https://github.com/kartell58/eternal.git"
   },
   "license": "MIT",
   "author": "kartell",
   "type": "commonjs",
   "main": "index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "node .",
-    "dev": "node scripts/betterThanDemons.js"
+    "dev": "node scripts/betterThanDemons.js",
+    "test": "node src/features/verification/captcha.test.js && node src/features/builder/tests/audit-fixes.test.js && node src/features/builder/tests/container-creation-flow.test.js && node src/features/builder/tests/container-data-preservation.test.js && node src/features/builder/tests/container-editor.test.js && node src/features/builder/tests/embed-editor.test.js && node src/features/builder/tests/json-editor.test.js && node src/features/builder/tests/native-container-presentation.test.js && node src/features/builder/tests/ui-redesign.test.js"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.1.0",
@@ -33,9 +37,5 @@
     "better-sqlite3": "^13.0.3",
     "discord.js": "^14.26.4",
     "dotenv": "^17.4.2"
-  },
-  "devDependencies": {
-    "concurrently": "^10.0.7",
-    "http": "^0.0.1-security"
   }
 }
