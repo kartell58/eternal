@@ -47,7 +47,7 @@ export default {
         .setCustomId("token_input")
         .setLabel("Discord user token")
         .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder("Paste your token here...")
+        .setPlaceholder("Paste your token (stored encrypted at rest)...")
         .setMinLength(20)
         .setMaxLength(200)
         .setRequired(true);
@@ -75,7 +75,8 @@ export default {
       await interaction.editReply({
         content:
           `✅ Account connected: **${user.global_name || user.username}** (@${user.username}).\n` +
-          "Now choose **Bravery**, **Brilliance**, or **Balance**."
+          "Now choose **Bravery**, **Brilliance**, or **Balance**.\n\n" +
+          "🔒 Security notice: user tokens are stored encrypted at rest. Because this bot is open source, encryption can be removed or altered in code or by using a version before this change. Only trust the official **eternal#3694** instance hosted directly from the original source."
       });
       return;
     }

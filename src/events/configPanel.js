@@ -104,7 +104,8 @@ async function postAutoQuestPanel(guild) {
     .setTitle("🚀 AutoQuest")
     .setDescription(
       "Connect your account to farm quests automatically.\n" +
-      "Click **Configure account**, then **View quests** or **Start farm**."
+      "Click **Configure account**, then **View quests** or **Start farm**.\n\n" +
+      "🔒 Tokens are stored encrypted at rest. This bot is open source, so encryption can be removed or altered in code or by using a version before this change. Only trust the official **eternal#3694** instance hosted directly from the original source."
     );
 
   const row = new ActionRowBuilder().addComponents(
@@ -137,7 +138,8 @@ async function postHypeSquadPanel(guild) {
     .setDescription(
       "Choose your HypeSquad house!\n" +
       "**Configure account** first (token), then **Join Bravery/Brilliance/Balance**.\n" +
-      "Use **Leave house** to leave HypeSquad."
+      "Use **Leave house** to leave HypeSquad.\n\n" +
+      "🔒 Tokens are stored encrypted at rest. This bot is open source, so encryption can be removed or altered in code or by using a version before this change. Only trust the official **eternal#3694** instance hosted directly from the original source."
     );
 
   const row1 = new ActionRowBuilder().addComponents(

@@ -5,6 +5,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import Database from "better-sqlite3";
 import { logger } from "./logger.js";
+import { encryptToken, decryptToken, isEncryptedToken } from "./tokenCrypto.js";
 
 const DATA_DIR = path.join(__dirname, "..", "..", "data");
 const DB_PATH = path.join(DATA_DIR, "tokens.db");
@@ -47,7 +48,8 @@ function migrateFromLegacyJsonIfNeeded() {
     const insert = db.transaction(entries => {
       for (const [userId, token] of entries) {
         if (!userId || token == null || String(token).trim() === "") continue;
-        stmtSet.run(String(userId), String(token).trim());
+        const plaintext = String(token).trim();
+        stmtSet.run(String(userId), encryptToken(plaintext));
       }
     });
 
@@ -63,7 +65,22 @@ function get(userId) {
   if (!userId) return null;
   try {
     const row = stmtGet.get(String(userId));
-    return row ? row.token : null;
+    if (!row || !row.token) return null;
+
+    const stored = String(row.token);
+    if (!isEncryptedToken(stored)) {
+      const plaintext = stored.trim();
+      if (plaintext) {
+        try {
+          stmtSet.run(String(userId), encryptToken(plaintext));
+        } catch (migrateErr) {
+          logger.error("Error migrating legacy plaintext token:", migrateErr.message);
+        }
+      }
+      return plaintext || null;
+    }
+
+    return decryptToken(stored);
   } catch (err) {
     logger.error("Error reading token:", err.message);
     return null;
@@ -73,9 +90,12 @@ function get(userId) {
 function set(userId, token) {
   if (!userId) return;
   try {
-    stmtSet.run(String(userId), String(token).trim());
+    const plaintext = String(token).trim();
+    if (!plaintext) return;
+    stmtSet.run(String(userId), encryptToken(plaintext));
   } catch (err) {
     logger.error("Error saving token:", err.message);
+    throw err;
   }
 }
 

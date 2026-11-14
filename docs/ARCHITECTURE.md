@@ -16,7 +16,8 @@ Feature modules:
 
 Persistence/config:
   settings.js / settings.json (per-guild panel and module configuration)
-  data/tokens.db            (user tokens for quest/hypesquad flows, runtime-managed)
+  data/tokens.db            (user tokens for quest/hypesquad flows, encrypted at rest, runtime-managed)
+  data/token-keys.json      (token-at-rest encryption key material, runtime-managed unless provided via env)
   builder-*.json              (builder drafts/templates/published action mappings)
 ```
 
@@ -42,7 +43,7 @@ The CAPTCHA flow uses a public Components V2 verification panel (`src/features/v
 
 ## 6. AutoQuest and HypeSquad — `src/commands/quest.js`, `src/events/autoQuest.js`, `src/events/hypeSquad.js`, `src/services/*`
 
-`/quest` opens an ephemeral control panel (configure account, view quests, start farm). `src/events/autoQuest.js` manages account/token configuration and quest actions through service calls; `src/events/hypeSquad.js` provides HypeSquad house management flows. These features depend on user-provided tokens and external Discord API endpoints, so runtime behavior is constrained by token validity, rate limits, and remote responses.
+`/quest` opens an ephemeral control panel (configure account, view quests, start farm). `src/events/autoQuest.js` manages account/token configuration and quest actions through service calls; `src/events/hypeSquad.js` provides HypeSquad house management flows. User tokens are persisted via `src/utils/userTokens.js` with at-rest encryption handled by `src/utils/tokenCrypto.js` (RSA-OAEP SHA-256; keys loaded from environment or generated/stored in `data/token-keys.json`) and decrypted in memory only when needed for API calls. These features depend on user-provided tokens and external Discord API endpoints, so runtime behavior is constrained by token validity, rate limits, and remote responses. At-rest encryption reduces exposure from stored data files, but it does not prevent extraction by an operator who controls the runtime, source code, or key material. Because the project is open source, users should trust only the official **eternal#3694** instance hosted directly from the original source.
 
 ## 7. Bot profile and presence — `src/commands/bot.js`, `src/utils/botPanelView.js`, `src/events/botPanel.js`
 

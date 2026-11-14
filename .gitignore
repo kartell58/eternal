@@ -54,6 +54,10 @@ temp/
 *.sqlite
 *.sqlite3
 
+# Runtime token encryption keys
+data/token-keys.json
+data/token-keys.*.json
+
 # OS-generated
 .DS_Store
 Thumbs.db
