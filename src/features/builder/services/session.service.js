@@ -52,8 +52,8 @@ function deleteSession(id) {
   sessions.delete(id);
 }
 
-function requireSession(sessionId, userId, guildId, t = null) {
-  const tr = typeof t === 'function' ? t : (key) => {
+function makeDefaultTr() {
+  return (key) => {
     const defaults = {
       'events.builder.errors.session_expired': 'This builder session has expired. Use /builder to start a new session. If you saved a draft or template, open it from the builder home to resume your work.',
       'events.builder.errors.session_other_user': 'This builder session belongs to another user.',
@@ -61,7 +61,36 @@ function requireSession(sessionId, userId, guildId, t = null) {
     };
     return defaults[key] || key;
   };
+}
+
+function trFromContext(ctx) {
+  if (!ctx) return null;
+  if (typeof ctx === 'function') return ctx;
+  const t = ctx.t;
+  const interaction = ctx.interaction;
+  const session = ctx.session;
+  const lang = (interaction && interaction.client && interaction.client.language) || ctx.lang || null;
+  if (typeof t === 'function') return t;
+  if (lang) {
+    const locale = (session && session.locale) || ctx.locale || (lang.getDefaultLocale ? lang.getDefaultLocale() : 'en-US');
+    return (key, vars, fallback) => {
+      const v = lang.t(key, vars, locale);
+      if (v === key && fallback != null) {
+        let out = String(fallback);
+        if (vars) for (const [k,val] of Object.entries(vars)) out = out.replace(new RegExp(`\\{\\{\\s*${k}\\s*\\}}`, 'g'), String(val));
+        return out;
+      }
+      return v;
+    };
+  }
+  return null;
+}
+
+function requireSession(sessionId, userId, guildId, ctx = null) {
   const s = getSession(sessionId);
+  let tr = trFromContext(ctx);
+  if (!tr && s) tr = trFromContext(Object.assign({}, ctx || {}, { session: s }));
+  if (!tr) tr = makeDefaultTr();
   if (!s) return { error: tr('events.builder.errors.session_expired') };
   if (s.userId !== userId) return { error: tr('events.builder.errors.session_other_user') };
   if (guildId && s.guildId && s.guildId !== guildId) return { error: tr('events.builder.errors.session_invalid_guild') };

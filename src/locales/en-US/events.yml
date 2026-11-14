@@ -1,85 +1,75 @@
 events:
   ready:
-    logged_in: "Logged in as {{tag}}."
-
+    logged_in: Logged in as {{tag}}.
   guild_member_add:
-    welcome_title: "👋 Welcome!"
-    welcome_message: "Hello {{member}}, welcome to **{{guild}}**! 🎉"
+    welcome_title: 👋 Welcome!
+    welcome_message: Hello {{member}}, welcome to **{{guild}}**! 🎉
     footer: "User ID: {{userId}} | {{date}}"
-
   interaction:
-    cooldown: "Please wait before using this again."
-
+    cooldown: Please wait before using this again.
   verification:
     panel:
-      title: "Verification"
-      description: "Before you can access the server, you need to verify that you are not a bot.\n\nClick **Respond** below to complete the **`CAPTCHA`** and receive your verified role."
-      respond_button: "Respond"
-      why_button: "Why verify?"
+      title: Verification
+      description: |-
+        Before you can access the server, you need to verify that you are not a bot.
 
+        Click **Respond** below to complete the **`CAPTCHA`** and receive your verified role.
+      respond_button: Respond
+      why_button: Why verify?
     why:
-      title: "Why have account verification?"
-      body: "Account verification helps prevent unwanted accounts from joining our server, keeping the community safer and reducing unwanted spam in your DMs."
-      credit: "Developed by kartell (2sj5) • discord.gg/mN4Rh4c35"
-
+      title: Why have account verification?
+      body: Account verification helps prevent unwanted accounts from joining our server, keeping the community safer and reducing unwanted spam in your DMs.
+      credit: Developed by kartell (2sj5) • discord.gg/mN4Rh4c35
     challenge:
-      title: "Verification — CAPTCHA Challenge"
-      instruction: "Carefully analyze the image below and select the menu option matching the displayed code."
-      placeholder: "Select the option matching the code..."
-      image_alt: "CAPTCHA code"
+      title: Verification — CAPTCHA Challenge
+      instruction: Carefully analyze the image below and select the menu option matching the displayed code.
+      placeholder: Select the option matching the code...
+      image_alt: CAPTCHA code
       attempts_time: "Attempts left: {{attemptsLeft}}/{{maxAttempts}} • Time limit: 2 minutes"
-      expires: "This challenge expires {{expires}}."
-      incorrect: "❌ Incorrect code, please try again."
-
+      expires: This challenge expires {{expires}}.
+      incorrect: ❌ Incorrect code, please try again.
     expired:
-      title: "Challenge expired"
-      body: "This CAPTCHA has expired. Click **Respond** on the verification panel to try again."
-
+      title: Challenge expired
+      body: This CAPTCHA has expired. Click **Respond** on the verification panel to try again.
     failed:
-      title: "Verification failed"
-      body: "You used all {{maxAttempts}} attempts. Click **Respond** on the verification panel to get a new code."
-
+      title: Verification failed
+      body: You used all {{maxAttempts}} attempts. Click **Respond** on the verification panel to get a new code.
     success:
-      title: "Verified!"
-
+      title: Verified!
     issue:
-      title: "Verification issue"
-
+      title: Verification issue
     errors:
-      guild_only: "This action can only be used inside a server."
-      role_not_configured: "Verification role is not configured. Please notify an administrator."
-      already_verified: "You already have the verification role!"
-
+      guild_only: This action can only be used inside a server.
+      role_not_configured: Verification role is not configured. Please notify an administrator.
+      already_verified: You already have the verification role!
     role:
-      not_configured: "Verification role is not configured. Please notify an administrator."
-      already: "You already have the verification role!"
-      hierarchy: "I cannot assign this role due to role hierarchy. Please notify an administrator."
-      assigned: "Congratulations! You received the {{role}} role."
-      error: "Error assigning role. Please try again or notify an administrator."
-
+      not_configured: Verification role is not configured. Please notify an administrator.
+      already: You already have the verification role!
+      hierarchy: I cannot assign this role due to role hierarchy. Please notify an administrator.
+      assigned: Congratulations! You received the {{role}} role.
+      error: Error assigning role. Please try again or notify an administrator.
     legacy_panel:
-      title: "✅ Verification"
-      description: "Click the button below to receive your verified role."
-      button: "Verify"
-
+      title: ✅ Verification
+      description: Click the button below to receive your verified role.
+      button: Verify
   config:
     panel:
-      title: "⚙️ Configuration Panel"
-      intro: "Choose what to configure below. Selections are saved automatically."
+      title: ⚙️ Configuration Panel
+      intro: Choose what to configure below. Selections are saved automatically.
       editing: "Editing: {{module}}"
       footer: "Server: {{guild}} | Today at {{time}}"
-      select_placeholder: "Select the {{module}}"
+      select_placeholder: Select the {{module}}
       module_placeholder: "{{module}}"
-      no_options: "No options available"
+      no_options: No options available
       modules:
-        welcome: "Welcome channel"
-        verificationChannel: "Verification channel"
-        verificationRole: "Verification role"
-        honeypot: "Honeypot (anti-selfbot)"
-        autoQuest: "AutoQuest"
-        hypeSquad: "HypeSquad"
-        autoRole: "Auto role on join"
-        rules: "Rules channel"
+        welcome: Welcome channel
+        verificationChannel: Verification channel
+        verificationRole: Verification role
+        honeypot: Honeypot (anti-selfbot)
+        autoQuest: AutoQuest
+        hypeSquad: HypeSquad
+        autoRole: Auto role on join
+        rules: Rules channel
       settings:
         welcome: "👋 Welcome channel: {{value}}"
         verificationChannel: "✅ Verification channel: {{value}}"
@@ -90,170 +80,700 @@ events:
         autoRole: "🧩 Auto role on join: {{value}}"
         rules: "📜 Rules channel: {{value}}"
       buttons:
-        post_captcha: "Post CAPTCHA panel"
-        post_honeypot: "Post honeypot notice"
-        post_rules: "Post rules"
-        post_autoquest: "Post AutoQuest panel"
-        post_hypesquad: "Post HypeSquad panel"
-        send_all: "Send all"
-        post_verification: "Post verification panel"
-
+        post_captcha: Post CAPTCHA panel
+        post_honeypot: Post honeypot notice
+        post_rules: Post rules
+        post_autoquest: Post AutoQuest panel
+        post_hypesquad: Post HypeSquad panel
+        send_all: Send all
+        post_verification: Post verification panel
     replies:
-      invalid_module: "Invalid module."
-      no_available_option: "No available option to configure."
-      verification_channel_not_configured: "Verification channel is not configured. Select it in the panel before posting."
-      verification_role_not_configured: "Verification role is not configured. Select it in the panel before posting."
-      honeypot_not_configured: "Honeypot channel is not configured. Select it in the panel before posting."
-      autoquest_not_configured: "AutoQuest channel is not configured. Select it in the panel before posting."
-      hypesquad_not_configured: "HypeSquad channel is not configured. Select it in the panel before posting."
-      rules_not_configured: "Rules channel is not configured. Select it in the panel before posting."
-      posted_captcha: "CAPTCHA panel posted in {{channel}}."
-      posted_verification: "Verification panel posted in {{channel}}."
-      posted_honeypot: "Honeypot notice posted in {{channel}}."
-      posted_autoquest: "AutoQuest panel posted in {{channel}}."
-      posted_hypesquad: "HypeSquad panel posted in {{channel}}."
-      posted_rules: "Rules posted in {{channel}}."
-      post_captcha_failed: "Could not post the CAPTCHA panel. Check the bot's permissions."
-      post_verification_failed: "Could not post the verification panel. Check the bot's permissions."
-      post_honeypot_failed: "Could not post the honeypot notice. Check the bot's permissions."
-      post_autoquest_failed: "Could not post the AutoQuest panel. Check the bot's permissions."
-      post_hypesquad_failed: "Could not post the HypeSquad panel. Check the bot's permissions."
-      post_rules_failed: "Could not post the rules. Check the bot's permissions."
+      invalid_module: Invalid module.
+      no_available_option: No available option to configure.
+      verification_channel_not_configured: Verification channel is not configured. Select it in the panel before posting.
+      verification_role_not_configured: Verification role is not configured. Select it in the panel before posting.
+      honeypot_not_configured: Honeypot channel is not configured. Select it in the panel before posting.
+      autoquest_not_configured: AutoQuest channel is not configured. Select it in the panel before posting.
+      hypesquad_not_configured: HypeSquad channel is not configured. Select it in the panel before posting.
+      rules_not_configured: Rules channel is not configured. Select it in the panel before posting.
+      posted_captcha: CAPTCHA panel posted in {{channel}}.
+      posted_verification: Verification panel posted in {{channel}}.
+      posted_honeypot: Honeypot notice posted in {{channel}}.
+      posted_autoquest: AutoQuest panel posted in {{channel}}.
+      posted_hypesquad: HypeSquad panel posted in {{channel}}.
+      posted_rules: Rules posted in {{channel}}.
+      post_captcha_failed: Could not post the CAPTCHA panel. Check the bot's permissions.
+      post_verification_failed: Could not post the verification panel. Check the bot's permissions.
+      post_honeypot_failed: Could not post the honeypot notice. Check the bot's permissions.
+      post_autoquest_failed: Could not post the AutoQuest panel. Check the bot's permissions.
+      post_hypesquad_failed: Could not post the HypeSquad panel. Check the bot's permissions.
+      post_rules_failed: Could not post the rules. Check the bot's permissions.
       send_all_posted: "**Posted:**"
       send_all_skipped: "**Skipped:**"
       send_all_failed: "**Failed:**"
-      send_all_none: "No panels were posted."
-      send_all_unknown_error: "unknown error"
-      send_all_failed_to_post: "failed to post"
-      task_captcha: "CAPTCHA Verification"
-      task_honeypot: "Honeypot"
-      task_rules: "Rules"
-      task_autoquest: "AutoQuest"
-      task_hypesquad: "HypeSquad"
-
+      send_all_none: No panels were posted.
+      send_all_unknown_error: unknown error
+      send_all_failed_to_post: failed to post
+      task_captcha: CAPTCHA Verification
+      task_honeypot: Honeypot
+      task_rules: Rules
+      task_autoquest: AutoQuest
+      task_hypesquad: HypeSquad
     posted:
-      honeypot_title: "🚫 DO NOT SEND ANY MESSAGES HERE"
-      honeypot_description: "This channel is used to detect **automated accounts**.\nAny message sent here will result in an **automatic sanction** (softban)."
-      rules_title: "📜 Server Rules"
-      rules_footer: "Posted on {{date}}"
-      rules_fallback: "⚠️ Could not read the rules file."
-      autoquest_title: "🚀 AutoQuest"
-      autoquest_description: "Connect your account to farm quests automatically.\nClick **Configure account**, then **View quests** or **Start farm**."
-      autoquest_configure: "Configure account"
-      autoquest_view: "View quests"
-      autoquest_farm: "Start farm"
-      hypesquad_title: "🏆 HypeSquad"
-      hypesquad_description: "Choose your HypeSquad house!\n**Configure account** first (token), then **Join Bravery/Brilliance/Balance**.\nUse **Leave house** to leave HypeSquad."
-      hypesquad_configure: "Configure account"
-      hypesquad_bravery: "Bravery"
-      hypesquad_brilliance: "Brilliance"
-      hypesquad_balance: "Balance"
-      hypesquad_leave: "Leave house"
-
+      honeypot_title: 🚫 DO NOT SEND ANY MESSAGES HERE
+      honeypot_description: |-
+        This channel is used to detect **automated accounts**.
+        Any message sent here will result in an **automatic sanction** (softban).
+      rules_title: 📜 Server Rules
+      rules_footer: Posted on {{date}}
+      rules_fallback: ⚠️ Could not read the rules file.
+      autoquest_title: 🚀 AutoQuest
+      autoquest_description: |-
+        Connect your account to farm quests automatically.
+        Click **Configure account**, then **View quests** or **Start farm**.
+      autoquest_configure: Configure account
+      autoquest_view: View quests
+      autoquest_farm: Start farm
+      hypesquad_title: 🏆 HypeSquad
+      hypesquad_description: |-
+        Choose your HypeSquad house!
+        **Configure account** first (token), then **Join Bravery/Brilliance/Balance**.
+        Use **Leave house** to leave HypeSquad.
+      hypesquad_configure: Configure account
+      hypesquad_bravery: Bravery
+      hypesquad_brilliance: Brilliance
+      hypesquad_balance: Balance
+      hypesquad_leave: Leave house
   bot_panel:
-    title: "🤖 Bot Configuration"
-    description: "Manage the bot profile and presence directly from this panel.\n\n**Name:** {{name}}\n**Status:** {{status}}\n**Thought/Activity:** {{thought}}\n**Bio:** {{bio}}\n**Avatar:** {{avatar}}\n**Banner:** {{banner}}"
-    footer: "Use the controls below to update settings."
-    status_placeholder: "Change status"
-    status:
-      online: "Online"
-      idle: "Idle"
-      dnd: "Do Not Disturb"
-      invisible: "Invisible"
-    buttons:
-      name: "Name"
-      avatar: "Avatar"
-      banner: "Banner"
-      thought: "Thought"
-      bio: "Bio"
-      refresh: "Refresh"
-    modals:
-      name_title: "Set Bot Name"
-      name_label: "New username"
-      avatar_title: "Set Bot Avatar"
-      avatar_label: "Image URL (or leave empty to clear)"
-      banner_title: "Set Bot Banner"
-      banner_label: "Image URL (or leave empty to clear)"
-      thought_title: "Set Bot Thought"
-      thought_label: "Activity/thought text"
-      bio_title: "Set Bot Bio"
-      bio_label: "Application/bot bio"
-    replies:
-      not_owner: "❌ Only the application owner can configure the bot."
-      username_empty: "❌ Username cannot be empty."
-      username_updated: "✅ Bot username updated."
-      avatar_cleared: "✅ Bot avatar cleared."
-      avatar_updated: "✅ Bot avatar updated."
-      banner_cleared: "✅ Bot banner cleared (if supported)."
-      banner_updated: "✅ Bot banner updated (if supported)."
-      thought_cleared: "✅ Bot thought/activity cleared."
-      thought_updated: "✅ Bot thought/activity updated."
-      bio_updated: "✅ Bot bio updated."
-      action_failed: "❌ Could not complete the action: {{error}}"
-      fetch_image_failed: "Could not fetch image (status {{status}})."
+    title: 🤖 Bot Configuration
+    description: |-
+      Manage the bot profile and presence directly from this panel.
 
+      **Name:** {{name}}
+      **Status:** {{status}}
+      **Thought/Activity:** {{thought}}
+      **Bio:** {{bio}}
+      **Avatar:** {{avatar}}
+      **Banner:** {{banner}}
+    footer: Use the controls below to update settings.
+    status_placeholder: Change status
+    status:
+      online: Online
+      idle: Idle
+      dnd: Do Not Disturb
+      invisible: Invisible
+    buttons:
+      name: Name
+      avatar: Avatar
+      banner: Banner
+      thought: Thought
+      bio: Bio
+      refresh: Refresh
+    modals:
+      name_title: Set Bot Name
+      name_label: New username
+      avatar_title: Set Bot Avatar
+      avatar_label: Image URL (or leave empty to clear)
+      banner_title: Set Bot Banner
+      banner_label: Image URL (or leave empty to clear)
+      thought_title: Set Bot Thought
+      thought_label: Activity/thought text
+      bio_title: Set Bot Bio
+      bio_label: Application/bot bio
+    replies:
+      not_owner: ❌ Only the application owner can configure the bot.
+      username_empty: ❌ Username cannot be empty.
+      username_updated: ✅ Bot username updated.
+      avatar_cleared: ✅ Bot avatar cleared.
+      avatar_updated: ✅ Bot avatar updated.
+      banner_cleared: ✅ Bot banner cleared (if supported).
+      banner_updated: ✅ Bot banner updated (if supported).
+      thought_cleared: ✅ Bot thought/activity cleared.
+      thought_updated: ✅ Bot thought/activity updated.
+      bio_updated: ✅ Bot bio updated.
+      action_failed: "❌ Could not complete the action: {{error}}"
+      fetch_image_failed: Could not fetch image (status {{status}}).
   autoquest:
     modal:
-      title: "Login - AutoQuest"
-      token_label: "Discord user token"
-      token_placeholder: "Paste your token here..."
+      title: Login - AutoQuest
+      token_label: Discord user token
+      token_placeholder: Paste your token here...
     replies:
-      invalid_token: "❌ Invalid or expired token. Please check it and try again."
-      connected: "✅ Account connected: **{{name}}** (@{{username}}).\nUse **View quests** to list quests or **Start farm** to automate them."
-      connect_first: "❌ Connect your account first using **Configure account**."
-      no_quests: "📭 No quests available."
-      quests_title: "📋 Available quests"
-      quest_line: "**{{index}}. {{name}}**\n🎁 {{reward}} • {{type}} • {{minutes}}min"
+      invalid_token: ❌ Invalid or expired token. Please check it and try again.
+      connected: |-
+        ✅ Account connected: **{{name}}** (@{{username}}).
+        Use **View quests** to list quests or **Start farm** to automate them.
+      connect_first: ❌ Connect your account first using **Configure account**.
+      no_quests: 📭 No quests available.
+      quests_title: 📋 Available quests
+      quest_line: |-
+        **{{index}}. {{name}}**
+        🎁 {{reward}} • {{type}} • {{minutes}}min
       fetch_error: "❌ Error fetching quests: {{error}}"
-      already_running: "⏳ You already have a farm running. Please wait for it to finish."
-      farm_started_reply: "🔄 Farm started. Progress will be sent to the AutoQuest channel."
+      already_running: ⏳ You already have a farm running. Please wait for it to finish.
+      farm_started_reply: 🔄 Farm started. Progress will be sent to the AutoQuest channel.
       farm_error_reply: "❌ Farm error: {{error}}"
-      truncated: "\n… (truncated)"
+      truncated: |-
+        
+        … (truncated)
     logs:
-      started_title: "🚀 Farm started"
-      started_body: "Account: **{{name}}** (@{{username}})\nStarting automated execution..."
-      quest_started_title: "🎯 Quest started"
-      quest_completed_title: "✅ Quest completed"
-      info_title: "ℹ️ AutoQuest"
-      warning_title: "⚠️ AutoQuest"
-      finished_title: "🏁 Farm finished"
-      finished_body: "Account: **{{name}}**\n{{completed}}/{{total}} quests completed."
-      error_title: "❌ Farm error"
-      error_body: "Account: **{{name}}**\n{{error}}"
-
+      started_title: 🚀 Farm started
+      started_body: |-
+        Account: **{{name}}** (@{{username}})
+        Starting automated execution...
+      quest_started_title: 🎯 Quest started
+      quest_completed_title: ✅ Quest completed
+      info_title: ℹ️ AutoQuest
+      warning_title: ⚠️ AutoQuest
+      finished_title: 🏁 Farm finished
+      finished_body: |-
+        Account: **{{name}}**
+        {{completed}}/{{total}} quests completed.
+      error_title: ❌ Farm error
+      error_body: |-
+        Account: **{{name}}**
+        {{error}}
   hypesquad:
     modal:
-      title: "Login - HypeSquad"
-      token_label: "Discord user token"
-      token_placeholder: "Paste your token here..."
+      title: Login - HypeSquad
+      token_label: Discord user token
+      token_placeholder: Paste your token here...
     replies:
-      invalid_token: "❌ Invalid or expired token. Please check it and try again."
-      invalid_token_configure: "❌ Invalid or expired token. Use **Configure account** to update it."
-      connected: "✅ Account connected: **{{name}}** (@{{username}}).\nNow choose **Bravery**, **Brilliance**, or **Balance**."
-      connect_first: "❌ Connect your account first using **Configure account**."
-      rate_limited: "⏳ Too many requests. Please wait a few seconds and try again."
-      action_failed: "❌ Could not complete the action (status {{status}})."
+      invalid_token: ❌ Invalid or expired token. Please check it and try again.
+      invalid_token_configure: ❌ Invalid or expired token. Use **Configure account** to update it.
+      connected: |-
+        ✅ Account connected: **{{name}}** (@{{username}}).
+        Now choose **Bravery**, **Brilliance**, or **Balance**.
+      connect_first: ❌ Connect your account first using **Configure account**.
+      rate_limited: ⏳ Too many requests. Please wait a few seconds and try again.
+      action_failed: ❌ Could not complete the action (status {{status}}).
       house_updated: "{{emoji}} HypeSquad updated! You are now in **{{house}}**."
-      left: "✅ You have left HypeSquad."
-
+      left: ✅ You have left HypeSquad.
   builder:
     errors:
       generic: "Builder error: {{error}}"
-      session_expired: "This builder session has expired. Use /builder to start a new session. If you saved a draft or template, open it from the builder home to resume your work."
-      session_other_user: "This builder session belongs to another user."
-      session_invalid_guild: "This builder session is not valid in this server."
-      unknown_interaction: "Unknown builder interaction."
+      session_expired: This builder session has expired. Use /builder to start a new session. If you saved a draft or template, open it from the builder home to resume your work.
+      session_other_user: This builder session belongs to another user.
+      session_invalid_guild: This builder session is not valid in this server.
+      unknown_interaction: Unknown builder interaction.
     runtime:
-      invalid_guild: "This action is not valid in this server."
-      invalid_channel: "This action is not valid in this channel."
+      invalid_guild: This action is not valid in this server.
+      invalid_channel: This action is not valid in this channel.
       selection_received: "Selection received: {{values}}"
-      selection_none: "(none)"
-      action_executed: "Action executed."
-      unauthorized: "You are not authorized to use this action."
-      update_failed: "Could not update this message interaction."
+      selection_none: (none)
+      action_executed: Action executed.
+      unauthorized: You are not authorized to use this action.
+      update_failed: Could not update this message interaction.
       internal_not_allowed: "Internal action not allowed: {{name}}"
-      internal_empty: "(empty)"
-      internal_noop: "Internal action executed (noop)."
-      acknowledged: "Acknowledged."
-      builder_info: "This message was published with Eternal Builder. No privileged internal action was executed."
-      internal_unavailable: "Internal action is not available."
+      internal_empty: (empty)
+      internal_noop: Internal action executed (noop).
+      acknowledged: Acknowledged.
+      builder_info: This message was published with Eternal Builder. No privileged internal action was executed.
+      internal_unavailable: Internal action is not available.
+    navigation:
+      types:
+        components_v2: Components V2
+        embed: Embed
+      context:
+        editing: editing {{channelId}}/{{messageId}}
+        new: new message
+        label: "{{type}} • {{target}}"
+      selection:
+        title: Visual Builder
+        description: |-
+          Choose which builder you want to use for this session.
+
+          **Embed Builder** — Create and edit Discord embed messages.
+          **Components V2 Builder** — Create and edit messages using Components V2 containers and components.
+        footer: Only the session owner can use this builder.
+        embed_button: Embed Builder
+        cv2_button: Components V2 Builder
+      embed_main:
+        title: Embed Builder
+        description: Create and edit embed messages for this builder draft. Select an embed to edit, add a new embed, or publish your message.
+        select_placeholder: Select an Embed to edit
+        no_embeds: No embeds available
+        no_embeds_desc: Add an embed to get started
+        embed_option: Embed {{index}}
+        add_embed: Add Embed
+        add_button: Add Button
+        send_custom: Send Custom
+        quick_send: Quick Send
+        back_selection: Builder Selection
+      cv2_main:
+        heading: "## Container Creation Panel"
+        info_title: Container Information
+        info_description: Manage the containers in your current Builder message. Select a container to edit, add new ones, import JSON, load templates, or publish.
+        containers_label: "**Containers:** {{value}}"
+        containers_none: None yet
+        containers_count: "{{count}} available"
+        owner_label: "**Session Owner:** <@{{userId}}>"
+        draft_label: "**Draft:** {{value}}"
+        draft_not_saved: Not saved
+        footer: -# Only the session owner can use this panel.
+        select_placeholder: Select a container to edit
+        no_containers: No containers available
+        no_containers_desc: Add a container to get started
+        container_option: Container {{index}}
+        add_container: Add Container
+        templates: Templates
+        builder_selection: Builder Selection
+        json_editor: JSON Editor
+        custom_send: Custom Send
+        quick_send: Quick Send
+      embed_editor:
+        heading: "## Embed Editor"
+        preview_title_fallback: Embed Title
+        preview_desc_fallback: "*No description yet*"
+        preview_footer: -# Embed {{index}} of {{total}} • {{context}}
+        btn_title: Title
+        btn_description: Description
+        btn_color: Color
+        btn_author: Author
+        btn_content: Message Content
+        btn_footer: Footer
+        btn_fields: Edit Fields
+        btn_add_field: Add Field
+        btn_images: Image & Thumbnail
+        btn_preview: Preview
+        btn_save: Save
+        btn_publish: Publish
+        btn_back: Back
+        btn_undo: Undo
+        btn_builder_selection: Builder Selection
+        btn_import_json: Import JSON
+        btn_export_json: Export JSON
+      cv2_editor:
+        title: Components V2 Editor
+        description: |-
+          **Editing:** {{context}}
+          Build with containers, sections, text, buttons, selects, media, and more.
+        selected_node: Selected node
+        none: (none)
+        top_level: Top-level
+        containers_count: "{{count}} container(s)"
+        footer: Select a node to add children, edit, move, duplicate, or remove.
+        select_placeholder: Select component node
+        no_components: No components yet
+        add_child: Add Child
+        edit: Edit
+        remove: Remove
+        duplicate: Duplicate
+        move_up: Move Up
+        move_down: Move Down
+        add_container: Add Container
+        preview: Preview
+        save: Save
+        publish: Publish
+        home: Home
+        undo: Undo
+      save_menu:
+        title: Save
+        description: |-
+          Save your current **{{type}}** message as a draft or reusable template.
+
+          Drafts and templates are private to you in this server.
+        save_draft: Save Draft
+        save_template: Save Template
+        back: Back to Editor
+      drafts:
+        title: Saved Drafts
+        description: Select a draft to open, or choose one to delete.
+        empty: No drafts saved for you in this server.
+        storage_warning: |-
+          
+
+          ⚠️ Previous storage was corrupted and backed up{{backup}}.
+        backup_suffix: " ({{backup}})"
+        open_placeholder: Open draft
+        delete_placeholder: Delete draft
+        delete_label: "Delete: {{name}}"
+        back: Back
+      templates:
+        title: Saved Templates
+        description: Open, duplicate, or delete your templates.
+        empty: No templates saved for you in this server.
+        storage_warning: |-
+          
+
+          ⚠️ Previous storage was corrupted and backed up{{backup}}.
+        backup_suffix: " ({{backup}})"
+        open_placeholder: Open template
+        duplicate_placeholder: Duplicate template
+        delete_placeholder: Delete template
+        duplicate_label: "Duplicate: {{name}}"
+        delete_label: "Delete: {{name}}"
+        back: Back
+      edit_existing:
+        title: Edit Existing Message
+        description: |-
+          Load a message sent by this bot to edit and republish it.
+
+          - Only bot-authored messages can be edited.
+          - Embeds can be imported into the editor.
+          - Existing Components V2 messages cannot be fully reconstructed visually; loading one sets it as the edit target and starts a new Components V2 draft to replace it on publish.
+
+          Provide the channel and message IDs below.
+        enter_info: Enter Message Info
+        back: Back
+      field_tools:
+        title: Field Tools
+        empty: No fields yet. Use "Add Field" to create one.
+        empty_list: No fields.
+        unnamed: (unnamed)
+        field_fallback: Field
+        select_placeholder: Select field
+        no_fields_option: No fields
+        edit: Edit
+        remove: Remove
+        duplicate: Duplicate
+        add_field: Add Field
+        move_up: Move Up
+        move_down: Move Down
+        back: Back
+      json:
+        modal_title: JSON Editor
+        label: Builder JSON document
+        placeholder: Paste a complete Builder document JSON
+        file_label: File (optional)
+        file_description: A .txt or .json file with the JSON. If attached, it replaces the text field.
+      replies:
+        embed_not_found: The selected embed could not be found.
+        container_not_found: The selected container could not be found.
+        no_items_to_edit: There are no items to edit in this container.
+        item_not_found: The selected item could not be found in this container.
+        could_not_open_item_editor: "Could not open item editor: {{error}}"
+        color_not_found: The saved color was not found.
+        invalid_color_option: Invalid color option.
+        cannot_add_type: Cannot add {{type}} to a container.
+        unknown_component_type: Unknown component type.
+        draft_not_found: Draft not found or not accessible in this server.
+        failed_load_draft: "Failed to load draft: {{error}}"
+        failed_delete_draft: "Failed to delete draft: {{error}}"
+        template_not_found: Template not found or not accessible in this server.
+        failed_load_template: "Failed to load template: {{error}}"
+        failed_duplicate_template: "Failed to duplicate template: {{error}}"
+        failed_delete_template: "Failed to delete template: {{error}}"
+        max_embeds: A message can have at most 10 embeds.
+        embed_buttons_unavailable: Adding message buttons is not available in the Embed Builder. Use the Components V2 Builder for button components.
+        delete_container_need_more: You need more than one container to delete.
+        quick_send_validation: |-
+          Cannot quick send: validation failed.
+          {{errors}}
+        quick_send_edit_perm: "Cannot quick send (edit): {{error}}"
+        quick_send_edited: "✅ Message edited (quick send): {{url}}"
+        quick_send_no_channel: Quick send could not determine the target channel for this session.
+        quick_send_perm: "Cannot quick send: {{error}}"
+        quick_send_published: "✅ Published (quick send): {{url}}"
+        quick_send_failed: "Quick send failed: {{error}}"
+        unknown_error: Unknown error
+        nothing_to_undo: Nothing to undo.
+        preview_cv2: Preview (Components V2) — editing controls remain in the builder message.
+        preview_content_prefix: "Content preview: {{content}}"
+        preview_embed_note: Preview — editing controls remain in the builder message.
+        preview_failed: "Preview failed: {{error}}"
+        draft_saved: "✅ Draft saved: **{{name}}** ({{id}}){{note}}"
+        draft_storage_warning: |-
+          
+          Warning: previous draft storage was corrupted and backed up{{backup}}.
+        draft_storage_backup_to: " to {{backup}}"
+        failed_save_draft: "Failed to save draft: {{error}}"
+        export_success: Exported the current builder state as JSON.
+        export_failed: "Export failed: {{error}}"
+        unhandled_navigation: Unhandled navigation action.
+      modals:
+        add_color_title: New color
+        color_name_label: Color name
+        color_name_placeholder: E.g. Eternal Purple
+        color_hex_label: HEX code
+        color_hex_placeholder: "#5865F2"
+        add_text_title: Add Text Display
+        text_label: Text content
+        text_placeholder: Enter the text to add
+        save_template_title: Save Template
+        template_name_label: Template name
+    container_editor:
+      title: "## Editing Container"
+      not_found: |-
+        ## Editing Container
+        The selected container could not be found.
+      color_not_found: |-
+        ## Select Color
+        The selected container could not be found.
+      preview_error: Unable to render container preview.
+      add_item_placeholder: Add Item
+      edit_item_placeholder: Edit Item
+      no_items: No items available
+      no_items_desc: Add an item to edit it
+      add_item_desc: Add a {{type}} to this container
+      item_fallback: Item {{index}}
+      select_color: Select Color
+      delete_container: Delete Container
+      back: Back
+      color_title: "## Select Color"
+      color_new: New color
+      color_new_desc: Save a color with name and HEX code
+      color_none: No color
+      color_none_desc: Container without accent color
+      color_discord_blue: Discord Blue
+      color_placeholder: Select a color
+      html_color_codes: HTML Color Codes
+      delete_title: |-
+        ## Delete Container
+        Are you sure you want to delete {{name}}? This cannot be undone.
+      this_container: this container
+      confirm_delete: Confirm Delete
+      cancel: Cancel
+      closed: Container editor closed. Use the main Builder panel to continue.
+      types:
+        text_display: Text
+        button: Button
+        separator: Separator
+        action_row: Action Row
+        section: Section
+        thumbnail: Thumbnail
+        media_gallery: Media Gallery
+        file: File
+        string_select: String Select
+        user_select: User Select
+        role_select: Role Select
+        channel_select: Channel Select
+        mentionable_select: Mentionable Select
+    components:
+      not_cv2: Not in Components V2 mode.
+      unknown_type: Unknown component type.
+      only_containers_top: Only containers can be added at the top level.
+      target_not_found: Target node not found. Select a node and try again.
+      cannot_add_inside: "Cannot add {{type}} inside {{parent}}. Allowed: {{allowed}}."
+      none: none
+      action_row_has_select: This action row already has a select menu.
+      select_must_be_alone: A select menu must be alone in its action row.
+      max_buttons: Max 5 buttons per action row.
+      max_section_texts: A section can have at most 3 text displays.
+      add_component_title: "## Add Component"
+      add_component_desc: No node selected. Add a top-level container, or go back and select a container, section, or action row to add a child inside it.
+      add_top_level_placeholder: Add top-level component
+      container_label: Container
+      container_desc: Top-level Components V2 container
+      back: Back
+      selected_not_found: Selected node not found.
+      cannot_add_children: Cannot add children to **{{type}}**. Select a container, section, or action row instead.
+      add_child_title: "## Add Child Component"
+      add_child_desc: "Adding inside **{{type}}**. Choose a component type:"
+      allowed_types: "**Allowed types:** {{types}}"
+      choose_type: Choose component type
+      no_node_selected: No node selected.
+      cannot_remove: Could not remove this node. Accessories are replaced via Edit (or by editing the parent section).
+      cannot_duplicate: Could not duplicate this node (accessories cannot be duplicated directly).
+      cannot_move: Cannot move further in that direction.
+      unhandled: Unhandled component action.
+    publishing:
+      menu:
+        title: "## Publish"
+        mode_edit: Edit existing message ({{channelId}}/{{messageId}})
+        mode_new: Publish new message
+        type_cv2: Components V2
+        type_embed: Embed
+        ready: ✅ Ready
+        issues: ❌ Issues found
+        and_more: "- …and {{count}} more"
+        destination: Not selected
+        destination_line: "**Destination:** {{value}}"
+        mode_line: "**Mode:** {{value}}"
+        type_line: "**Type:** {{value}}"
+        validation_line: "**Validation:** {{value}}"
+        footer: -# Publishing uses safe defaults (mentions disabled). Review preview before confirming.
+        channel_placeholder: Select destination channel
+        confirm_edit: Confirm Edit
+        confirm_publish: Confirm Publish
+        final_preview: Final Preview
+        back: Back
+        switch_new: Switch to New Message
+      replies:
+        final_preview_content: "Final preview (how it will be published):"
+        preview_failed: "Preview failed: {{error}}"
+        cannot_publish: |-
+          Cannot publish:
+          {{errors}}
+        cannot_edit_channel: "Cannot edit in target channel: {{error}}"
+        edited: "✅ Message edited successfully: {{url}}"
+        cannot_publish_perm: "Cannot publish: {{error}}"
+        published: "✅ Published successfully: {{url}}"
+        failed: "Publish failed: {{error}}"
+        unhandled: Unhandled publish action.
+    validator:
+      embed:
+        title_exceeds: Title exceeds {{limit}} chars.
+        description_exceeds: Description exceeds {{limit}} chars.
+        footer_exceeds: Footer text exceeds {{limit}} chars.
+        author_exceeds: Author name exceeds {{limit}} chars.
+        too_many_fields: Too many fields (max {{limit}}).
+        field_name_exceeds: Field {{index}} name exceeds {{limit}} chars.
+        field_value_exceeds: Field {{index}} value exceeds {{limit}} chars.
+        field_name_required: Field {{index}} requires a name.
+        field_value_required: Field {{index}} requires a value.
+        invalid_url: "{{label}} is not a valid URL."
+        invalid_color: Embed color must be a valid hex color.
+        total_exceeds: Total embed length exceeds {{limit}} chars.
+        max_embeds: A message can have at most 10 embeds.
+        embed_prefix: Embed {{index}}
+        content_exceeds: Message content exceeds 2000 chars.
+        url_labels:
+          author_url: Author URL
+          author_icon: Author icon
+          title_url: Title URL
+          thumbnail_url: Thumbnail URL
+          image_url: Image URL
+          footer_icon: Footer icon
+      cv2:
+        no_root: Components V2 message must have at least one top-level component.
+        root_must_be_container: Top-level Components V2 items must be Containers in this builder.
+        too_many: Too many components (max 40).
+        text_required: Text Display components must have content.
+        button_label_emoji: Buttons must have a label or emoji.
+        link_url: Link buttons require a URL.
+        action_row_select_alone: An action row with a select menu can only contain that select.
+        action_row_max_buttons: An action row can contain at most 5 buttons.
+        section_texts: A section must have 1-3 text displays.
+        section_accessory: A section must have an accessory (thumbnail or button).
+        gallery_items: Media gallery must have at least one item.
+        gallery_url: Media gallery item {{index}} requires a URL.
+        file_required: File component requires a file reference (attachment name or URL).
+    services:
+      publisher:
+        channel_not_found: Channel not found.
+        not_text_based: Selected channel is not text-based.
+        no_permissions: Unable to resolve permissions for that channel.
+        no_view: Missing View Channel permission.
+        no_send_thread: Missing Send Messages permission for this thread.
+        no_send: Missing Send Messages permission.
+        message_not_found: Message not found.
+        not_author: I can only edit messages sent by this bot.
+      drafts:
+        not_authorized_overwrite: Not authorized to overwrite this draft.
+        default_embed: Embed Draft
+        default_cv2: Components V2 Draft
+        not_authorized_delete: Not authorized to delete this draft.
+      templates:
+        not_authorized_overwrite: Not authorized to overwrite this template.
+        untitled: Untitled Template
+        not_authorized_delete: Not authorized to delete this template.
+        not_authorized_duplicate: Not authorized to duplicate this template.
+        copy_suffix: " (copy)"
+      colors:
+        name_required: Color name is required.
+        invalid_hex: "Color must be a valid hex color (e.g. #5865F2)."
+    schemas:
+      text_default: New text
+      button_default: Button
+      button_pressed: Button pressed.
+      section_text: Section text
+      select_placeholder: Select an option
+      option_label: Option 1
+      container_default_content: Use this container to organize your message. You can add text, buttons, selects, and more.
+    json:
+      document_not_object: Document must be an object.
+      v1_containers_required: v1 document must include a `containers` array.
+      container_must_be_object: Each container must be an object.
+      top_level_container_only: Only container items are supported at top level in v1 documents.
+      item_must_be_object: Container items must be objects.
+      v1_min_container: v1 document must include at least one container.
+      unsupported_structure: "Unsupported JSON structure: expected a builder document/state object."
+      missing_type: "Unsupported JSON structure: missing or invalid `type` (expected `embed` or `components_v2`)."
+      invalid_root: "Unsupported Components V2 document: `root` must be an array."
+      invalid_embed: "Unsupported embed document: `embed` or `embeds` is required."
+    properties:
+      modal_titles:
+        embed_title: Title
+        embed_description: Description
+        embed_color: Color
+        embed_basic: Title & Description
+        embed_author: Author
+        embed_footer: Footer & Timestamp
+        embed_images: Images
+        embed_content: Message Content
+        edit_generic: "Edit: {{section}}"
+        add_field: Add Field
+        edit_field: Edit Field {{index}}
+        edit_node: Edit {{type}}
+        edit_existing: Edit Existing Message
+        save_template: Save Template
+      labels:
+        title: Title
+        title_url: Title URL
+        description: Description
+        color_hex: "Color (hex, e.g. #5865F2)"
+        author_name: Author name
+        author_url: Author URL
+        author_icon_url: Author icon URL
+        footer_text: Footer text
+        footer_icon_url: Footer icon URL
+        timestamp: Timestamp (ISO or "now" or empty)
+        thumbnail_url: Thumbnail URL
+        image_url: Main image URL
+        message_content: Message content
+        field_name: Field name
+        field_value: Field value
+        inline_yes_no: Inline? (yes/no)
+        content: Content
+        accent_color: Accent color (hex or empty)
+        spoiler_yes_no: Spoiler? (yes/no)
+        button_label: Label
+        button_style: Style (1-5 or primary/secondary/success/danger/link)
+        button_url_or_id: URL (link) or custom_id
+        button_emoji_disabled: Emoji,Disabled (e.g. 🔥,no or <:n:1>,yes)
+        button_action_resp: Action type|response for non-link (ephemeral/channel/update/internal)
+        divider_yes_no: Divider? (yes/no)
+        spacing: Spacing (1=small, 2=large)
+        thumbnail_url_req: Thumbnail URL
+        description_short: Description
+        media_items: "Items (one per line: url|description|spoiler yes/no)"
+        file_ref: File URL or attachment://name
+        section_texts: Text displays separated by a line with --- (1-3)
+        section_acc: "Accessory: thumbnail|url|desc|spoiler OR button|label|style|url|custom_id|emoji|disabled|actionType|response"
+        select_ph_id: "Placeholder/custom_id: placeholder||custom_id"
+        select_minmax: Min,Max values (e.g. 1,1)
+        select_options: "String options: label|value|description per line"
+        disabled_yes_no: Disabled? (yes/no)
+        channel_id: Channel ID
+        message_id: Message ID
+        template_name: Template name
+      replies:
+        no_modal_section: No editable modal for this section. Use Field Tools for fields.
+        select_component_first: Select a component first.
+        selected_node_not_found: Selected node not found.
+        edit_not_supported: Editing not supported for {{type}} via modal.
+        node_not_found: Node not found.
+        max_fields: Maximum 25 fields.
+        field_not_found: Field not found.
+        container_not_found: The selected container could not be found.
+        text_content_empty: Text content cannot be empty.
+        color_save_failed: "Could not save color: {{error}}"
+        unsupported_file_ext: Unsupported file extension. Only .json and .txt files are allowed.
+        file_too_large: File is too large. Maximum allowed size is 20 MB.
+        could_not_read_file: "Could not read uploaded file: {{error}}"
+        could_not_read_file_status: Could not read uploaded file (status {{status}}).
+        uploaded_empty: Uploaded file is empty.
+        no_json_content: No JSON content provided.
+        invalid_json: "Invalid JSON: {{error}} (existing data preserved)."
+        json_validation_failed: |-
+          JSON validation failed (existing data preserved):
+          {{errors}}
+        only_bot_messages: I can only edit messages authored by this bot.
+        cv2_loaded_as_target: Loaded Components V2 message as edit target. Full visual reconstruction of existing CV2 messages is not supported; the editor started a new CV2 draft that will replace the target message when you publish edit. You can now build the replacement.
+        failed_load_message: "Failed to load message: {{error}}"
+        not_embed_mode: Not in embed mode.
+        select_field_first: Select a field first.
+        template_saved: "Template saved: **{{name}}** ({{id}})"
+        unhandled: Unhandled property action.
+    json_errors:
+      document_not_object: Document must be an object.
+      v1_containers_required: v1 document must include a `containers` array.
+      container_must_be_object: Each container must be an object.
+      top_level_container_only: Only container items are supported at top level in v1 documents.
+      item_must_be_object: Container items must be objects.
+      v1_min_container: v1 document must include at least one container.
+      unsupported_structure: "Unsupported JSON structure: expected a builder document/state object."
+      missing_type: "Unsupported JSON structure: missing or invalid `type` (expected `embed` or `components_v2`)."
+      invalid_root: "Unsupported Components V2 document: `root` must be an array."
+      invalid_embed: "Unsupported embed document: `embed` or `embeds` is required."

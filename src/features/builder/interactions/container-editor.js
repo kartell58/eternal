@@ -9,6 +9,8 @@ const {
 const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
 const { allowedChildTypes } = require('../utils/component-tree');
 
+function tr(t, key, vars, fallback) { return t ? t(key, vars, fallback) : (fallback != null ? fallback : key); }
+
 function getContainers(session) {
   return (session.state?.root || []).filter(n => n && n.type === 'container');
 }
@@ -20,25 +22,28 @@ function getSelectedContainer(session) {
   return found || null;
 }
 
-const CHILD_TYPE_LABELS = {
-  text_display: 'Text',
-  button: 'Button',
-  separator: 'Separator',
-  action_row: 'Action Row',
-  section: 'Section',
-  thumbnail: 'Thumbnail',
-  media_gallery: 'Media Gallery',
-  file: 'File',
-  string_select: 'String Select',
-  user_select: 'User Select',
-  role_select: 'Role Select',
-  channel_select: 'Channel Select',
-  mentionable_select: 'Mentionable Select'
+const CHILD_TYPE_KEYS = {
+  text_display: 'text_display',
+  button: 'button',
+  separator: 'separator',
+  action_row: 'action_row',
+  section: 'section',
+  thumbnail: 'thumbnail',
+  media_gallery: 'media_gallery',
+  file: 'file',
+  string_select: 'string_select',
+  user_select: 'user_select',
+  role_select: 'role_select',
+  channel_select: 'channel_select',
+  mentionable_select: 'mentionable_select'
 };
 
-function childTypeLabel(node, index) {
-  if (!node) return `Item ${index + 1}`;
-  const type = CHILD_TYPE_LABELS[node.type] || String(node.type || 'Item').replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase());
+function childTypeLabel(node, index, t) {
+  if (!node) return tr(t, 'events.builder.container_editor.item_fallback', { index: index + 1 }, `Item ${index + 1}`);
+  const key = CHILD_TYPE_KEYS[node.type];
+  const type = key
+    ? tr(t, `events.builder.container_editor.types.${key}`, {}, String(node.type || 'Item').replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase()))
+    : String(node.type || 'Item').replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase());
   return `${type} ${index + 1}`;
 }
 
@@ -58,17 +63,17 @@ function childDescription(node) {
   return '';
 }
 
-function buildContainerPreviewComponent(container) {
+function buildContainerPreviewComponent(container, t) {
   try {
     const payload = buildComponentsV2Payload({ type: 'components_v2', content: '', root: [container] });
     if (payload.components && payload.components[0]) return payload.components[0];
   } catch (e) {
     // fall through
   }
-  return new TextDisplayBuilder().setContent('Unable to render container preview.');
+  return new TextDisplayBuilder().setContent(tr(t, 'events.builder.container_editor.preview_error', {}, 'Unable to render container preview.'));
 }
 
-function buildContainerEditor(session) {
+function buildContainerEditor(session, t) {
   const container = getSelectedContainer(session);
   if (!container) {
     return {
@@ -76,9 +81,9 @@ function buildContainerEditor(session) {
       embeds: [],
       flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
       components: [
-        new TextDisplayBuilder().setContent('## Editing Container\nThe selected container could not be found.'),
+        new TextDisplayBuilder().setContent(tr(t, 'events.builder.container_editor.not_found', {}, '## Editing Container\nThe selected container could not be found.')),
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_back`).setLabel('Back').setStyle(ButtonStyle.Secondary)
+          new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_back`).setLabel(tr(t, 'events.builder.container_editor.back', {}, 'Back')).setStyle(ButtonStyle.Secondary)
         )
       ]
     };
@@ -87,40 +92,43 @@ function buildContainerEditor(session) {
   const children = Array.isArray(container.components) ? container.components : [];
   const editOptions = children.length
     ? children.slice(0, 25).map((child, i) => ({
-        label: childTypeLabel(child, i),
+        label: childTypeLabel(child, i, t),
         value: child._id,
         description: childDescription(child) || undefined
       }))
-    : [{ label: 'No items available', value: 'none', description: 'Add an item to edit it' }];
+    : [{ label: tr(t, 'events.builder.container_editor.no_items', {}, 'No items available'), value: 'none', description: tr(t, 'events.builder.container_editor.no_items_desc', {}, 'Add an item to edit it') }];
 
-  const addOptions = allowedChildTypes('container').map(type => ({
-    label: type.replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase()),
-    value: type,
-    description: `Add a ${type.replace(/_/g, ' ')} to this container`.slice(0, 100)
-  }));
+  const addOptions = allowedChildTypes('container').map(type => {
+    const typeLabel = tr(t, `events.builder.container_editor.types.${type}`, {}, type.replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase()));
+    return {
+      label: typeLabel,
+      value: type,
+      description: tr(t, 'events.builder.container_editor.add_item_desc', { type: typeLabel.toLowerCase() }, `Add a ${type.replace(/_/g, ' ')} to this container`).slice(0, 100)
+    };
+  });
 
   const canDelete = getContainers(session).length > 1;
 
   const components = [
-    new TextDisplayBuilder().setContent('## Editing Container'),
-    buildContainerPreviewComponent(container),
+    new TextDisplayBuilder().setContent(tr(t, 'events.builder.container_editor.title', {}, '## Editing Container')),
+    buildContainerPreviewComponent(container, t),
     new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId(`bld:${session.id}:nav:ce_add_item`)
-        .setPlaceholder('Add Item')
+        .setPlaceholder(tr(t, 'events.builder.container_editor.add_item_placeholder', {}, 'Add Item'))
         .addOptions(addOptions.slice(0, 25))
     ),
     new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId(`bld:${session.id}:nav:ce_edit_item`)
-        .setPlaceholder('Edit Item')
+        .setPlaceholder(tr(t, 'events.builder.container_editor.edit_item_placeholder', {}, 'Edit Item'))
         .setDisabled(children.length === 0)
         .addOptions(editOptions)
     ),
     new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_color`).setLabel('Select Color').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_delete`).setLabel('Delete Container').setStyle(ButtonStyle.Danger).setDisabled(!canDelete),
-      new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_back`).setLabel('Back').setStyle(ButtonStyle.Secondary)
+      new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_color`).setLabel(tr(t, 'events.builder.container_editor.select_color', {}, 'Select Color')).setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_delete`).setLabel(tr(t, 'events.builder.container_editor.delete_container', {}, 'Delete Container')).setStyle(ButtonStyle.Danger).setDisabled(!canDelete),
+      new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_back`).setLabel(tr(t, 'events.builder.container_editor.back', {}, 'Back')).setStyle(ButtonStyle.Secondary)
     )
   ];
 
@@ -132,7 +140,7 @@ function buildContainerEditor(session) {
   };
 }
 
-function buildContainerColorScreen(session) {
+function buildContainerColorScreen(session, t) {
   const container = getSelectedContainer(session);
   if (!container) {
     return {
@@ -140,9 +148,9 @@ function buildContainerColorScreen(session) {
       embeds: [],
       flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
       components: [
-        new TextDisplayBuilder().setContent('## Select Color\nThe selected container could not be found.'),
+        new TextDisplayBuilder().setContent(tr(t, 'events.builder.container_editor.color_not_found', {}, '## Select Color\nThe selected container could not be found.')),
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_color_back`).setLabel('Back').setStyle(ButtonStyle.Secondary)
+          new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_color_back`).setLabel(tr(t, 'events.builder.container_editor.back', {}, 'Back')).setStyle(ButtonStyle.Secondary)
         )
       ]
     };
@@ -151,9 +159,9 @@ function buildContainerColorScreen(session) {
   const { listColors } = require('../services/colors.service');
   const saved = listColors(session.guildId, session.userId);
   const options = [
-    { label: 'Nova cor', value: 'new', description: 'Salve uma cor com nome e codigo HEX' },
-    { label: 'Sem cor', value: 'none', description: 'Container sem accent color' },
-    { label: 'Azul Discord', value: 'discord_blue', description: '#5865F2' }
+    { label: tr(t, 'events.builder.container_editor.color_new', {}, 'New color'), value: 'new', description: tr(t, 'events.builder.container_editor.color_new_desc', {}, 'Save a color with name and HEX code') },
+    { label: tr(t, 'events.builder.container_editor.color_none', {}, 'No color'), value: 'none', description: tr(t, 'events.builder.container_editor.color_none_desc', {}, 'Container without accent color') },
+    { label: tr(t, 'events.builder.container_editor.color_discord_blue', {}, 'Discord Blue'), value: 'discord_blue', description: '#5865F2' }
   ];
   for (const c of saved) {
     if (options.length >= 25) break;
@@ -165,17 +173,17 @@ function buildContainerColorScreen(session) {
   }
 
   const components = [
-    new TextDisplayBuilder().setContent('## Select Color'),
-    buildContainerPreviewComponent(container),
+    new TextDisplayBuilder().setContent(tr(t, 'events.builder.container_editor.color_title', {}, '## Select Color')),
+    buildContainerPreviewComponent(container, t),
     new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId(`bld:${session.id}:nav:ce_color_select`)
-        .setPlaceholder('Selecionar uma cor')
+        .setPlaceholder(tr(t, 'events.builder.container_editor.color_placeholder', {}, 'Select a color'))
         .addOptions(options)
     ),
     new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_color_back`).setLabel('Back').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setLabel('HTML Color Codes').setStyle(ButtonStyle.Link).setURL('https://htmlcolorcodes.com/')
+      new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_color_back`).setLabel(tr(t, 'events.builder.container_editor.back', {}, 'Back')).setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setLabel(tr(t, 'events.builder.container_editor.html_color_codes', {}, 'HTML Color Codes')).setStyle(ButtonStyle.Link).setURL('https://htmlcolorcodes.com/')
     )
   ];
 
@@ -187,29 +195,29 @@ function buildContainerColorScreen(session) {
   };
 }
 
-function buildContainerDeleteConfirm(session) {
+function buildContainerDeleteConfirm(session, t) {
   const container = getSelectedContainer(session);
-  const name = container ? `this container` : 'this container';
+  const name = tr(t, 'events.builder.container_editor.this_container', {}, 'this container');
   return {
     content: null,
     embeds: [],
     flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
     components: [
-      new TextDisplayBuilder().setContent(`## Delete Container\nAre you sure you want to delete ${name}? This cannot be undone.`),
+      new TextDisplayBuilder().setContent(tr(t, 'events.builder.container_editor.delete_title', { name }, `## Delete Container\nAre you sure you want to delete ${name}? This cannot be undone.`)),
       new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_delete_confirm`).setLabel('Confirm Delete').setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_delete_cancel`).setLabel('Cancel').setStyle(ButtonStyle.Secondary)
+        new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_delete_confirm`).setLabel(tr(t, 'events.builder.container_editor.confirm_delete', {}, 'Confirm Delete')).setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId(`bld:${session.id}:nav:ce_delete_cancel`).setLabel(tr(t, 'events.builder.container_editor.cancel', {}, 'Cancel')).setStyle(ButtonStyle.Secondary)
       )
     ]
   };
 }
 
-function buildContainerEditorClosed() {
+function buildContainerEditorClosed(t) {
   return {
     content: null,
     embeds: [],
     flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-    components: [new TextDisplayBuilder().setContent('Container editor closed. Use the main Builder panel to continue.')]
+    components: [new TextDisplayBuilder().setContent(tr(t, 'events.builder.container_editor.closed', {}, 'Container editor closed. Use the main Builder panel to continue.'))]
   };
 }
 

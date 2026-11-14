@@ -1,85 +1,75 @@
 events:
   ready:
-    logged_in: "Conectado como {{tag}}."
-
+    logged_in: Conectado como {{tag}}.
   guild_member_add:
-    welcome_title: "👋 Bem-vindo!"
-    welcome_message: "Olá {{member}}, bem-vindo(a) ao **{{guild}}**! 🎉"
+    welcome_title: 👋 Bem-vindo!
+    welcome_message: Olá {{member}}, bem-vindo(a) ao **{{guild}}**! 🎉
     footer: "ID do usuário: {{userId}} | {{date}}"
-
   interaction:
-    cooldown: "Aguarde antes de usar isso novamente."
-
+    cooldown: Aguarde antes de usar isso novamente.
   verification:
     panel:
-      title: "Verificação"
-      description: "Antes de acessar o servidor, você precisa verificar que não é um bot.\n\nClique em **Responder** abaixo para concluir o **`CAPTCHA`** e receber seu cargo de verificado."
-      respond_button: "Responder"
-      why_button: "Por que verificar?"
+      title: Verificação
+      description: |-
+        Antes de acessar o servidor, você precisa verificar que não é um bot.
 
+        Clique em **Responder** abaixo para concluir o **`CAPTCHA`** e receber seu cargo de verificado.
+      respond_button: Responder
+      why_button: Por que verificar?
     why:
-      title: "Por que ter uma verificação de conta..."
-      body: "A verificação de conta é para prevenir que contas indesejadas entrem em nosso servidor, deixando a comunidade mais segura e reduzindo SPAM desnecessário em sua DM."
-      credit: "Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35"
-
+      title: Por que ter uma verificação de conta...
+      body: A verificação de conta é para prevenir que contas indesejadas entrem em nosso servidor, deixando a comunidade mais segura e reduzindo SPAM desnecessário em sua DM.
+      credit: Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35
     challenge:
-      title: "Verificação — Desafio CAPTCHA"
-      instruction: "Analise cuidadosamente a imagem abaixo e selecione no menu a opção que corresponde ao código exibido."
-      placeholder: "Selecione a opção que corresponde ao código..."
-      image_alt: "Código CAPTCHA"
+      title: Verificação — Desafio CAPTCHA
+      instruction: Analise cuidadosamente a imagem abaixo e selecione no menu a opção que corresponde ao código exibido.
+      placeholder: Selecione a opção que corresponde ao código...
+      image_alt: Código CAPTCHA
       attempts_time: "Tentativas restantes: {{attemptsLeft}}/{{maxAttempts}} • Tempo limite: 2 minutos"
-      expires: "Este desafio expira {{expires}}."
-      incorrect: "❌ Código incorreto, tente novamente."
-
+      expires: Este desafio expira {{expires}}.
+      incorrect: ❌ Código incorreto, tente novamente.
     expired:
-      title: "Desafio expirado"
-      body: "Este CAPTCHA expirou. Clique em **Responder** no painel de verificação para tentar novamente."
-
+      title: Desafio expirado
+      body: Este CAPTCHA expirou. Clique em **Responder** no painel de verificação para tentar novamente.
     failed:
-      title: "Falha na verificação"
-      body: "Você usou todas as {{maxAttempts}} tentativas. Clique em **Responder** no painel de verificação para obter um novo código."
-
+      title: Falha na verificação
+      body: Você usou todas as {{maxAttempts}} tentativas. Clique em **Responder** no painel de verificação para obter um novo código.
     success:
-      title: "Verificado!"
-
+      title: Verificado!
     issue:
-      title: "Problema na verificação"
-
+      title: Problema na verificação
     errors:
-      guild_only: "Esta ação só pode ser usada dentro de um servidor."
-      role_not_configured: "O cargo de verificação não está configurado. Avise um administrador."
-      already_verified: "Você já possui o cargo de verificação!"
-
+      guild_only: Esta ação só pode ser usada dentro de um servidor.
+      role_not_configured: O cargo de verificação não está configurado. Avise um administrador.
+      already_verified: Você já possui o cargo de verificação!
     role:
-      not_configured: "O cargo de verificação não está configurado. Avise um administrador."
-      already: "Você já possui o cargo de verificação!"
-      hierarchy: "Não consigo atribuir este cargo devido à hierarquia de cargos. Avise um administrador."
-      assigned: "Parabéns! Você recebeu o cargo {{role}}."
-      error: "Erro ao atribuir o cargo. Tente novamente ou avise um administrador."
-
+      not_configured: O cargo de verificação não está configurado. Avise um administrador.
+      already: Você já possui o cargo de verificação!
+      hierarchy: Não consigo atribuir este cargo devido à hierarquia de cargos. Avise um administrador.
+      assigned: Parabéns! Você recebeu o cargo {{role}}.
+      error: Erro ao atribuir o cargo. Tente novamente ou avise um administrador.
     legacy_panel:
-      title: "✅ Verificação"
-      description: "Clique no botão abaixo para receber seu cargo de verificado."
-      button: "Verificar"
-
+      title: ✅ Verificação
+      description: Clique no botão abaixo para receber seu cargo de verificado.
+      button: Verificar
   config:
     panel:
-      title: "⚙️ Painel de Configuração"
-      intro: "Escolha o que configurar abaixo. As seleções são salvas automaticamente."
+      title: ⚙️ Painel de Configuração
+      intro: Escolha o que configurar abaixo. As seleções são salvas automaticamente.
       editing: "Editando: {{module}}"
       footer: "Servidor: {{guild}} | Hoje às {{time}}"
-      select_placeholder: "Selecione {{module}}"
+      select_placeholder: Selecione {{module}}
       module_placeholder: "{{module}}"
-      no_options: "Nenhuma opção disponível"
+      no_options: Nenhuma opção disponível
       modules:
-        welcome: "Canal de boas-vindas"
-        verificationChannel: "Canal de verificação"
-        verificationRole: "Cargo de verificação"
-        honeypot: "Honeypot (anti-selfbot)"
-        autoQuest: "AutoQuest"
-        hypeSquad: "HypeSquad"
-        autoRole: "Cargo automático ao entrar"
-        rules: "Canal de regras"
+        welcome: Canal de boas-vindas
+        verificationChannel: Canal de verificação
+        verificationRole: Cargo de verificação
+        honeypot: Honeypot (anti-selfbot)
+        autoQuest: AutoQuest
+        hypeSquad: HypeSquad
+        autoRole: Cargo automático ao entrar
+        rules: Canal de regras
       settings:
         welcome: "👋 Canal de boas-vindas: {{value}}"
         verificationChannel: "✅ Canal de verificação: {{value}}"
@@ -90,170 +80,700 @@ events:
         autoRole: "🧩 Cargo automático ao entrar: {{value}}"
         rules: "📜 Canal de regras: {{value}}"
       buttons:
-        post_captcha: "Postar painel CAPTCHA"
-        post_honeypot: "Postar aviso do honeypot"
-        post_rules: "Postar regras"
-        post_autoquest: "Postar painel AutoQuest"
-        post_hypesquad: "Postar painel HypeSquad"
-        send_all: "Enviar tudo"
-        post_verification: "Postar painel de verificação"
-
+        post_captcha: Postar painel CAPTCHA
+        post_honeypot: Postar aviso do honeypot
+        post_rules: Postar regras
+        post_autoquest: Postar painel AutoQuest
+        post_hypesquad: Postar painel HypeSquad
+        send_all: Enviar tudo
+        post_verification: Postar painel de verificação
     replies:
-      invalid_module: "Módulo inválido."
-      no_available_option: "Nenhuma opção disponível para configurar."
-      verification_channel_not_configured: "O canal de verificação não está configurado. Selecione-o no painel antes de postar."
-      verification_role_not_configured: "O cargo de verificação não está configurado. Selecione-o no painel antes de postar."
-      honeypot_not_configured: "O canal de honeypot não está configurado. Selecione-o no painel antes de postar."
-      autoquest_not_configured: "O canal do AutoQuest não está configurado. Selecione-o no painel antes de postar."
-      hypesquad_not_configured: "O canal do HypeSquad não está configurado. Selecione-o no painel antes de postar."
-      rules_not_configured: "O canal de regras não está configurado. Selecione-o no painel antes de postar."
-      posted_captcha: "Painel CAPTCHA postado em {{channel}}."
-      posted_verification: "Painel de verificação postado em {{channel}}."
-      posted_honeypot: "Aviso do honeypot postado em {{channel}}."
-      posted_autoquest: "Painel AutoQuest postado em {{channel}}."
-      posted_hypesquad: "Painel HypeSquad postado em {{channel}}."
-      posted_rules: "Regras postadas em {{channel}}."
-      post_captcha_failed: "Não foi possível postar o painel CAPTCHA. Verifique as permissões do bot."
-      post_verification_failed: "Não foi possível postar o painel de verificação. Verifique as permissões do bot."
-      post_honeypot_failed: "Não foi possível postar o aviso do honeypot. Verifique as permissões do bot."
-      post_autoquest_failed: "Não foi possível postar o painel AutoQuest. Verifique as permissões do bot."
-      post_hypesquad_failed: "Não foi possível postar o painel HypeSquad. Verifique as permissões do bot."
-      post_rules_failed: "Não foi possível postar as regras. Verifique as permissões do bot."
+      invalid_module: Módulo inválido.
+      no_available_option: Nenhuma opção disponível para configurar.
+      verification_channel_not_configured: O canal de verificação não está configurado. Selecione-o no painel antes de postar.
+      verification_role_not_configured: O cargo de verificação não está configurado. Selecione-o no painel antes de postar.
+      honeypot_not_configured: O canal de honeypot não está configurado. Selecione-o no painel antes de postar.
+      autoquest_not_configured: O canal do AutoQuest não está configurado. Selecione-o no painel antes de postar.
+      hypesquad_not_configured: O canal do HypeSquad não está configurado. Selecione-o no painel antes de postar.
+      rules_not_configured: O canal de regras não está configurado. Selecione-o no painel antes de postar.
+      posted_captcha: Painel CAPTCHA postado em {{channel}}.
+      posted_verification: Painel de verificação postado em {{channel}}.
+      posted_honeypot: Aviso do honeypot postado em {{channel}}.
+      posted_autoquest: Painel AutoQuest postado em {{channel}}.
+      posted_hypesquad: Painel HypeSquad postado em {{channel}}.
+      posted_rules: Regras postadas em {{channel}}.
+      post_captcha_failed: Não foi possível postar o painel CAPTCHA. Verifique as permissões do bot.
+      post_verification_failed: Não foi possível postar o painel de verificação. Verifique as permissões do bot.
+      post_honeypot_failed: Não foi possível postar o aviso do honeypot. Verifique as permissões do bot.
+      post_autoquest_failed: Não foi possível postar o painel AutoQuest. Verifique as permissões do bot.
+      post_hypesquad_failed: Não foi possível postar o painel HypeSquad. Verifique as permissões do bot.
+      post_rules_failed: Não foi possível postar as regras. Verifique as permissões do bot.
       send_all_posted: "**Postado:**"
       send_all_skipped: "**Ignorado:**"
       send_all_failed: "**Falhou:**"
-      send_all_none: "Nenhum painel foi postado."
-      send_all_unknown_error: "erro desconhecido"
-      send_all_failed_to_post: "falha ao postar"
-      task_captcha: "Verificação CAPTCHA"
-      task_honeypot: "Honeypot"
-      task_rules: "Regras"
-      task_autoquest: "AutoQuest"
-      task_hypesquad: "HypeSquad"
-
+      send_all_none: Nenhum painel foi postado.
+      send_all_unknown_error: erro desconhecido
+      send_all_failed_to_post: falha ao postar
+      task_captcha: Verificação CAPTCHA
+      task_honeypot: Honeypot
+      task_rules: Regras
+      task_autoquest: AutoQuest
+      task_hypesquad: HypeSquad
     posted:
-      honeypot_title: "🚫 NÃO ENVIE MENSAGENS AQUI"
-      honeypot_description: "Este canal é usado para detectar **contas automatizadas**.\nQualquer mensagem enviada aqui resultará em uma **sanção automática** (softban)."
-      rules_title: "📜 Regras do Servidor"
-      rules_footer: "Postado em {{date}}"
-      rules_fallback: "⚠️ Não foi possível ler o arquivo de regras."
-      autoquest_title: "🚀 AutoQuest"
-      autoquest_description: "Conecte sua conta para farmar missões automaticamente.\nClique em **Configurar conta**, depois em **Ver missões** ou **Iniciar farm**."
-      autoquest_configure: "Configurar conta"
-      autoquest_view: "Ver missões"
-      autoquest_farm: "Iniciar farm"
-      hypesquad_title: "🏆 HypeSquad"
-      hypesquad_description: "Escolha sua casa do HypeSquad!\n**Configure a conta** primeiro (token), depois **Entrar em Bravery/Brilliance/Balance**.\nUse **Sair da casa** para sair do HypeSquad."
-      hypesquad_configure: "Configurar conta"
-      hypesquad_bravery: "Bravery"
-      hypesquad_brilliance: "Brilliance"
-      hypesquad_balance: "Balance"
-      hypesquad_leave: "Sair da casa"
-
+      honeypot_title: 🚫 NÃO ENVIE MENSAGENS AQUI
+      honeypot_description: |-
+        Este canal é usado para detectar **contas automatizadas**.
+        Qualquer mensagem enviada aqui resultará em uma **sanção automática** (softban).
+      rules_title: 📜 Regras do Servidor
+      rules_footer: Postado em {{date}}
+      rules_fallback: ⚠️ Não foi possível ler o arquivo de regras.
+      autoquest_title: 🚀 AutoQuest
+      autoquest_description: |-
+        Conecte sua conta para farmar missões automaticamente.
+        Clique em **Configurar conta**, depois em **Ver missões** ou **Iniciar farm**.
+      autoquest_configure: Configurar conta
+      autoquest_view: Ver missões
+      autoquest_farm: Iniciar farm
+      hypesquad_title: 🏆 HypeSquad
+      hypesquad_description: |-
+        Escolha sua casa do HypeSquad!
+        **Configure a conta** primeiro (token), depois **Entrar em Bravery/Brilliance/Balance**.
+        Use **Sair da casa** para sair do HypeSquad.
+      hypesquad_configure: Configurar conta
+      hypesquad_bravery: Bravery
+      hypesquad_brilliance: Brilliance
+      hypesquad_balance: Balance
+      hypesquad_leave: Sair da casa
   bot_panel:
-    title: "🤖 Configuração do Bot"
-    description: "Gerencie o perfil e a presença do bot diretamente neste painel.\n\n**Nome:** {{name}}\n**Status:** {{status}}\n**Pensamento/Atividade:** {{thought}}\n**Bio:** {{bio}}\n**Avatar:** {{avatar}}\n**Banner:** {{banner}}"
-    footer: "Use os controles abaixo para atualizar as configurações."
-    status_placeholder: "Alterar status"
-    status:
-      online: "Online"
-      idle: "Ausente"
-      dnd: "Não perturbe"
-      invisible: "Invisível"
-    buttons:
-      name: "Nome"
-      avatar: "Avatar"
-      banner: "Banner"
-      thought: "Pensamento"
-      bio: "Bio"
-      refresh: "Atualizar"
-    modals:
-      name_title: "Definir nome do bot"
-      name_label: "Novo nome de usuário"
-      avatar_title: "Definir avatar do bot"
-      avatar_label: "URL da imagem (ou deixe vazio para limpar)"
-      banner_title: "Definir banner do bot"
-      banner_label: "URL da imagem (ou deixe vazio para limpar)"
-      thought_title: "Definir pensamento do bot"
-      thought_label: "Texto da atividade/pensamento"
-      bio_title: "Definir bio do bot"
-      bio_label: "Bio do aplicativo/bot"
-    replies:
-      not_owner: "❌ Apenas o dono do aplicativo pode configurar o bot."
-      username_empty: "❌ O nome de usuário não pode ficar vazio."
-      username_updated: "✅ Nome de usuário do bot atualizado."
-      avatar_cleared: "✅ Avatar do bot removido."
-      avatar_updated: "✅ Avatar do bot atualizado."
-      banner_cleared: "✅ Banner do bot removido (se suportado)."
-      banner_updated: "✅ Banner do bot atualizado (se suportado)."
-      thought_cleared: "✅ Pensamento/atividade do bot removido."
-      thought_updated: "✅ Pensamento/atividade do bot atualizado."
-      bio_updated: "✅ Bio do bot atualizada."
-      action_failed: "❌ Não foi possível concluir a ação: {{error}}"
-      fetch_image_failed: "Não foi possível obter a imagem (status {{status}})."
+    title: 🤖 Configuração do Bot
+    description: |-
+      Gerencie o perfil e a presença do bot diretamente neste painel.
 
+      **Nome:** {{name}}
+      **Status:** {{status}}
+      **Pensamento/Atividade:** {{thought}}
+      **Bio:** {{bio}}
+      **Avatar:** {{avatar}}
+      **Banner:** {{banner}}
+    footer: Use os controles abaixo para atualizar as configurações.
+    status_placeholder: Alterar status
+    status:
+      online: Online
+      idle: Ausente
+      dnd: Não perturbe
+      invisible: Invisível
+    buttons:
+      name: Nome
+      avatar: Avatar
+      banner: Banner
+      thought: Pensamento
+      bio: Bio
+      refresh: Atualizar
+    modals:
+      name_title: Definir nome do bot
+      name_label: Novo nome de usuário
+      avatar_title: Definir avatar do bot
+      avatar_label: URL da imagem (ou deixe vazio para limpar)
+      banner_title: Definir banner do bot
+      banner_label: URL da imagem (ou deixe vazio para limpar)
+      thought_title: Definir pensamento do bot
+      thought_label: Texto da atividade/pensamento
+      bio_title: Definir bio do bot
+      bio_label: Bio do aplicativo/bot
+    replies:
+      not_owner: ❌ Apenas o dono do aplicativo pode configurar o bot.
+      username_empty: ❌ O nome de usuário não pode ficar vazio.
+      username_updated: ✅ Nome de usuário do bot atualizado.
+      avatar_cleared: ✅ Avatar do bot removido.
+      avatar_updated: ✅ Avatar do bot atualizado.
+      banner_cleared: ✅ Banner do bot removido (se suportado).
+      banner_updated: ✅ Banner do bot atualizado (se suportado).
+      thought_cleared: ✅ Pensamento/atividade do bot removido.
+      thought_updated: ✅ Pensamento/atividade do bot atualizado.
+      bio_updated: ✅ Bio do bot atualizada.
+      action_failed: "❌ Não foi possível concluir a ação: {{error}}"
+      fetch_image_failed: Não foi possível obter a imagem (status {{status}}).
   autoquest:
     modal:
-      title: "Login - AutoQuest"
-      token_label: "Token de usuário do Discord"
-      token_placeholder: "Cole seu token aqui..."
+      title: Login - AutoQuest
+      token_label: Token de usuário do Discord
+      token_placeholder: Cole seu token aqui...
     replies:
-      invalid_token: "❌ Token inválido ou expirado. Verifique e tente novamente."
-      connected: "✅ Conta conectada: **{{name}}** (@{{username}}).\nUse **Ver missões** para listar missões ou **Iniciar farm** para automatizá-las."
-      connect_first: "❌ Conecte sua conta primeiro usando **Configurar conta**."
-      no_quests: "📭 Nenhuma missão disponível."
-      quests_title: "📋 Missões disponíveis"
-      quest_line: "**{{index}}. {{name}}**\n🎁 {{reward}} • {{type}} • {{minutes}}min"
+      invalid_token: ❌ Token inválido ou expirado. Verifique e tente novamente.
+      connected: |-
+        ✅ Conta conectada: **{{name}}** (@{{username}}).
+        Use **Ver missões** para listar missões ou **Iniciar farm** para automatizá-las.
+      connect_first: ❌ Conecte sua conta primeiro usando **Configurar conta**.
+      no_quests: 📭 Nenhuma missão disponível.
+      quests_title: 📋 Missões disponíveis
+      quest_line: |-
+        **{{index}}. {{name}}**
+        🎁 {{reward}} • {{type}} • {{minutes}}min
       fetch_error: "❌ Erro ao buscar missões: {{error}}"
-      already_running: "⏳ Você já tem um farm em execução. Aguarde terminar."
-      farm_started_reply: "🔄 Farm iniciado. O progresso será enviado ao canal do AutoQuest."
+      already_running: ⏳ Você já tem um farm em execução. Aguarde terminar.
+      farm_started_reply: 🔄 Farm iniciado. O progresso será enviado ao canal do AutoQuest.
       farm_error_reply: "❌ Erro no farm: {{error}}"
-      truncated: "\n… (truncado)"
+      truncated: |-
+        
+        … (truncado)
     logs:
-      started_title: "🚀 Farm iniciado"
-      started_body: "Conta: **{{name}}** (@{{username}})\nIniciando execução automática..."
-      quest_started_title: "🎯 Missão iniciada"
-      quest_completed_title: "✅ Missão concluída"
-      info_title: "ℹ️ AutoQuest"
-      warning_title: "⚠️ AutoQuest"
-      finished_title: "🏁 Farm finalizado"
-      finished_body: "Conta: **{{name}}**\n{{completed}}/{{total}} missões concluídas."
-      error_title: "❌ Erro no farm"
-      error_body: "Conta: **{{name}}**\n{{error}}"
-
+      started_title: 🚀 Farm iniciado
+      started_body: |-
+        Conta: **{{name}}** (@{{username}})
+        Iniciando execução automática...
+      quest_started_title: 🎯 Missão iniciada
+      quest_completed_title: ✅ Missão concluída
+      info_title: ℹ️ AutoQuest
+      warning_title: ⚠️ AutoQuest
+      finished_title: 🏁 Farm finalizado
+      finished_body: |-
+        Conta: **{{name}}**
+        {{completed}}/{{total}} missões concluídas.
+      error_title: ❌ Erro no farm
+      error_body: |-
+        Conta: **{{name}}**
+        {{error}}
   hypesquad:
     modal:
-      title: "Login - HypeSquad"
-      token_label: "Token de usuário do Discord"
-      token_placeholder: "Cole seu token aqui..."
+      title: Login - HypeSquad
+      token_label: Token de usuário do Discord
+      token_placeholder: Cole seu token aqui...
     replies:
-      invalid_token: "❌ Token inválido ou expirado. Verifique e tente novamente."
-      invalid_token_configure: "❌ Token inválido ou expirado. Use **Configurar conta** para atualizá-lo."
-      connected: "✅ Conta conectada: **{{name}}** (@{{username}}).\nAgora escolha **Bravery**, **Brilliance** ou **Balance**."
-      connect_first: "❌ Conecte sua conta primeiro usando **Configurar conta**."
-      rate_limited: "⏳ Muitas solicitações. Aguarde alguns segundos e tente novamente."
-      action_failed: "❌ Não foi possível concluir a ação (status {{status}})."
+      invalid_token: ❌ Token inválido ou expirado. Verifique e tente novamente.
+      invalid_token_configure: ❌ Token inválido ou expirado. Use **Configurar conta** para atualizá-lo.
+      connected: |-
+        ✅ Conta conectada: **{{name}}** (@{{username}}).
+        Agora escolha **Bravery**, **Brilliance** ou **Balance**.
+      connect_first: ❌ Conecte sua conta primeiro usando **Configurar conta**.
+      rate_limited: ⏳ Muitas solicitações. Aguarde alguns segundos e tente novamente.
+      action_failed: ❌ Não foi possível concluir a ação (status {{status}}).
       house_updated: "{{emoji}} HypeSquad atualizado! Agora você está na casa **{{house}}**."
-      left: "✅ Você saiu do HypeSquad."
-
+      left: ✅ Você saiu do HypeSquad.
   builder:
     errors:
       generic: "Erro no construtor: {{error}}"
-      session_expired: "Esta sessão do construtor expirou. Use /builder para iniciar uma nova sessão. Se você salvou um rascunho ou modelo, abra-o na tela inicial do construtor para continuar seu trabalho."
-      session_other_user: "Esta sessão do construtor pertence a outro usuário."
-      session_invalid_guild: "Esta sessão do construtor não é válida neste servidor."
-      unknown_interaction: "Interação do construtor desconhecida."
+      session_expired: Esta sessão do construtor expirou. Use /builder para iniciar uma nova sessão. Se você salvou um rascunho ou modelo, abra-o na tela inicial do construtor para continuar seu trabalho.
+      session_other_user: Esta sessão do construtor pertence a outro usuário.
+      session_invalid_guild: Esta sessão do construtor não é válida neste servidor.
+      unknown_interaction: Interação do construtor desconhecida.
     runtime:
-      invalid_guild: "Esta ação não é válida neste servidor."
-      invalid_channel: "Esta ação não é válida neste canal."
+      invalid_guild: Esta ação não é válida neste servidor.
+      invalid_channel: Esta ação não é válida neste canal.
       selection_received: "Seleção recebida: {{values}}"
-      selection_none: "(nenhuma)"
-      action_executed: "Ação executada."
-      unauthorized: "Você não está autorizado a usar esta ação."
-      update_failed: "Não foi possível atualizar esta interação da mensagem."
+      selection_none: (nenhuma)
+      action_executed: Ação executada.
+      unauthorized: Você não está autorizado a usar esta ação.
+      update_failed: Não foi possível atualizar esta interação da mensagem.
       internal_not_allowed: "Ação interna não permitida: {{name}}"
-      internal_empty: "(vazio)"
-      internal_noop: "Ação interna executada (noop)."
-      acknowledged: "Confirmado."
-      builder_info: "Esta mensagem foi publicada com o Eternal Builder. Nenhuma ação interna privilegiada foi executada."
-      internal_unavailable: "Ação interna não disponível."
+      internal_empty: (vazio)
+      internal_noop: Ação interna executada (noop).
+      acknowledged: Confirmado.
+      builder_info: Esta mensagem foi publicada com o Eternal Builder. Nenhuma ação interna privilegiada foi executada.
+      internal_unavailable: Ação interna não disponível.
+    navigation:
+      types:
+        components_v2: Components V2
+        embed: Embed
+      context:
+        editing: editando {{channelId}}/{{messageId}}
+        new: nova mensagem
+        label: "{{type}} • {{target}}"
+      selection:
+        title: Construtor Visual
+        description: |-
+          Escolha qual construtor você deseja usar nesta sessão.
+
+          **Construtor de Embed** — Crie e edite mensagens com embed do Discord.
+          **Construtor Components V2** — Crie e edite mensagens usando containers e componentes do Components V2.
+        footer: Apenas o dono da sessão pode usar este construtor.
+        embed_button: Construtor de Embed
+        cv2_button: Construtor Components V2
+      embed_main:
+        title: Construtor de Embed
+        description: Crie e edite mensagens com embed neste rascunho. Selecione um embed para editar, adicione um novo embed ou publique sua mensagem.
+        select_placeholder: Selecione um Embed para editar
+        no_embeds: Nenhum embed disponível
+        no_embeds_desc: Adicione um embed para começar
+        embed_option: Embed {{index}}
+        add_embed: Adicionar Embed
+        add_button: Adicionar Botão
+        send_custom: Envio Personalizado
+        quick_send: Envio Rápido
+        back_selection: Seleção de Construtor
+      cv2_main:
+        heading: "## Painel de Criação de Containers"
+        info_title: Informações do Container
+        info_description: Gerencie os containers da sua mensagem atual. Selecione um container para editar, adicione novos, importe JSON, carregue modelos ou publique.
+        containers_label: "**Containers:** {{value}}"
+        containers_none: Nenhum ainda
+        containers_count: "{{count}} disponível(is)"
+        owner_label: "**Dono da sessão:** <@{{userId}}>"
+        draft_label: "**Rascunho:** {{value}}"
+        draft_not_saved: Não salvo
+        footer: -# Apenas o dono da sessão pode usar este painel.
+        select_placeholder: Selecione um container para editar
+        no_containers: Nenhum container disponível
+        no_containers_desc: Adicione um container para começar
+        container_option: Container {{index}}
+        add_container: Adicionar Container
+        templates: Modelos
+        builder_selection: Seleção de Construtor
+        json_editor: Editor JSON
+        custom_send: Envio Personalizado
+        quick_send: Envio Rápido
+      embed_editor:
+        heading: "## Editor de Embed"
+        preview_title_fallback: Título do Embed
+        preview_desc_fallback: "*Sem descrição ainda*"
+        preview_footer: -# Embed {{index}} de {{total}} • {{context}}
+        btn_title: Título
+        btn_description: Descrição
+        btn_color: Cor
+        btn_author: Autor
+        btn_content: Conteúdo da Mensagem
+        btn_footer: Rodapé
+        btn_fields: Editar Campos
+        btn_add_field: Adicionar Campo
+        btn_images: Imagem e Miniatura
+        btn_preview: Visualizar
+        btn_save: Salvar
+        btn_publish: Publicar
+        btn_back: Voltar
+        btn_undo: Desfazer
+        btn_builder_selection: Seleção de Construtor
+        btn_import_json: Importar JSON
+        btn_export_json: Exportar JSON
+      cv2_editor:
+        title: Editor Components V2
+        description: |-
+          **Editando:** {{context}}
+          Construa com containers, seções, textos, botões, seleções, mídia e mais.
+        selected_node: Nó selecionado
+        none: (nenhum)
+        top_level: Nível superior
+        containers_count: "{{count}} container(s)"
+        footer: Selecione um nó para adicionar filhos, editar, mover, duplicar ou remover.
+        select_placeholder: Selecione um nó de componente
+        no_components: Nenhum componente ainda
+        add_child: Adicionar Filho
+        edit: Editar
+        remove: Remover
+        duplicate: Duplicar
+        move_up: Mover para Cima
+        move_down: Mover para Baixo
+        add_container: Adicionar Container
+        preview: Visualizar
+        save: Salvar
+        publish: Publicar
+        home: Início
+        undo: Desfazer
+      save_menu:
+        title: Salvar
+        description: |-
+          Salve sua mensagem atual de **{{type}}** como rascunho ou modelo reutilizável.
+
+          Rascunhos e modelos são privados para você neste servidor.
+        save_draft: Salvar Rascunho
+        save_template: Salvar Modelo
+        back: Voltar ao Editor
+      drafts:
+        title: Rascunhos Salvos
+        description: Selecione um rascunho para abrir ou escolha um para excluir.
+        empty: Nenhum rascunho salvo para você neste servidor.
+        storage_warning: |-
+          
+
+          ⚠️ O armazenamento anterior estava corrompido e foi salvo em backup{{backup}}.
+        backup_suffix: " ({{backup}})"
+        open_placeholder: Abrir rascunho
+        delete_placeholder: Excluir rascunho
+        delete_label: "Excluir: {{name}}"
+        back: Voltar
+      templates:
+        title: Modelos Salvos
+        description: Abra, duplique ou exclua seus modelos.
+        empty: Nenhum modelo salvo para você neste servidor.
+        storage_warning: |-
+          
+
+          ⚠️ O armazenamento anterior estava corrompido e foi salvo em backup{{backup}}.
+        backup_suffix: " ({{backup}})"
+        open_placeholder: Abrir modelo
+        duplicate_placeholder: Duplicar modelo
+        delete_placeholder: Excluir modelo
+        duplicate_label: "Duplicar: {{name}}"
+        delete_label: "Excluir: {{name}}"
+        back: Voltar
+      edit_existing:
+        title: Editar Mensagem Existente
+        description: |-
+          Carregue uma mensagem enviada por este bot para editar e republicar.
+
+          - Apenas mensagens do bot podem ser editadas.
+          - Embeds podem ser importados para o editor.
+          - Mensagens Components V2 existentes não podem ser totalmente reconstruídas visualmente; ao carregar, ela será definida como alvo de edição e um novo rascunho CV2 será iniciado para substituí-la ao publicar.
+
+          Informe os IDs do canal e da mensagem abaixo.
+        enter_info: Informar Mensagem
+        back: Voltar
+      field_tools:
+        title: Ferramentas de Campos
+        empty: Nenhum campo ainda. Use "Adicionar Campo" para criar um.
+        empty_list: Sem campos.
+        unnamed: (sem nome)
+        field_fallback: Campo
+        select_placeholder: Selecionar campo
+        no_fields_option: Sem campos
+        edit: Editar
+        remove: Remover
+        duplicate: Duplicar
+        add_field: Adicionar Campo
+        move_up: Mover para Cima
+        move_down: Mover para Baixo
+        back: Voltar
+      json:
+        modal_title: Editor JSON
+        label: Documento JSON do construtor
+        placeholder: Cole um documento JSON completo do construtor
+        file_label: Arquivo (opcional)
+        file_description: Um arquivo .txt ou .json com o JSON. Se anexado, substitui o campo de texto.
+      replies:
+        embed_not_found: O embed selecionado não foi encontrado.
+        container_not_found: O container selecionado não foi encontrado.
+        no_items_to_edit: Não há itens para editar neste container.
+        item_not_found: O item selecionado não foi encontrado neste container.
+        could_not_open_item_editor: "Não foi possível abrir o editor do item: {{error}}"
+        color_not_found: A cor salva não foi encontrada.
+        invalid_color_option: Opção de cor inválida.
+        cannot_add_type: Não é possível adicionar {{type}} a um container.
+        unknown_component_type: Tipo de componente desconhecido.
+        draft_not_found: Rascunho não encontrado ou não acessível neste servidor.
+        failed_load_draft: "Falha ao carregar rascunho: {{error}}"
+        failed_delete_draft: "Falha ao excluir rascunho: {{error}}"
+        template_not_found: Modelo não encontrado ou não acessível neste servidor.
+        failed_load_template: "Falha ao carregar modelo: {{error}}"
+        failed_duplicate_template: "Falha ao duplicar modelo: {{error}}"
+        failed_delete_template: "Falha ao excluir modelo: {{error}}"
+        max_embeds: Uma mensagem pode ter no máximo 10 embeds.
+        embed_buttons_unavailable: Adicionar botões de mensagem não está disponível no Construtor de Embed. Use o Construtor Components V2 para componentes de botão.
+        delete_container_need_more: Você precisa ter mais de um container para apagar.
+        quick_send_validation: |-
+          Não é possível enviar rapidamente: falha na validação.
+          {{errors}}
+        quick_send_edit_perm: "Não é possível enviar rapidamente (editar): {{error}}"
+        quick_send_edited: "✅ Mensagem editada (envio rápido): {{url}}"
+        quick_send_no_channel: O envio rápido não conseguiu determinar o canal de destino desta sessão.
+        quick_send_perm: "Não é possível enviar rapidamente: {{error}}"
+        quick_send_published: "✅ Publicado (envio rápido): {{url}}"
+        quick_send_failed: "Falha no envio rápido: {{error}}"
+        unknown_error: Erro desconhecido
+        nothing_to_undo: Nada para desfazer.
+        preview_cv2: Visualização (Components V2) — os controles de edição permanecem na mensagem do construtor.
+        preview_content_prefix: "Prévia do conteúdo: {{content}}"
+        preview_embed_note: Visualização — os controles de edição permanecem na mensagem do construtor.
+        preview_failed: "Falha na visualização: {{error}}"
+        draft_saved: "✅ Rascunho salvo: **{{name}}** ({{id}}){{note}}"
+        draft_storage_warning: |-
+          
+          Aviso: o armazenamento anterior de rascunhos estava corrompido e foi salvo em backup{{backup}}.
+        draft_storage_backup_to: " em {{backup}}"
+        failed_save_draft: "Falha ao salvar rascunho: {{error}}"
+        export_success: Estado atual do construtor exportado como JSON.
+        export_failed: "Falha na exportação: {{error}}"
+        unhandled_navigation: Ação de navegação não tratada.
+      modals:
+        add_color_title: Nova cor
+        color_name_label: Nome da cor
+        color_name_placeholder: "Ex.: Roxo Eternal"
+        color_hex_label: Código HEX
+        color_hex_placeholder: "#5865F2"
+        add_text_title: Adicionar Exibição de Texto
+        text_label: Conteúdo do texto
+        text_placeholder: Digite o texto para adicionar
+        save_template_title: Salvar Modelo
+        template_name_label: Nome do modelo
+    container_editor:
+      title: "## Editando Container"
+      not_found: |-
+        ## Editando Container
+        O container selecionado não foi encontrado.
+      color_not_found: |-
+        ## Selecionar Cor
+        O container selecionado não foi encontrado.
+      preview_error: Não foi possível renderizar a prévia do container.
+      add_item_placeholder: Adicionar Item
+      edit_item_placeholder: Editar Item
+      no_items: Nenhum item disponível
+      no_items_desc: Adicione um item para editá-lo
+      add_item_desc: Adicionar {{type}} a este container
+      item_fallback: Item {{index}}
+      select_color: Selecionar Cor
+      delete_container: Excluir Container
+      back: Voltar
+      color_title: "## Selecionar Cor"
+      color_new: Nova cor
+      color_new_desc: Salve uma cor com nome e código HEX
+      color_none: Sem cor
+      color_none_desc: Container sem cor de destaque
+      color_discord_blue: Azul Discord
+      color_placeholder: Selecionar uma cor
+      html_color_codes: Códigos de Cores HTML
+      delete_title: |-
+        ## Excluir Container
+        Tem certeza de que deseja excluir {{name}}? Isso não pode ser desfeito.
+      this_container: este container
+      confirm_delete: Confirmar Exclusão
+      cancel: Cancelar
+      closed: Editor de container fechado. Use o painel principal do Construtor para continuar.
+      types:
+        text_display: Texto
+        button: Botão
+        separator: Separador
+        action_row: Linha de Ação
+        section: Seção
+        thumbnail: Miniatura
+        media_gallery: Galeria de Mídia
+        file: Arquivo
+        string_select: Seleção de Texto
+        user_select: Seleção de Usuário
+        role_select: Seleção de Cargo
+        channel_select: Seleção de Canal
+        mentionable_select: Seleção de Mencionável
+    components:
+      not_cv2: Não está no modo Components V2.
+      unknown_type: Tipo de componente desconhecido.
+      only_containers_top: Apenas containers podem ser adicionados no nível superior.
+      target_not_found: Nó de destino não encontrado. Selecione um nó e tente novamente.
+      cannot_add_inside: "Não é possível adicionar {{type}} dentro de {{parent}}. Permitidos: {{allowed}}."
+      none: nenhum
+      action_row_has_select: Esta linha de ação já possui um menu de seleção.
+      select_must_be_alone: Um menu de seleção deve estar sozinho em sua linha de ação.
+      max_buttons: Máximo de 5 botões por linha de ação.
+      max_section_texts: Uma seção pode ter no máximo 3 exibições de texto.
+      add_component_title: "## Adicionar Componente"
+      add_component_desc: Nenhum nó selecionado. Adicione um container de nível superior ou volte e selecione um container, seção ou linha de ação para adicionar um filho dentro dele.
+      add_top_level_placeholder: Adicionar componente de nível superior
+      container_label: Container
+      container_desc: Container de nível superior do Components V2
+      back: Voltar
+      selected_not_found: Nó selecionado não encontrado.
+      cannot_add_children: Não é possível adicionar filhos em **{{type}}**. Selecione um container, seção ou linha de ação.
+      add_child_title: "## Adicionar Componente Filho"
+      add_child_desc: "Adicionando dentro de **{{type}}**. Escolha um tipo de componente:"
+      allowed_types: "**Tipos permitidos:** {{types}}"
+      choose_type: Escolher tipo de componente
+      no_node_selected: Nenhum nó selecionado.
+      cannot_remove: Não foi possível remover este nó. Acessórios são substituídos via Editar (ou editando a seção pai).
+      cannot_duplicate: Não foi possível duplicar este nó (acessórios não podem ser duplicados diretamente).
+      cannot_move: Não é possível mover mais nessa direção.
+      unhandled: Ação de componente não tratada.
+    publishing:
+      menu:
+        title: "## Publicar"
+        mode_edit: Editar mensagem existente ({{channelId}}/{{messageId}})
+        mode_new: Publicar nova mensagem
+        type_cv2: Components V2
+        type_embed: Embed
+        ready: ✅ Pronto
+        issues: ❌ Problemas encontrados
+        and_more: "- …e mais {{count}}"
+        destination: Não selecionado
+        destination_line: "**Destination:** {{value}}"
+        mode_line: "**Mode:** {{value}}"
+        type_line: "**Type:** {{value}}"
+        validation_line: "**Validation:** {{value}}"
+        footer: -# A publicação usa padrões seguros (menções desativadas). Revise a prévia antes de confirmar.
+        channel_placeholder: Selecione o canal de destino
+        confirm_edit: Confirmar Edição
+        confirm_publish: Confirmar Publicação
+        final_preview: Prévia Final
+        back: Voltar
+        switch_new: Mudar para Nova Mensagem
+      replies:
+        final_preview_content: "Prévia final (como será publicada):"
+        preview_failed: "Falha na prévia: {{error}}"
+        cannot_publish: |-
+          Não é possível publicar:
+          {{errors}}
+        cannot_edit_channel: "Não é possível editar no canal de destino: {{error}}"
+        edited: "✅ Mensagem editada com sucesso: {{url}}"
+        cannot_publish_perm: "Não é possível publicar: {{error}}"
+        published: "✅ Publicado com sucesso: {{url}}"
+        failed: "Falha na publicação: {{error}}"
+        unhandled: Ação de publicação não tratada.
+    validator:
+      embed:
+        title_exceeds: O título excede {{limit}} caracteres.
+        description_exceeds: A descrição excede {{limit}} caracteres.
+        footer_exceeds: O texto do rodapé excede {{limit}} caracteres.
+        author_exceeds: O nome do autor excede {{limit}} caracteres.
+        too_many_fields: Muitos campos (máx. {{limit}}).
+        field_name_exceeds: O nome do campo {{index}} excede {{limit}} caracteres.
+        field_value_exceeds: O valor do campo {{index}} excede {{limit}} caracteres.
+        field_name_required: O campo {{index}} requer um nome.
+        field_value_required: O campo {{index}} requer um valor.
+        invalid_url: "{{label}} não é uma URL válida."
+        invalid_color: A cor do embed deve ser uma cor hexadecimal válida.
+        total_exceeds: O tamanho total do embed excede {{limit}} caracteres.
+        max_embeds: Uma mensagem pode ter no máximo 10 embeds.
+        embed_prefix: Embed {{index}}
+        content_exceeds: O conteúdo da mensagem excede 2000 caracteres.
+        url_labels:
+          author_url: URL do autor
+          author_icon: Ícone do autor
+          title_url: URL do título
+          thumbnail_url: URL da miniatura
+          image_url: URL da imagem
+          footer_icon: Ícone do rodapé
+      cv2:
+        no_root: A mensagem Components V2 deve ter pelo menos um componente de nível superior.
+        root_must_be_container: Itens de nível superior do Components V2 devem ser Containers neste construtor.
+        too_many: Muitos componentes (máx. 40).
+        text_required: Componentes de exibição de texto devem ter conteúdo.
+        button_label_emoji: Botões devem ter um rótulo ou emoji.
+        link_url: Botões de link exigem uma URL.
+        action_row_select_alone: Uma linha de ação com menu de seleção pode conter apenas essa seleção.
+        action_row_max_buttons: Uma linha de ação pode conter no máximo 5 botões.
+        section_texts: Uma seção deve ter de 1 a 3 exibições de texto.
+        section_accessory: Uma seção deve ter um acessório (miniatura ou botão).
+        gallery_items: A galeria de mídia deve ter pelo menos um item.
+        gallery_url: O item {{index}} da galeria de mídia requer uma URL.
+        file_required: O componente de arquivo requer uma referência de arquivo (nome de anexo ou URL).
+    services:
+      publisher:
+        channel_not_found: Canal não encontrado.
+        not_text_based: O canal selecionado não é baseado em texto.
+        no_permissions: Não foi possível resolver as permissões para esse canal.
+        no_view: Permissão de Ver Canal ausente.
+        no_send_thread: Permissão de Enviar Mensagens ausente nesta thread.
+        no_send: Permissão de Enviar Mensagens ausente.
+        message_not_found: Mensagem não encontrada.
+        not_author: Só posso editar mensagens enviadas por este bot.
+      drafts:
+        not_authorized_overwrite: Não autorizado a sobrescrever este rascunho.
+        default_embed: Rascunho de Embed
+        default_cv2: Rascunho Components V2
+        not_authorized_delete: Não autorizado a excluir este rascunho.
+      templates:
+        not_authorized_overwrite: Não autorizado a sobrescrever este modelo.
+        untitled: Modelo sem título
+        not_authorized_delete: Não autorizado a excluir este modelo.
+        not_authorized_duplicate: Não autorizado a duplicar este modelo.
+        copy_suffix: " (cópia)"
+      colors:
+        name_required: O nome da cor é obrigatório.
+        invalid_hex: "A cor deve ser um hexadecimal válido (ex.: #5865F2)."
+    schemas:
+      text_default: Novo texto
+      button_default: Botão
+      button_pressed: Botão pressionado.
+      section_text: Texto da seção
+      select_placeholder: Selecione uma opção
+      option_label: Opção 1
+      container_default_content: Use este container para organizar sua mensagem. Você pode adicionar texto, botões, seleções e muito mais.
+    json:
+      document_not_object: O documento deve ser um objeto.
+      v1_containers_required: O documento v1 deve incluir um array `containers`.
+      container_must_be_object: Cada container deve ser um objeto.
+      top_level_container_only: Apenas containers são suportados no nível superior em documentos v1.
+      item_must_be_object: Os itens do container devem ser objetos.
+      v1_min_container: O documento v1 deve incluir pelo menos um container.
+      unsupported_structure: "Estrutura JSON não suportada: esperado um objeto de documento/estado do construtor."
+      missing_type: "Estrutura JSON não suportada: `type` ausente ou inválido (esperado `embed` ou `components_v2`)."
+      invalid_root: "Documento Components V2 não suportado: `root` deve ser um array."
+      invalid_embed: "Documento de embed não suportado: `embed` ou `embeds` é obrigatório."
+    properties:
+      modal_titles:
+        embed_title: Título
+        embed_description: Descrição
+        embed_color: Cor
+        embed_basic: Título e Descrição
+        embed_author: Autor
+        embed_footer: Rodapé e Timestamp
+        embed_images: Imagens
+        embed_content: Conteúdo da Mensagem
+        edit_generic: "Editar: {{section}}"
+        add_field: Adicionar Campo
+        edit_field: Editar Campo {{index}}
+        edit_node: Editar {{type}}
+        edit_existing: Editar Mensagem Existente
+        save_template: Salvar Modelo
+      labels:
+        title: Título
+        title_url: URL do título
+        description: Descrição
+        color_hex: "Cor (hex, ex.: #5865F2)"
+        author_name: Nome do autor
+        author_url: URL do autor
+        author_icon_url: URL do ícone do autor
+        footer_text: Texto do rodapé
+        footer_icon_url: URL do ícone do rodapé
+        timestamp: Timestamp (ISO ou "now" ou vazio)
+        thumbnail_url: URL da miniatura
+        image_url: URL da imagem principal
+        message_content: Conteúdo da mensagem
+        field_name: Nome do campo
+        field_value: Valor do campo
+        inline_yes_no: Inline? (yes/no)
+        content: Conteúdo
+        accent_color: Cor de destaque (hex ou vazio)
+        spoiler_yes_no: Spoiler? (yes/no)
+        button_label: Rótulo
+        button_style: Estilo (1-5 ou primary/secondary/success/danger/link)
+        button_url_or_id: URL (link) ou custom_id
+        button_emoji_disabled: "Emoji,Desativado (ex.: 🔥,no ou <:n:1>,yes)"
+        button_action_resp: Tipo de ação|resposta para não-link (ephemeral/channel/update/internal)
+        divider_yes_no: Divisor? (yes/no)
+        spacing: Espaçamento (1=pequeno, 2=grande)
+        thumbnail_url_req: URL da miniatura
+        description_short: Descrição
+        media_items: "Itens (um por linha: url|descrição|spoiler yes/no)"
+        file_ref: URL do arquivo ou attachment://nome
+        section_texts: Exibições de texto separadas por uma linha com --- (1-3)
+        section_acc: "Acessório: thumbnail|url|desc|spoiler OU button|label|style|url|custom_id|emoji|disabled|actionType|response"
+        select_ph_id: "Placeholder/custom_id: placeholder||custom_id"
+        select_minmax: "Mín,Máx valores (ex.: 1,1)"
+        select_options: "Opções string: label|value|description por linha"
+        disabled_yes_no: Desativado? (yes/no)
+        channel_id: ID do canal
+        message_id: ID da mensagem
+        template_name: Nome do modelo
+      replies:
+        no_modal_section: Nenhum modal editável para esta seção. Use Ferramentas de Campos para campos.
+        select_component_first: Selecione um componente primeiro.
+        selected_node_not_found: Nó selecionado não encontrado.
+        edit_not_supported: Edição não suportada para {{type}} via modal.
+        node_not_found: Nó não encontrado.
+        max_fields: Máximo de 25 campos.
+        field_not_found: Campo não encontrado.
+        container_not_found: O container selecionado não foi encontrado.
+        text_content_empty: O conteúdo do texto não pode estar vazio.
+        color_save_failed: "Não foi possível salvar a cor: {{error}}"
+        unsupported_file_ext: Extensão de arquivo não suportada. Apenas arquivos .json e .txt são permitidos.
+        file_too_large: Arquivo muito grande. O tamanho máximo permitido é 20 MB.
+        could_not_read_file: "Não foi possível ler o arquivo enviado: {{error}}"
+        could_not_read_file_status: Não foi possível ler o arquivo enviado (status {{status}}).
+        uploaded_empty: O arquivo enviado está vazio.
+        no_json_content: Nenhum conteúdo JSON fornecido.
+        invalid_json: "JSON inválido: {{error}} (dados existentes preservados)."
+        json_validation_failed: |-
+          Falha na validação do JSON (dados existentes preservados):
+          {{errors}}
+        only_bot_messages: Só posso editar mensagens enviadas por este bot.
+        cv2_loaded_as_target: Mensagem Components V2 carregada como alvo de edição. A reconstrução visual completa de mensagens CV2 existentes não é suportada; o editor iniciou um novo rascunho CV2 que substituirá a mensagem alvo ao publicar. Agora você pode construir a substituição.
+        failed_load_message: "Falha ao carregar mensagem: {{error}}"
+        not_embed_mode: Não está no modo embed.
+        select_field_first: Selecione um campo primeiro.
+        template_saved: "Modelo salvo: **{{name}}** ({{id}})"
+        unhandled: Ação de propriedade não tratada.
+    json_errors:
+      document_not_object: O documento deve ser um objeto.
+      v1_containers_required: O documento v1 deve incluir um array `containers`.
+      container_must_be_object: Cada container deve ser um objeto.
+      top_level_container_only: Apenas containers são suportados no nível superior em documentos v1.
+      item_must_be_object: Os itens do container devem ser objetos.
+      v1_min_container: O documento v1 deve incluir pelo menos um container.
+      unsupported_structure: "Estrutura JSON não suportada: esperado um objeto de documento/estado do construtor."
+      missing_type: "Estrutura JSON não suportada: `type` ausente ou inválido (esperado `embed` ou `components_v2`)."
+      invalid_root: "Documento Components V2 não suportado: `root` deve ser um array."
+      invalid_embed: "Documento de embed não suportado: `embed` ou `embeds` é obrigatório."
