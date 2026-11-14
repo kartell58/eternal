@@ -32,4 +32,6 @@ function installSignalHandlers(runtime, { exitProcess = code => process.exit(cod
   };
 }
 
-module.exports = { installSignalHandlers };
+export { installSignalHandlers };
+
+export default { installSignalHandlers };

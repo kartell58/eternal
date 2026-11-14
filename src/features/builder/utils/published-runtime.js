@@ -1,5 +1,5 @@
-const { safeCustomId } = require('../builders/components-v2.builder');
-const { setAction } = require('../services/published-actions.service');
+import { safeCustomId } from '../builders/components-v2.builder.js';
+import { setAction } from '../services/published-actions.service.js';
 
 function collectActionsFromState(state, messageId, meta = {}) {
   if (!state || state.type !== 'components_v2') return;
@@ -24,4 +24,6 @@ function collectActionsFromState(state, messageId, meta = {}) {
   (state.root || []).forEach(visit);
 }
 
-module.exports = { collectActionsFromState };
+export { collectActionsFromState };
+
+export default { collectActionsFromState };

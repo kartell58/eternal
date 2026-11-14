@@ -1,39 +1,45 @@
-const fs = require("fs");
-const path = require("path");
+import { fileURLToPath, pathToFileURL } from 'url';
+import fs from 'fs';
+import path from 'path';
 
-function loadCommands() {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+function unwrapModule(mod) {
+  return mod && mod.default ? mod.default : mod;
+}
+
+export async function loadCommands() {
   const commands = new Map();
 
   const files = fs
-    .readdirSync(path.join(__dirname, "commands"))
-    .filter(file => file.endsWith(".js"));
+    .readdirSync(path.join(__dirname, 'commands'))
+    .filter(file => file.endsWith('.js'));
 
   for (const file of files) {
-    const command = require(path.join(__dirname, "commands", file));
+    const fullPath = path.join(__dirname, 'commands', file);
+    const mod = await import(pathToFileURL(fullPath).href);
+    const command = unwrapModule(mod);
     commands.set(command.data.name, command);
   }
 
   return commands;
 }
 
-function loadEvents(client) {
+export async function loadEvents(client) {
   const files = fs
-    .readdirSync(path.join(__dirname, "events"))
-    .filter(file => file.endsWith(".js"));
+    .readdirSync(path.join(__dirname, 'events'))
+    .filter(file => file.endsWith('.js'));
 
   for (const file of files) {
-    const event = require(path.join(__dirname, "events", file));
+    const fullPath = path.join(__dirname, 'events', file);
+    const mod = await import(pathToFileURL(fullPath).href);
+    const event = unwrapModule(mod);
 
     if (event.once) {
-      client.once(event.name, (...args) =>
-        event.execute(...args, client)
-      );
+      client.once(event.name, (...args) => event.execute(...args, client));
     } else {
-      client.on(event.name, (...args) =>
-        event.execute(...args, client)
-      );
+      client.on(event.name, (...args) => event.execute(...args, client));
     }
   }
 }
-
-module.exports = { loadCommands, loadEvents };

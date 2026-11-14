@@ -1,16 +1,16 @@
-const {
+import {
   Events,
   ActionRowBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle
-} = require("discord.js");
-const { request, getUser } = require("../utils/userApi");
-const {
-  get: getToken,
-  set: setToken,
-  remove: removeToken
-} = require("../utils/userTokens");
+} from "discord.js";
+import { request, getUser } from "../utils/userApi.js";
+import {
+  get as getToken,
+  set as setToken,
+  remove as removeToken
+} from "../utils/userTokens.js";
 
 const MODAL_ID = "hs_login_modal";
 
@@ -30,7 +30,7 @@ function errorMessage(res) {
   return `❌ Could not complete the action (status ${res.status}).`;
 }
 
-module.exports = {
+export default {
   name: Events.InteractionCreate,
 
   async execute(interaction) {
@@ -55,8 +55,7 @@ module.exports = {
       modal.addComponents(new ActionRowBuilder().addComponents(input));
       await interaction.showModal(modal);
       return;
-    }
-
+    };
     // ---------- Modal: save token ----------
     if (customId === MODAL_ID && interaction.isModalSubmit()) {
       const token = interaction.fields.getTextInputValue("token_input").trim();

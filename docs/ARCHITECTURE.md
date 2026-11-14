@@ -22,11 +22,11 @@ Persistence/config:
 
 ## 1. Entry point and connection — `index.js`, `src/connection.js`
 
-`index.js` loads environment variables and calls `connect()` from `src/connection.js`. `connect()` creates the Discord `Client` with the required gateway intents (`Guilds`, `GuildMembers`, `GuildMessages`), loads command modules via `src/loader.js`, registers slash commands globally through Discord REST (`Routes.applicationCommands` using `TOKEN` and `CLIENT_ID`), wires `InteractionCreate` to `src/middlewares/messageHandler.js`, loads event modules, logs readiness on `ClientReady`, and logs in. This keeps process bootstrap separate from command/event implementations.
+`index.js` loads environment variables and calls `connect()` from `src/connection.js`. `connect()` creates the Discord `Client` with the required gateway intents (`Guilds`, `GuildMembers`, `GuildMessages`), asynchronously loads command modules via `src/loader.js`, registers slash commands globally through Discord REST (`Routes.applicationCommands` using `TOKEN` and `CLIENT_ID`), wires `InteractionCreate` to `src/middlewares/messageHandler.js`, asynchronously loads event modules, logs readiness on `ClientReady`, and logs in. This keeps process bootstrap separate from command/event implementations.
 
 ## 2. Command and event loading — `src/loader.js`, `src/commands/`, `src/events/`
 
-`loadCommands()` reads `src/commands/*.js`, requires modules that export `data` and `execute`, and returns a `Map` keyed by command name. `loadEvents()` reads `src/events/*.js` and registers each module on the client (`once` or `on`) by its exported event `name`. This convention allows features to add commands/events as files without changing the bootstrap logic, except when command registration payloads or interaction routing depend on module exports.
+`loadCommands()` reads `src/commands/*.js`, dynamically imports ESM modules that export `data` and `execute` (default export supported), and returns a `Map` keyed by command name. `loadEvents()` reads `src/events/*.js`, dynamically imports each ESM event module, and registers it on the client (`once` or `on`) by its exported event `name`. This convention allows features to add commands/events as files without changing the bootstrap logic, except when command registration payloads or interaction routing depend on module exports.
 
 ## 3. Interaction dispatch — `src/middlewares/messageHandler.js`
 

@@ -1,12 +1,15 @@
-const assert = require("assert");
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const { spawn } = require("child_process");
+import { fileURLToPath } from 'url';
+import assert from "assert";
+import fs from "fs";
+import os from "os";
+import path from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import { spawn } from "child_process";
 
-const BetterThanDemons = require("..");
-const EVENTS = require("../core/events");
-const { createFilter } = require("../watcher/filters");
+import BetterThanDemons from "...js";
+import EVENTS from "../core/events.js";
+import { createFilter } from "../watcher/filters.js";
 
 (async () => {
   const results = [];
@@ -41,7 +44,7 @@ const { createFilter } = require("../watcher/filters");
 
   function fixtureApp(cleanupMs) {
     return `
-const fs = require('fs');
+import fs from 'fs';
 const log = process.env.FIXTURE_LOG;
 fs.appendFileSync(log, 'start ' + process.pid + '\\n');
 setInterval(() => {}, 1000);

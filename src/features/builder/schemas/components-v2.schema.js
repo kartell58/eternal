@@ -1,4 +1,4 @@
-const { randomUUID } = require('crypto');
+import { randomUUID } from 'crypto';
 
 function uid() {
   return randomUUID().slice(0, 8);
@@ -106,18 +106,6 @@ const COMPONENT_FACTORIES = {
   mentionable_select: () => createSelectMenu('mentionable_select')
 };
 
-module.exports = {
-  uid,
-  createDefaultComponentsV2State,
-  COMPONENT_FACTORIES,
-  createTextDisplay,
-  createSeparator,
-  createButton,
-  createActionRow,
-  createSection,
-  createThumbnail,
-  createMediaGallery,
-  createFile,
-  createSelectMenu,
-  createContainer
-};
+export { uid, createDefaultComponentsV2State, COMPONENT_FACTORIES, createTextDisplay, createSeparator, createButton, createActionRow, createSection, createThumbnail, createMediaGallery, createFile, createSelectMenu, createContainer };
+
+export default { uid, createDefaultComponentsV2State, COMPONENT_FACTORIES, createTextDisplay, createSeparator, createButton, createActionRow, createSection, createThumbnail, createMediaGallery, createFile, createSelectMenu, createContainer };

@@ -1,6 +1,9 @@
 #!/usr/bin/env node
-const { spawnSync } = require('child_process');
-const path = require('path');
+import { fileURLToPath } from 'url';
+import { spawnSync } from 'child_process';
+import path from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const root = path.resolve(__dirname, '..');
 

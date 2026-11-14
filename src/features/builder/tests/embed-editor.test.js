@@ -1,21 +1,15 @@
-const assert = require('assert');
-const fs = require('fs');
-const path = require('path');
-const { MessageFlags } = require('discord.js');
+import assert from 'assert';
+import fs from 'fs';
+import path from 'path';
+import { MessageFlags } from 'discord.js';
+import { sessions, createSession, getSession } from '../services/session.service.js';
+import { handleNavigation, buildEmbedEditor, buildMainPanel, buildContainerEditor, buildEmbedMainPanel } from '../interactions/navigation.js';
+import { handleProperties } from '../interactions/properties.js';
+import draftService from '../services/draft.service.js';
+import { createDefaultEmbedState } from '../schemas/embed.schema.js';
 
 function freshModules() {
-  for (const mod of [
-    '../services/session.service',
-    '../interactions/navigation',
-    '../interactions/properties',
-    '../interactions/publishing',
-    '../interactions/container-editor',
-    '../interactions/components',
-    '../services/draft.service',
-    '../utils/json-document'
-  ]) {
-    delete require.cache[require.resolve(mod)];
-  }
+  try { sessions.clear(); } catch {}
 }
 
 function mockInteraction(session, customId, opts = {}) {
@@ -105,8 +99,6 @@ function fields(values) {
 
   await test('embed editor uses Rio-style preview card, section buttons, actions, and navigation', () => {
     freshModules();
-    const { createSession } = require('../services/session.service');
-    const { buildEmbedEditor } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.state.embeds[0].title = 'Hello';
     s.state.embeds[0].description = 'World';
@@ -135,8 +127,6 @@ function fields(values) {
 
   await test('switching selected embed updates preview and editor state', async () => {
     freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation, buildEmbedEditor } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.state.embeds[0].title = 'First';
     s.state.embeds.push(JSON.parse(JSON.stringify(s.state.embeds[0])));
@@ -157,8 +147,6 @@ function fields(values) {
 
   await test('add embed opens editor and preserves existing embeds', async () => {
     freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.state.embeds[0].title = 'First';
     const i = mockInteraction(s, `bld:${s.id}:nav:add_embed_main`);
@@ -174,8 +162,6 @@ function fields(values) {
 
   await test('property editing targets only the selected embed', async () => {
     freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleProperties } = require('../interactions/properties');
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.state.embeds[0].title = 'First';
     s.state.embeds.push(JSON.parse(JSON.stringify(s.state.embeds[0])));
@@ -227,8 +213,6 @@ function fields(values) {
 
   await test('field creation, editing, and deletion operate on selected embed', async () => {
     freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleProperties } = require('../interactions/properties');
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.state.embeds[0].fields = [{ name: 'First field', value: 'First value', inline: false }];
     s.state.embeds.push(JSON.parse(JSON.stringify(s.state.embeds[0])));
@@ -277,8 +261,6 @@ function fields(values) {
 
   await test('field tools view uses selected embed and includes add field', async () => {
     freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.state.embeds[0].fields = [{ name: 'First field', value: 'First value', inline: false }];
     s.state.embeds.push(JSON.parse(JSON.stringify(s.state.embeds[0])));
@@ -297,8 +279,6 @@ function fields(values) {
 
   await test('editor navigation returns to embed panel and builder selection in same message', async () => {
     freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.view = 'editor';
 
@@ -319,9 +299,6 @@ function fields(values) {
 
   await test('undo restores previous embed state', async () => {
     freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleProperties } = require('../interactions/properties');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.state.embeds[0].title = 'Before';
     s.view = 'editor';
@@ -343,8 +320,6 @@ function fields(values) {
 
   await test('export json returns current builder state as a file', async () => {
     freshModules();
-    const { createSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.state.embeds[0].title = 'Export me';
     const i = mockInteraction(s, `bld:${s.id}:nav:export_json`);
@@ -359,8 +334,6 @@ function fields(values) {
 
   await test('import json from embed editor returns to editor with imported multi-embed state', async () => {
     freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleProperties } = require('../interactions/properties');
     const s = createSession('u1', 'g1', 'c1', 'embed');
     s.view = 'editor';
     const candidate = {
@@ -387,8 +360,6 @@ function fields(values) {
 
   await test('draft persistence stores and reloads multi-embed state', () => {
     freshModules();
-    const draftService = require('../services/draft.service');
-    const { createDefaultEmbedState } = require('../schemas/embed.schema');
     const cwd = process.cwd();
     const draftFile = path.join(cwd, 'builder-drafts.json');
     try { fs.rmSync(draftFile, { force: true }); } catch {}
@@ -408,8 +379,6 @@ function fields(values) {
 
   await test('components v2 regression: main panel and container editor remain intact', () => {
     freshModules();
-    const { createSession } = require('../services/session.service');
-    const { buildMainPanel, buildContainerEditor } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     const main = buildMainPanel(s);
     assert.ok(allText(main.components).includes('Container Creation Panel'), 'CV2 main panel intact');

@@ -1,10 +1,18 @@
-const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { requireSession, pushHistory, saveSession } = require('../services/session.service');
-const { findParentInfo } = require('../utils/component-tree');
-const templateService = require('../services/template.service');
-const { buildEmbedEditor, buildCv2Editor } = require('./navigation');
-const { parseColor } = require('../utils/validator');
-const { normalizeEmbedState, getSelectedEmbed, createDefaultEmbedState } = require('../schemas/embed.schema');
+import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { requireSession, pushHistory, saveSession } from '../services/session.service.js';
+import { findParentInfo } from '../utils/component-tree.js';
+import templateService from '../services/template.service.js';
+import { buildEmbedEditor, buildCv2Editor, buildMainPanel, buildEmbedMainPanel } from './navigation.js';
+import { parseColor } from '../utils/validator.js';
+import { normalizeEmbedState, getSelectedEmbed, createDefaultEmbedState } from '../schemas/embed.schema.js';
+import { buildContainerEditor, buildContainerColorScreen } from './container-editor.js';
+import { COMPONENT_FACTORIES } from '../schemas/components-v2.schema.js';
+import { saveColor } from '../services/colors.service.js';
+import axios from 'axios';
+import path from 'path';
+import { normalizeImportedDocument } from '../utils/json-document.js';
+import { validateEmbedState, validateComponentsV2State } from '../utils/validator.js';
+import { ContainerBuilder, TextDisplayBuilder, MessageFlags } from 'discord.js';
 
 function tid(s, a, extra = '') { return `bld:${s.id}:prop:${a}${extra ? ':' + extra : ''}`; }
 
@@ -332,7 +340,6 @@ async function handleProperties(interaction, { sid }) {
         }
       } catch (e) { /* keep partial */ }
       // If editing was initiated from ephemeral container editor, return to it when possible
-      const { buildContainerEditor } = require('./container-editor');
       if (session.containerEditorContainerId) {
         // If edited node is the container itself or a child, prefer container editor
         const cid = session.containerEditorContainerId;
@@ -354,7 +361,6 @@ async function handleProperties(interaction, { sid }) {
       return interaction.reply({ content: `Template saved: **${tpl.name}** (${tpl.id})`, flags: 64 });
     }
     if (action === 'ce_color_modal') {
-      const { buildContainerEditor } = require('./container-editor');
       const cid = session.containerEditorContainerId || session.selectedNodeId;
       const container = (session.state.root || []).find(c => c._id === cid && c.type === 'container') || (session.state.root || []).find(c => c._id === session.selectedNodeId && c.type === 'container');
       if (!container) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
@@ -367,8 +373,6 @@ async function handleProperties(interaction, { sid }) {
       return interaction.update(buildContainerEditor(session));
     }
     if (action === 'ce_add_text_display') {
-      const { buildContainerEditor } = require('./container-editor');
-      const { COMPONENT_FACTORIES } = require('../schemas/components-v2.schema');
       const cid = session.containerEditorContainerId || session.selectedNodeId;
       const container = (session.state.root || []).find(c => c._id === cid && c.type === 'container');
       if (!container) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
@@ -385,8 +389,6 @@ async function handleProperties(interaction, { sid }) {
       return interaction.update(buildContainerEditor(session));
     }
     if (action === 'ce_color_save') {
-      const { buildContainerColorScreen } = require('./container-editor');
-      const { saveColor } = require('../services/colors.service');
       const cid = session.containerEditorContainerId || session.selectedNodeId;
       const container = (session.state.root || []).find(c => c._id === cid && c.type === 'container');
       if (!container) return interaction.reply({ content: 'The selected container could not be found.', flags: 64 });
@@ -406,9 +408,6 @@ async function handleProperties(interaction, { sid }) {
       return interaction.update(buildContainerColorScreen(session));
     }
     if (action === 'json_import') {
-      const axios = require('axios');
-      const path = require('path');
-      const { normalizeImportedDocument } = require('../utils/json-document');
       const MAX_BYTES = 20 * 1024 * 1024;
       let raw = interaction.fields.getTextInputValue('json');
 
@@ -464,7 +463,6 @@ async function handleProperties(interaction, { sid }) {
       const candidate = normalized.state;
 
       // Validate before applying; preserve existing data on failure
-      const { validateEmbedState, validateComponentsV2State } = require('../utils/validator');
       const validation = candidate.type === 'embed' ? validateEmbedState(candidate) : validateComponentsV2State(candidate);
       if (!validation.valid) {
         return interaction.reply({ content: `JSON validation failed (existing data preserved):\n${validation.errors.slice(0, 8).map(e => `- ${e}`).join('\n')}`.slice(0, 2000), flags: 64 });
@@ -477,7 +475,6 @@ async function handleProperties(interaction, { sid }) {
       session.templateId = null;
       session.selectedNodeId = candidate.type === 'components_v2' ? (candidate.root?.[0]?._id || null) : null;
       saveSession(session);
-      const { buildMainPanel, buildEmbedMainPanel, buildEmbedEditor } = require('./navigation');
       if (candidate.type === 'embed') {
         normalizeEmbedState(session.state);
         if (previousView === 'editor') {
@@ -503,7 +500,7 @@ async function handleProperties(interaction, { sid }) {
         // attempt basic import for embeds; CV2 import is limited
         if (msg.flags?.has?.(1 << 15) || msg.flags?.bitfield === 32768) {
           // cannot reliably reconstruct full CV2 tree; start fresh but set edit target
-          session.state = require('../schemas/components-v2.schema').createDefaultComponentsV2State();
+          session.state = createDefaultComponentsV2State();
           session.type = 'components_v2';
           saveSession(session);
           return interaction.update({ content: 'Loaded Components V2 message as edit target. Full visual reconstruction of existing CV2 messages is not supported; the editor started a new CV2 draft that will replace the target message when you publish edit. You can now build the replacement.', embeds: buildCv2Editor(session).embeds, components: buildCv2Editor(session).components });
@@ -527,14 +524,12 @@ async function handleProperties(interaction, { sid }) {
           session.state = st; session.type = 'embed';
           session.view = 'embed_home';
           saveSession(session);
-          const { buildEmbedMainPanel } = require('./navigation');
           return interaction.update(buildEmbedMainPanel(session));
         } else {
           const st = createDefaultEmbedState();
           st.content = msg.content || '';
           session.state = st; session.type = 'embed'; session.view = 'embed_home';
           saveSession(session);
-          const { buildEmbedMainPanel } = require('./navigation');
           return interaction.update(buildEmbedMainPanel(session));
         }
       } catch (e) {
@@ -599,7 +594,6 @@ async function handleProperties(interaction, { sid }) {
     if (action === 'field_down' && idx < fields.length-1) { const [it]=fields.splice(idx,1); fields.splice(idx+1,0,it); session.selectedFieldIndex = idx+1; }
     saveSession(session);
     // rebuild field tools view
-    const { ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
     const info = new ContainerBuilder().setAccentColor(0x5865f2).addTextDisplayComponents(
       new TextDisplayBuilder().setContent('## Field Tools'),
       new TextDisplayBuilder().setContent(fields.length ? fields.map((f,i)=>`${i+1}. ${String(f.name||'(unnamed)').slice(0,80)}`).join('\n').slice(0, 4000) : 'No fields.')
@@ -627,4 +621,6 @@ async function handleProperties(interaction, { sid }) {
   return interaction.reply({ content: 'Unhandled property action.', flags: 64 });
 }
 
-module.exports = { handleProperties, showCv2EditModal };
+export { handleProperties, showCv2EditModal };
+
+export default { handleProperties, showCv2EditModal };

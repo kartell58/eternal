@@ -1,5 +1,5 @@
-const crypto = require("crypto");
-const { createCanvas } = require("@napi-rs/canvas");
+import crypto from "crypto";
+import { createCanvas } from "@napi-rs/canvas";
 
 const CODE_LENGTH = 6;
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I, O, 0, 1 to avoid ambiguity
@@ -188,19 +188,6 @@ function pruneExpired() {
 const cleanupInterval = setInterval(pruneExpired, 60 * 1000);
 if (typeof cleanupInterval.unref === "function") cleanupInterval.unref();
 
-module.exports = {
-  CODE_LENGTH,
-  OPTION_COUNT,
-  MAX_ATTEMPTS,
-  CHALLENGE_TTL_MS,
-  generateCode,
-  formatCode,
-  generateOptions,
-  renderCaptcha,
-  createChallenge,
-  getChallenge,
-  isExpired,
-  deleteChallenge,
-  clearChallenges,
-  pruneExpired
-};
+export { CODE_LENGTH, OPTION_COUNT, MAX_ATTEMPTS, CHALLENGE_TTL_MS, generateCode, formatCode, generateOptions, renderCaptcha, createChallenge, getChallenge, isExpired, deleteChallenge, clearChallenges, pruneExpired };
+
+export default { CODE_LENGTH, OPTION_COUNT, MAX_ATTEMPTS, CHALLENGE_TTL_MS, generateCode, formatCode, generateOptions, renderCaptcha, createChallenge, getChallenge, isExpired, deleteChallenge, clearChallenges, pruneExpired };

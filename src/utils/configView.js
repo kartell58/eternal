@@ -1,12 +1,12 @@
-const {
+import {
   EmbedBuilder,
   ActionRowBuilder,
   StringSelectMenuBuilder,
   ButtonBuilder,
   ButtonStyle,
   ChannelType
-} = require("discord.js");
-const { get } = require("../settings");
+} from "discord.js";
+import { get } from "../settings.js";
 
 /**
  * Configurable modules displayed in the /config panel.
@@ -213,11 +213,6 @@ function buildPanel(guild, editingKey = DEFAULT_MODULE) {
   };
 }
 
-module.exports = {
-  MODULES,
-  DEFAULT_MODULE,
-  buildPanel,
-  buildValueSelect,
-  formatChannel,
-  formatRole
-};
+export { MODULES, DEFAULT_MODULE, buildPanel, buildValueSelect, formatChannel, formatRole };
+
+export default { MODULES, DEFAULT_MODULE, buildPanel, buildValueSelect, formatChannel, formatRole };

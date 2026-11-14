@@ -1,7 +1,7 @@
-const { Events } = require("discord.js");
-const { assignVerificationRole } = require("../features/verification/role");
+import { Events } from "discord.js";
+import { assignVerificationRole } from "../features/verification/role.js";
 
-module.exports = {
+export default {
   name: Events.InteractionCreate,
 
   async execute(interaction) {

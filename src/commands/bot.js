@@ -1,7 +1,7 @@
-const { SlashCommandBuilder } = require("discord.js");
-const { buildBotPanel } = require("../utils/botPanelView");
+import { SlashCommandBuilder } from "discord.js";
+import { buildBotPanel } from "../utils/botPanelView.js";
 
-module.exports = {
+export default {
   data: new SlashCommandBuilder()
     .setName("bot")
     .setDescription("Manage and configure the bot profile and presence"),

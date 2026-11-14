@@ -1,6 +1,6 @@
-const assert = require("assert");
-const { GatewayIntentBits } = require("discord.js");
-const { INTENTS } = require("../connection");
+import assert from "assert";
+import { GatewayIntentBits } from "discord.js";
+import { INTENTS } from "../connection.js";
 
 const results = [];
 const test = (name, fn) => {

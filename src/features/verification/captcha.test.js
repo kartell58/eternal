@@ -1,5 +1,5 @@
-const assert = require("assert");
-const { Collection, ChannelType, MessageFlags } = require("discord.js");
+import assert from "assert";
+import { Collection, ChannelType, MessageFlags } from "discord.js";
 
 (async () => {
   const results = [];
@@ -12,12 +12,14 @@ const { Collection, ChannelType, MessageFlags } = require("discord.js");
     }
   };
 
-  const captcha = require("./captcha");
-  const { buildCaptchaPanel } = require("./panel");
-  const { assignVerificationRole, resolveVerificationRole } = require("./role");
-  const { WHY_VERIFY_TEXT, handleRespond, handleAnswer, handleWhy, execute } = require("../../events/captchaVerification");
-  const { buildPanel } = require("../../utils/configView");
-  const { SEND_ALL_PANELS, postCaptchaPanel } = require("../../events/configPanel");
+  const captcha = await import('./captcha.js');
+  const { buildCaptchaPanel } = await import('./panel.js');
+  const { assignVerificationRole, resolveVerificationRole } = await import('./role.js');
+  const captchaEvent = await import('../../events/captchaVerification.js');
+  const { WHY_VERIFY_TEXT, handleRespond, handleAnswer, handleWhy, execute } = captchaEvent;
+  const { buildPanel } = await import('../../utils/configView.js');
+  const configPanel = await import('../../events/configPanel.js');
+  const { SEND_ALL_PANELS, postCaptchaPanel } = configPanel;
 
   const fakeRole = { id: "r1", name: "Verified", position: 5, managed: false, toString() { return `<@&${this.id}>`; } };
 

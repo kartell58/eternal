@@ -1,11 +1,11 @@
-const {
+import {
   ContainerBuilder,
   TextDisplayBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
   MessageFlags
-} = require("discord.js");
+} from "discord.js";
 
 /**
  * Builds the public CAPTCHA verification panel payload.
@@ -46,4 +46,6 @@ function buildCaptchaPanel() {
   };
 }
 
-module.exports = { buildCaptchaPanel };
+export { buildCaptchaPanel };
+
+export default { buildCaptchaPanel };

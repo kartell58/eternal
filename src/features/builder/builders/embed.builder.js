@@ -1,6 +1,6 @@
-const { EmbedBuilder } = require('discord.js');
-const { parseColor } = require('../utils/validator');
-const { normalizeEmbedState } = require('../schemas/embed.schema');
+import { EmbedBuilder } from 'discord.js';
+import { parseColor } from '../utils/validator.js';
+import { normalizeEmbedState } from '../schemas/embed.schema.js';
 
 function buildSingleEmbed(e) {
   const embed = new EmbedBuilder();
@@ -59,4 +59,6 @@ function buildEmbedPayload(state) {
   };
 }
 
-module.exports = { buildEmbedPayload, buildSingleEmbed, hasEmbedContent };
+export { buildEmbedPayload, buildSingleEmbed, hasEmbedContent };
+
+export default { buildEmbedPayload, buildSingleEmbed, hasEmbedContent };

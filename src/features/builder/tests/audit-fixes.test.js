@@ -1,6 +1,8 @@
-const assert = require('assert');
-const fs = require('fs');
-const path = require('path');
+let __bust = 0;
+function __b(){ return `?t=${__bust}`; }
+import assert from 'assert';
+import fs from 'fs';
+import path from 'path';
 
 function cleanup(files) {
   for (const f of files) {
@@ -30,24 +32,21 @@ function cleanup(files) {
   cleanup([draftFile, tplFile, actFile]);
 
   // fresh requires where needed
-  delete require.cache[require.resolve('../services/draft.service')];
-  delete require.cache[require.resolve('../services/template.service')];
-  delete require.cache[require.resolve('../services/published-actions.service')];
-  delete require.cache[require.resolve('../utils/published-runtime')];
-  delete require.cache[require.resolve('../interactions/router')];
-
-  const { createDefaultEmbedState } = require('../schemas/embed.schema');
-  const { createDefaultComponentsV2State } = require('../schemas/components-v2.schema');
-  const draftSvc = require('../services/draft.service');
-  const tplSvc = require('../services/template.service');
-  const { collectActionsFromState } = require('../utils/published-runtime');
-  const { getAction } = require('../services/published-actions.service');
-  const router = require('../interactions/router');
-  const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
-  const { validateComponentsV2State } = require('../utils/validator');
-  const sessionSvc = require('../services/session.service');
-
-  await test('unauthorized draft overwrite blocked', () => {
+  const { createDefaultEmbedState } = await import('../schemas/embed.schema.js' + __b());
+  const { createDefaultComponentsV2State } = await import('../schemas/components-v2.schema.js' + __b());
+  const __m_19599 = await import('../services/draft.service.js' + __b());
+  const draftSvc = __m_19599.default ?? __m_19599;
+  const __m_52457 = await import('../services/template.service.js' + __b());
+  const tplSvc = __m_52457.default ?? __m_52457;
+  const { collectActionsFromState } = await import('../utils/published-runtime.js' + __b());
+  const { getAction } = await import('../services/published-actions.service.js' + __b());
+  const __m_51242 = await import('../interactions/router.js' + __b());
+  const router = __m_51242.default ?? __m_51242;
+  const { buildComponentsV2Payload } = await import('../builders/components-v2.builder.js' + __b());
+  const { validateComponentsV2State } = await import('../utils/validator.js' + __b());
+  const __m_65678 = await import('../services/session.service.js' + __b());
+  const sessionSvc = __m_65678.default ?? __m_65678;
+  await test('unauthorized draft overwrite blocked', async () => {
     const d = draftSvc.saveDraft('u1','g1', createDefaultEmbedState(), null, 'Mine');
     let threw = false;
     try { draftSvc.saveDraft('u2','g1', createDefaultEmbedState(), d.id, 'Hack'); } catch (e) { threw = /Not authorized/.test(e.message); }
@@ -57,7 +56,7 @@ function cleanup(files) {
     draftSvc.deleteDraft('u1','g1',d.id);
   });
 
-  await test('unauthorized template overwrite blocked', () => {
+  await test('unauthorized template overwrite blocked', async () => {
     const t = tplSvc.saveTemplate('u1','g1', createDefaultEmbedState(), 'T1');
     let threw = false;
     try { tplSvc.saveTemplate('u2','g1', createDefaultEmbedState(), 'Hack', t.id); } catch (e) { threw = /Not authorized/.test(e.message); }
@@ -67,7 +66,7 @@ function cleanup(files) {
     tplSvc.deleteTemplate('u1','g1',t.id);
   });
 
-  await test('cross-guild draft/template access denied', () => {
+  await test('cross-guild draft/template access denied', async () => {
     const d = draftSvc.saveDraft('u1','g1', createDefaultEmbedState(), null, 'D');
     const t = tplSvc.saveTemplate('u1','g1', createDefaultEmbedState(), 'T');
     assert.strictEqual(draftSvc.getDraftFor('u1','g2',d.id), null);
@@ -80,12 +79,12 @@ function cleanup(files) {
 
   await test('custom component IDs route and execute published action', async () => {
     cleanup([actFile]);
-    delete require.cache[require.resolve('../services/published-actions.service')];
-    delete require.cache[require.resolve('../utils/published-runtime')];
-    delete require.cache[require.resolve('../interactions/router')];
-    const pa = require('../services/published-actions.service');
-    const rt = require('../utils/published-runtime');
-    const rtr = require('../interactions/router');
+    const __m_94847 = await import('../services/published-actions.service.js' + __b());
+    const pa = __m_94847.default ?? __m_94847;
+    const __m_2696 = await import('../utils/published-runtime.js' + __b());
+    const rt = __m_2696.default ?? __m_2696;
+    const __m_74816 = await import('../interactions/router.js' + __b());
+    const rtr = __m_74816.default ?? __m_74816;
     const st = createDefaultComponentsV2State();
     st.root[0].components.push({ _id:'ar1', type:'action_row', components:[{_id:'btn1',type:'button',label:'X',style:1,custom_id:'my_custom_id',url:'',action:{type:'ephemeral',value:'ok'}}] });
     const payload = buildComponentsV2Payload(st);
@@ -107,8 +106,8 @@ function cleanup(files) {
   });
 
   await test('unregistered component interactions are not swallowed as handled', async () => {
-    delete require.cache[require.resolve('../interactions/router')];
-    const rtr = require('../interactions/router');
+    const __m_74816 = await import('../interactions/router.js' + __b());
+    const rtr = __m_74816.default ?? __m_74816;
     const interaction = {
       customId: 'totally_unknown_button', message: { id: 'msg_none' }, guildId: 'g1', channelId: 'c1', user: { id: 'u1' },
       isButton: () => true, isStringSelectMenu: () => false, isChatInputCommand: () => false,
@@ -122,11 +121,10 @@ function cleanup(files) {
 
   await test('unauthorized update/internal actions blocked and mentions disabled', async () => {
     cleanup([actFile]);
-    delete require.cache[require.resolve('../services/published-actions.service')];
-    delete require.cache[require.resolve('../utils/published-runtime')];
-    delete require.cache[require.resolve('../interactions/router')];
-    const pa = require('../services/published-actions.service');
-    const rtr = require('../interactions/router');
+    const __m_94847 = await import('../services/published-actions.service.js' + __b());
+    const pa = __m_94847.default ?? __m_94847;
+    const __m_74816 = await import('../interactions/router.js' + __b());
+    const rtr = __m_74816.default ?? __m_74816;
     pa.setAction('m1', 'act_upd', { type:'update', value:'@everyone hi', kind:'button', ownerId:'owner', guildId:'g1', channelId:'c1' });
     let replied = null;
     const interaction = {
@@ -146,9 +144,10 @@ function cleanup(files) {
   });
 
   await test('channel action allows others but uses safe mentions', async () => {
-    delete require.cache[require.resolve('../interactions/router')];
-    const pa = require('../services/published-actions.service');
-    const rtr = require('../interactions/router');
+    const __m_94847 = await import('../services/published-actions.service.js' + __b());
+    const pa = __m_94847.default ?? __m_94847;
+    const __m_74816 = await import('../interactions/router.js' + __b());
+    const rtr = __m_74816.default ?? __m_74816;
     pa.setAction('m2', 'act_chan', { type:'channel', value:'hello @everyone', kind:'button', ownerId:'owner', guildId:'g1', channelId:'c1' });
     let replied = null;
     const interaction = {
@@ -163,11 +162,11 @@ function cleanup(files) {
     assert.strictEqual(replied.flags, undefined);
   });
 
-  await test('corrupted persistence quarantined/backed up and does not overwrite with corrupt parse', () => {
+  await test('corrupted persistence quarantined/backed up and does not overwrite with corrupt parse', async () => {
     cleanup([draftFile]);
     fs.writeFileSync(draftFile, '{bad json!!!', 'utf8');
-    delete require.cache[require.resolve('../services/draft.service')];
-    const ds = require('../services/draft.service');
+    const __m_48683 = await import('../services/draft.service.js' + __b());
+    const ds = __m_48683.default ?? __m_48683;
     const status = ds.getLoadStatus();
     assert.ok(status.recovered === true);
     const list = ds.listDrafts('u','g');
@@ -178,8 +177,8 @@ function cleanup(files) {
 
   await test('concurrent draft saves are serialized (no lost writes)', async () => {
     cleanup([draftFile]);
-    delete require.cache[require.resolve('../services/draft.service')];
-    const ds = require('../services/draft.service');
+    const __m_48683 = await import('../services/draft.service.js' + __b());
+    const ds = __m_48683.default ?? __m_48683;
     const ops = [];
     for (let i=0;i<10;i++) ops.push(Promise.resolve().then(()=>ds.saveDraft('u1','g1', createDefaultEmbedState(), null, 'D'+i)));
     const saved = await Promise.all(ops);
@@ -189,7 +188,7 @@ function cleanup(files) {
     assert.strictEqual(list.length, 10);
   });
 
-  await test('session expiration and cleanup', () => {
+  await test('session expiration and cleanup', async () => {
     const s = sessionSvc.createSession('u1','g1','c1','embed');
     s.updatedAt = Date.now() - (sessionSvc.SESSION_TTL_MS + 1000);
     sessionSvc.sessions.set(s.id, s);
@@ -199,7 +198,7 @@ function cleanup(files) {
     assert.ok(r.error && /expired/i.test(r.error) && /draft|template|resume/i.test(r.error));
   });
 
-  await test('components v2 payload/validation basics', () => {
+  await test('components v2 payload/validation basics', async () => {
     const st = createDefaultComponentsV2State();
     const v = validateComponentsV2State(st);
     assert.ok(v.valid, JSON.stringify(v.errors));
@@ -208,13 +207,13 @@ function cleanup(files) {
     assert.strictEqual(j.type, 17);
   });
 
-  await test('published actions recover after module reload', () => {
+  await test('published actions recover after module reload', async () => {
     cleanup([actFile]);
-    delete require.cache[require.resolve('../services/published-actions.service')];
-    const pa1 = require('../services/published-actions.service');
+    const __m_14416 = await import('../services/published-actions.service.js' + __b());
+    const pa1 = __m_14416.default ?? __m_14416;
     pa1.setAction('msgR', 'cidR', { type:'ephemeral', value:'persisted', kind:'button', ownerId:'o', guildId:'g', channelId:'c' });
-    delete require.cache[require.resolve('../services/published-actions.service')];
-    const pa2 = require('../services/published-actions.service');
+    const __m_9208 = await import('../services/published-actions.service.js' + __b());
+    const pa2 = __m_9208.default ?? __m_9208;
     const a = pa2.getAction('msgR', 'cidR');
     assert.ok(a && a.value === 'persisted');
   });

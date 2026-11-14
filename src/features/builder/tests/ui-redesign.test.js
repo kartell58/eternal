@@ -1,10 +1,10 @@
-const assert = require('assert');
-const { MessageFlags } = require('discord.js');
-const { createSession } = require('../services/session.service');
-const { buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor, buildSelectionScreen, buildEmbedMainPanel } = require('../interactions/navigation');
-const { buildPublishMenu } = require('../interactions/publishing');
-const { createDefaultEmbedState } = require('../schemas/embed.schema');
-const { createDefaultComponentsV2State, createContainer } = require('../schemas/components-v2.schema');
+import assert from 'assert';
+import { MessageFlags } from 'discord.js';
+import { createSession } from '../services/session.service.js';
+import { buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor, buildSelectionScreen, buildEmbedMainPanel } from '../interactions/navigation.js';
+import { buildPublishMenu } from '../interactions/publishing.js';
+import { createDefaultEmbedState } from '../schemas/embed.schema.js';
+import { createDefaultComponentsV2State, createContainer } from '../schemas/components-v2.schema.js';
 
 (async () => {
   const results = [];

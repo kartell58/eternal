@@ -1,6 +1,6 @@
-const { randomUUID } = require('crypto');
-const { createDefaultEmbedState } = require('../schemas/embed.schema');
-const { createDefaultComponentsV2State } = require('../schemas/components-v2.schema');
+import { randomUUID } from 'crypto';
+import { createDefaultEmbedState } from '../schemas/embed.schema.js';
+import { createDefaultComponentsV2State } from '../schemas/components-v2.schema.js';
 
 const sessions = new Map();
 const SESSION_TTL_MS = 1000 * 60 * 30; // 30 minutes of inactivity
@@ -76,4 +76,6 @@ function popHistory(session) {
   return true;
 }
 
-module.exports = { createSession, getSession, saveSession, deleteSession, requireSession, pushHistory, popHistory, cleanupExpiredSessions, sessions, SESSION_TTL_MS };
+export { createSession, getSession, saveSession, deleteSession, requireSession, pushHistory, popHistory, cleanupExpiredSessions, sessions, SESSION_TTL_MS };
+
+export default { createSession, getSession, saveSession, deleteSession, requireSession, pushHistory, popHistory, cleanupExpiredSessions, sessions, SESSION_TTL_MS };

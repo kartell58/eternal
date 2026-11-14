@@ -1,8 +1,8 @@
-const { handleNavigation } = require('./navigation');
-const { handleComponents } = require('./components');
-const { handleProperties } = require('./properties');
-const { handlePublishing } = require('./publishing');
-const { getAction } = require('../services/published-actions.service');
+import { handleNavigation } from './navigation.js';
+import { handleComponents } from './components.js';
+import { handleProperties } from './properties.js';
+import { handlePublishing } from './publishing.js';
+import { getAction } from '../services/published-actions.service.js';
 
 const SAFE_INTERNAL_ACTIONS = new Set(['noop', 'acknowledge', 'builder_info']);
 
@@ -118,4 +118,6 @@ async function routeBuilderInteraction(interaction) {
   return false;
 }
 
-module.exports = { routeBuilderInteraction, isBuilderSessionInteraction, handlePublishedRuntime, SAFE_INTERNAL_ACTIONS };
+export { routeBuilderInteraction, isBuilderSessionInteraction, handlePublishedRuntime, SAFE_INTERNAL_ACTIONS };
+
+export default { routeBuilderInteraction, isBuilderSessionInteraction, handlePublishedRuntime, SAFE_INTERNAL_ACTIONS };

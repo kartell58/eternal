@@ -1,18 +1,17 @@
-const assert = require('assert');
-const { MessageFlags } = require('discord.js');
+import assert from 'assert';
+import { MessageFlags } from 'discord.js';
+import { sessions, createSession, getSession } from '../services/session.service.js';
+import { handleNavigation, buildContainerEditor } from '../interactions/navigation.js';
+import { handleProperties } from '../interactions/properties.js';
+import { createContainer } from '../schemas/components-v2.schema.js';
 
 function freshModules() {
-  delete require.cache[require.resolve('../services/session.service')];
-  delete require.cache[require.resolve('../interactions/navigation')];
-  delete require.cache[require.resolve('../interactions/components')];
-  delete require.cache[require.resolve('../interactions/properties')];
-  delete require.cache[require.resolve('../interactions/publishing')];
-  delete require.cache[require.resolve('../interactions/container-editor')];
+  sessions.clear();
 }
 
 (async () => {
   const results = [];
-  const test = async (name, fn) => { try { await fn(); results.push({ name, ok: true }); } catch (e) { results.push({ name, ok: false, err: e.message, stack: e.stack }); } };
+  const test = async (name, fn) => { try { freshModules(); await fn(); results.push({ name, ok: true }); } catch (e) { results.push({ name, ok: false, err: e.message, stack: e.stack }); } };
 
   function mockInteraction(session, customId, opts = {}) {
     return {
@@ -72,9 +71,6 @@ function freshModules() {
   }
 
   await test('selecting a container opens editor in the same ephemeral message', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     const c = s.state.root[0];
     const i = mockInteraction(s, `bld:${s.id}:nav:container_select`, { isSelect: true, values: [c._id] });
@@ -88,9 +84,6 @@ function freshModules() {
   });
 
   await test('container editor displays correct preview, title, and controls in order', async () => {
-    freshModules();
-    const { createSession } = require('../services/session.service');
-    const { buildContainerEditor } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     const c = s.state.root[0];
     c.accent_color = 0x5865f2;
@@ -111,9 +104,6 @@ function freshModules() {
   });
 
   await test('add item adds supported item to container and updates same ephemeral editor', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     const c = s.state.root[0];
     s.selectedNodeId = c._id;
@@ -130,10 +120,6 @@ function freshModules() {
   });
 
   await test('add text display opens modal and adds edited text on submit', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
-    const { handleProperties } = require('../interactions/properties');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     const c = s.state.root[0];
     s.selectedNodeId = c._id;
@@ -159,9 +145,6 @@ function freshModules() {
   });
 
   await test('edit item select opens existing item modal for correct item', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     const c = s.state.root[0];
     s.selectedNodeId = c._id;
@@ -178,9 +161,6 @@ function freshModules() {
   });
 
   await test('select color opens color screen and updates accent color in same message', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     const c = s.state.root[0];
     s.selectedNodeId = c._id; s.containerEditorContainerId = c._id;
@@ -199,73 +179,72 @@ function freshModules() {
   });
 
   await test('delete container requires confirmation and preserves other containers then returns to main panel', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
-    const { createContainer } = require('../schemas/components-v2.schema');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
-    const c1 = s.state.root[0]; const c2 = createContainer(); s.state.root.push(c2);
-    s.selectedNodeId = c1._id; s.containerEditorContainerId = c1._id;
-    const del = mockInteraction(s, `bld:${s.id}:nav:ce_delete`);
-    await handleNavigation(del, { sid: s.id });
-    assert.ok(del.updated, 'confirmation shown');
-    const ids = walkIds(del.updated.components);
-    assert.ok(ids.some(id => id.endsWith(':nav:ce_delete_confirm')), 'confirm button');
-    assert.ok(ids.some(id => id.endsWith(':nav:ce_delete_cancel')), 'cancel button');
+    const c1 = s.state.root[0];
+    const c2 = createContainer();
+    s.state.root.push(c2);
+    s.selectedNodeId = c1._id;
+    s.containerEditorContainerId = c1._id;
+    const ask = mockInteraction(s, `bld:${s.id}:nav:ce_delete`);
+    await handleNavigation(ask, { sid: s.id });
+    assert.ok(ask.updated && hasFlag(ask.updated, MessageFlags.Ephemeral), 'confirmation shown');
+    assert.ok(allText(ask.updated.components).includes('Delete Container'), 'confirmation title');
+    let session = getSession(s.id);
+    assert.strictEqual(session.state.root.length, 2, 'not deleted before confirm');
     const confirm = mockInteraction(s, `bld:${s.id}:nav:ce_delete_confirm`);
     await handleNavigation(confirm, { sid: s.id });
-    const session = getSession(s.id);
-    assert.strictEqual(session.state.root.length, 1);
-    assert.strictEqual(session.state.root[0]._id, c2._id);
-    assert.ok(confirm.updated && hasFlag(confirm.updated, MessageFlags.Ephemeral), 'main panel shown ephemerally');
-    assert.ok(allText(confirm.updated.components).includes('Container Creation Panel'), 'returned to main panel');
+    session = getSession(s.id);
+    assert.strictEqual(session.state.root.length, 1, 'one container removed');
+    assert.ok(session.state.root.some(x => x._id === c2._id), 'other container preserved');
+    assert.ok(!session.state.root.some(x => x._id === c1._id), 'selected container removed');
+    assert.strictEqual(session.view, 'home');
+    assert.ok(confirm.updated && allText(confirm.updated.components).includes('Container Creation Panel'), 'returned to main panel');
   });
 
   await test('delete container is disabled and blocked when only one container exists', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation, buildContainerEditor } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     const c = s.state.root[0];
-    s.selectedNodeId = c._id; s.containerEditorContainerId = c._id;
+    s.selectedNodeId = c._id;
     const view = buildContainerEditor(s);
-    let delBtn = null;
-    function walk(n){ if(!n) return; if(Array.isArray(n)) return n.forEach(walk); const j=typeof n.toJSON==='function'?n.toJSON():n; if(j&&j.custom_id&&j.custom_id.endsWith(':nav:ce_delete')) delBtn=j; if(j&&Array.isArray(j.components)) j.components.forEach(walk); if(Array.isArray(n.components)) n.components.forEach(walk);} walk(view.components||[]);
-    assert.ok(delBtn && delBtn.disabled === true, 'delete button disabled with one container');
-    const del = mockInteraction(s, `bld:${s.id}:nav:ce_delete`);
-    await handleNavigation(del, { sid: s.id });
-    const session = getSession(s.id);
-    assert.strictEqual(session.state.root.length, 1, 'container not removed');
-    assert.ok(del.repliedPayload && del.repliedPayload.flags === 64, 'action blocked');
+    const ids = walkIds(view.components);
+    assert.ok(ids.includes(`bld:${s.id}:nav:ce_delete`), 'delete button present');
+    // Find disabled state in json
+    let delBtn;
+    function walk(node){ if(!node) return; if(Array.isArray(node)) return node.forEach(walk); const j=typeof node.toJSON==='function'?node.toJSON():node; if(j&&j.custom_id===`bld:${s.id}:nav:ce_delete`) delBtn=j; if(j&&Array.isArray(j.components)) j.components.forEach(walk); if(Array.isArray(node.components)) node.components.forEach(walk);} walk(view.components);
+    assert.ok(delBtn && delBtn.disabled, 'delete disabled for single container');
+    const i = mockInteraction(s, `bld:${s.id}:nav:ce_delete`);
+    await handleNavigation(i, { sid: s.id });
+    assert.ok(i.repliedPayload && i.repliedPayload.flags === 64, 'blocked with ephemeral reply');
+    assert.ok(/mais de um container/i.test(i.repliedPayload.content || ''), 'warning message');
+    assert.strictEqual(getSession(s.id).state.root.length, 1, 'container not deleted');
   });
 
   await test('back returns to main panel in same message without losing changes', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     const c = s.state.root[0];
-    c.accent_color = 123;
+    c.accent_color = 0x123456;
+    c.components[0].content = 'Keep me';
     s.selectedNodeId = c._id; s.containerEditorContainerId = c._id;
-    const back = mockInteraction(s, `bld:${s.id}:nav:ce_back`);
-    await handleNavigation(back, { sid: s.id });
+    const i = mockInteraction(s, `bld:${s.id}:nav:ce_back`);
+    await handleNavigation(i, { sid: s.id });
     const session = getSession(s.id);
-    assert.strictEqual(session.state.root[0].accent_color, 123, 'changes preserved');
     assert.strictEqual(session.view, 'home');
-    assert.ok(back.updated && hasFlag(back.updated, MessageFlags.Ephemeral), 'ephemeral update');
-    assert.ok(allText(back.updated.components).includes('Container Creation Panel'), 'main panel shown');
+    assert.ok(i.updated && allText(i.updated.components).includes('Container Creation Panel'), 'main panel returned');
+    assert.ok(!i.repliedPayload, 'same message update');
+    const container = session.state.root.find(x => x._id === c._id);
+    assert.strictEqual(container.accent_color, 0x123456);
+    assert.strictEqual(container.components[0].content, 'Keep me');
   });
 
   await test('unauthorized user cannot interact with another user\'s container editor', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('owner', 'g1', 'c1', 'components_v2');
-    s.selectedNodeId = s.state.root[0]._id; s.containerEditorContainerId = s.state.root[0]._id;
-    const i = mockInteraction(s, `bld:${s.id}:nav:ce_delete`, { userId: 'intruder' });
+    const c = s.state.root[0];
+    s.selectedNodeId = c._id; s.containerEditorContainerId = c._id;
+    const i = mockInteraction(s, `bld:${s.id}:nav:ce_back`, { userId: 'intruder' });
     await handleNavigation(i, { sid: s.id });
-    assert.ok(i.repliedPayload && i.repliedPayload.flags === 64);
-    assert.ok(/another user/i.test(i.repliedPayload.content || ''));
+    assert.ok(i.repliedPayload && i.repliedPayload.flags === 64, 'ephemeral rejection');
+    assert.ok(/another user/i.test(i.repliedPayload.content || ''), 'ownership message');
+    assert.ok(!i.updated, 'no editor update for intruder');
   });
 
   console.log(JSON.stringify(results, null, 2));

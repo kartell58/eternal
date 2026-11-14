@@ -1,5 +1,5 @@
-const settings = require("../../settings");
-const { logger } = require("../../utils/logger");
+import settings from "../../settings.js";
+import { logger } from "../../utils/logger.js";
 
 function readSetting(getSetting) {
   return getSetting || ((guildId, key) => settings.get(guildId, key));
@@ -64,4 +64,6 @@ async function assignVerificationRole(interaction, { getSetting } = {}) {
   }
 }
 
-module.exports = { assignVerificationRole, resolveVerificationRole };
+export { assignVerificationRole, resolveVerificationRole };
+
+export default { assignVerificationRole, resolveVerificationRole };

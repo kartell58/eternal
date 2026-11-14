@@ -1,5 +1,5 @@
-const path = require("path");
-const { DEFAULT_IGNORED } = require("../config/loader");
+import path from "path";
+import { DEFAULT_IGNORED } from "../config/loader.js";
 
 function normalizeRelative(relPath) {
   return String(relPath || "")
@@ -105,4 +105,6 @@ function createFilter(watchConfig) {
   return { isIgnored, isWatchableFile, normalizeRelative };
 }
 
-module.exports = { createFilter, normalizeRelative, globToRegExp, classifyPattern };
+export { createFilter, normalizeRelative, globToRegExp, classifyPattern };
+
+export default { createFilter, normalizeRelative, globToRegExp, classifyPattern };

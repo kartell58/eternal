@@ -1,4 +1,4 @@
-const {
+import {
   ContainerBuilder,
   SectionBuilder,
   TextDisplayBuilder,
@@ -15,7 +15,7 @@ const {
   RoleSelectMenuBuilder,
   ChannelSelectMenuBuilder,
   MentionableSelectMenuBuilder
-} = require('discord.js');
+} from 'discord.js';
 
 function applyTextDisplay(node) {
   return new TextDisplayBuilder().setContent(String(node.content || '\u200b'));
@@ -157,4 +157,6 @@ function buildComponentsV2Payload(state) {
   };
 }
 
-module.exports = { buildComponentsV2Payload, safeCustomId };
+export { buildComponentsV2Payload, safeCustomId };
+
+export default { buildComponentsV2Payload, safeCustomId };

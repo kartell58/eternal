@@ -1,6 +1,6 @@
-const fs = require("fs");
-const path = require("path");
-const { LEVELS } = require("../logger");
+import fs from "fs";
+import path from "path";
+import { LEVELS } from "../logger.js";
 
 const DEFAULT_WATCH_EXTENSIONS = [".js", ".mjs", ".cjs", ".json", ".env", ".txt"];
 
@@ -323,13 +323,6 @@ function loadConfig(userConfig = {}, env = process.env) {
   return normalize(config, cwd);
 }
 
-module.exports = {
-  loadConfig,
-  normalizeAliases,
-  parseDelayMs,
-  readConfigFile,
-  readPackageConfig,
-  CONFIG_FILES,
-  DEFAULT_IGNORED,
-  DEFAULT_WATCH_EXTENSIONS
-};
+export { loadConfig, normalizeAliases, parseDelayMs, readConfigFile, readPackageConfig, CONFIG_FILES, DEFAULT_IGNORED, DEFAULT_WATCH_EXTENSIONS };
+
+export default { loadConfig, normalizeAliases, parseDelayMs, readConfigFile, readPackageConfig, CONFIG_FILES, DEFAULT_IGNORED, DEFAULT_WATCH_EXTENSIONS };

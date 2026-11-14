@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   START: "start",
   STOP: "stop",
   READY: "ready",

@@ -1,8 +1,8 @@
-const { SlashCommandBuilder, MessageFlags } = require('discord.js');
-const { buildSelectionScreen } = require('../interactions/navigation');
-const { createSession } = require('../services/session.service');
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
+import { buildSelectionScreen } from '../interactions/navigation.js';
+import { createSession } from '../services/session.service.js';
 
-module.exports = {
+export default {
   data: new SlashCommandBuilder()
     .setName('builder')
     .setDescription('Open the visual message builder to create, edit, preview, and publish messages'),
@@ -18,7 +18,7 @@ module.exports = {
       try {
         if (!interaction.replied && !interaction.deferred) {
           await interaction.reply({ content: 'Could not open the builder. Please try again.', flags: MessageFlags.Ephemeral });
-        }
+        };
       } catch {}
     }
   }

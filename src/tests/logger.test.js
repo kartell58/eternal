@@ -1,4 +1,4 @@
-const assert = require('assert');
+import assert from 'assert';
 
 const results = [];
 async function test(name, fn) {
@@ -10,12 +10,12 @@ async function test(name, fn) {
   }
 }
 
-function withEnv(key, value, fn) {
+async function withEnv(key, value, fn) {
   const prev = process.env[key];
   if (value === undefined) delete process.env[key];
   else process.env[key] = value;
   try {
-    return fn();
+    return await fn();
   } finally {
     if (prev === undefined) delete process.env[key];
     else process.env[key] = prev;
@@ -23,7 +23,7 @@ function withEnv(key, value, fn) {
 }
 
 async function main() {
-  const loggerModule = require('../utils/logger');
+  const loggerModule = await import('../utils/logger.js');
   const { LEVELS, createLogger, logger } = loggerModule;
 
   await test('exports shared logger API', () => {
@@ -92,17 +92,15 @@ async function main() {
     assert.match(lines[0], /\[INFO\] i$/);
   });
 
-  await test('LOG_LEVEL environment configuration', () => {
-    withEnv('LOG_LEVEL', 'warn', () => {
-      delete require.cache[require.resolve('../utils/logger')];
-      const mod = require('../utils/logger');
+  await test('LOG_LEVEL environment configuration', async () => {
+    await withEnv('LOG_LEVEL', 'warn', async () => {
+      const mod = await import(`../utils/logger.js?env=${Date.now()}-${Math.random()}`);
       const lines = [];
       const l = mod.createLogger({ name: 'env', sink: (line) => lines.push(line) });
       l.info('i');
       l.warn('w');
       assert.strictEqual(lines.length, 1);
       assert.match(lines[0], /\[WARN\] \[env\] w$/);
-      delete require.cache[require.resolve('../utils/logger')];
     });
   });
 
@@ -235,8 +233,8 @@ async function main() {
     assert.strictEqual(Object.isFrozen(l), true);
   });
 
-  await test('AutoQuest logger callback compatibility', () => {
-    const autoFarm = require('../utils/autoFarm');
+  await test('AutoQuest logger callback compatibility', async () => {
+    const autoFarm = await import('../utils/autoFarm.js');
     assert.strictEqual(typeof autoFarm._createLogger, 'function');
     const calls = [];
     const emit = autoFarm._createLogger((line, level, message) => calls.push({ line, level, message }));

@@ -1,4 +1,4 @@
-const { EMBED_LIMITS } = require('../schemas/embed.schema');
+import { EMBED_LIMITS, normalizeEmbedState } from '../schemas/embed.schema.js';
 
 function isValidUrl(str) {
   if (!str) return true;
@@ -71,7 +71,6 @@ function hasAnyEmbedContent(e) {
 }
 
 function validateEmbedState(state) {
-  const { normalizeEmbedState } = require('../schemas/embed.schema');
   normalizeEmbedState(state);
   const errors = [];
   const embeds = Array.isArray(state.embeds) ? state.embeds : (state.embed ? [state.embed] : []);
@@ -147,4 +146,6 @@ function validateComponentsV2State(state) {
   return { valid: errors.length === 0, errors };
 }
 
-module.exports = { isValidUrl, isHexColor, parseColor, validateEmbedState, validateComponentsV2State };
+export { isValidUrl, isHexColor, parseColor, validateEmbedState, validateComponentsV2State };
+
+export default { isValidUrl, isHexColor, parseColor, validateEmbedState, validateComponentsV2State };

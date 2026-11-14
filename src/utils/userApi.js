@@ -1,5 +1,5 @@
-const axios = require("axios");
-const { logger } = require("./logger");
+import axios from "axios";
+import { logger } from "./logger.js";
 
 // Defaults for user-token Discord API requests (AutoQuest/HypeSquad helpers).
 // Kept in code so the runtime does not depend on a local config.json file.
@@ -54,4 +54,6 @@ async function getUser(token) {
   return res.data;
 }
 
-module.exports = { request, getUser, buildHeaders };
+export { request, getUser, buildHeaders };
+
+export default { request, getUser, buildHeaders };

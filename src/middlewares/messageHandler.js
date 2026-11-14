@@ -8,4 +8,6 @@ async function messageHandler(interaction, commands) {
   await command.execute(interaction);
 }
 
-module.exports = { messageHandler };
+export { messageHandler };
+
+export default { messageHandler };

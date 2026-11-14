@@ -1,6 +1,6 @@
-const { EmbedBuilder } = require("discord.js");
-const { get } = require("../settings");
-const { logger } = require("../utils/logger");
+import { EmbedBuilder } from "discord.js";
+import { get } from "../settings.js";
+import { logger } from "../utils/logger.js";
 
 function formatDateTime(date) {
   const dd = String(date.getDate()).padStart(2, "0");
@@ -11,7 +11,7 @@ function formatDateTime(date) {
   return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
 }
 
-module.exports = {
+export default {
   name: "guildMemberAdd",
 
   async execute(member) {
@@ -26,7 +26,7 @@ module.exports = {
         await member.roles.add(autoRole);
       } catch (err) {
         logger.error("Error adding auto role:", err);
-      }
+      };
     }
 
     // Welcome message

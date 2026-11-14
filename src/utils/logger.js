@@ -150,8 +150,6 @@ function createLogger(options = {}) {
 
 const logger = createLogger({ name: 'eternal' });
 
-module.exports = {
-  LEVELS,
-  createLogger,
-  logger
-};
+export { LEVELS, createLogger, logger };
+
+export default { LEVELS, createLogger, logger };

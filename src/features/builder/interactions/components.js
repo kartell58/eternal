@@ -1,8 +1,9 @@
-const { ActionRowBuilder, StringSelectMenuBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { requireSession, pushHistory, saveSession } = require('../services/session.service');
-const { findParentInfo, removeNode, duplicateNode, moveNode, allowedChildTypes } = require('../utils/component-tree');
-const { COMPONENT_FACTORIES, createContainer } = require('../schemas/components-v2.schema');
-const { buildCv2Editor } = require('./navigation');
+import { ActionRowBuilder, StringSelectMenuBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { requireSession, pushHistory, saveSession } from '../services/session.service.js';
+import { findParentInfo, removeNode, duplicateNode, moveNode, allowedChildTypes } from '../utils/component-tree.js';
+import { COMPONENT_FACTORIES, createContainer } from '../schemas/components-v2.schema.js';
+import { buildCv2Editor } from './navigation.js';
+import { ContainerBuilder, TextDisplayBuilder, MessageFlags } from 'discord.js';
 
 async function handleComponents(interaction, { sid }) {
   const { session, error } = requireSession(sid, interaction.user.id, interaction.guildId);
@@ -55,7 +56,6 @@ async function handleComponents(interaction, { sid }) {
   }
 
   if (action === 'add') {
-    const { ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
     const targetId = session.selectedNodeId;
     if (!targetId) {
       const info = new ContainerBuilder().setAccentColor(0x5865f2).addTextDisplayComponents(
@@ -119,4 +119,6 @@ async function handleComponents(interaction, { sid }) {
   return interaction.reply({ content: 'Unhandled component action.', flags: 64 });
 }
 
-module.exports = { handleComponents };
+export { handleComponents };
+
+export default { handleComponents };

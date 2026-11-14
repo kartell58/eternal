@@ -1,7 +1,10 @@
-const fs = require('fs');
-const path = require('path');
-const Database = require('better-sqlite3');
-const { parseColor, isHexColor } = require('../utils/validator');
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+import path from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import Database from 'better-sqlite3';
+import { parseColor, isHexColor } from '../utils/validator.js';
 
 const DATA_DIR = path.join(__dirname, '..', '..', '..', '..', 'data');
 const DB_PATH = path.join(DATA_DIR, 'colors.db');
@@ -63,4 +66,5 @@ function getColorById(guildId, userId, id) {
   }
 }
 
-module.exports = { listColors, saveColor, getColorById, toHex, DB_PATH, _db: db };
+export { listColors, saveColor, getColorById, toHex, DB_PATH, db as _db };
+export default { listColors, saveColor, getColorById, toHex, DB_PATH, _db: db };

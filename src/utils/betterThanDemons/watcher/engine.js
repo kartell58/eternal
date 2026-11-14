@@ -1,6 +1,6 @@
-const fs = require("fs");
-const path = require("path");
-const { normalizeRelative } = require("./filters");
+import fs from "fs";
+import path from "path";
+import { normalizeRelative } from "./filters.js";
 
 /**
  * Watches directories one level at a time instead of relying on
@@ -140,4 +140,6 @@ class WatchEngine {
   }
 }
 
-module.exports = { WatchEngine };
+export { WatchEngine };
+
+export default { WatchEngine };

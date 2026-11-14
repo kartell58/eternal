@@ -1,16 +1,19 @@
-const {
+import { fileURLToPath } from 'url';
+import {
   Events,
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle
-} = require("discord.js");
-const fs = require("fs");
-const path = require("path");
-const { get, set } = require("../settings");
-const { MODULES, buildPanel } = require("../utils/configView");
-const { buildCaptchaPanel } = require("../features/verification/panel");
-const { logger } = require("../utils/logger");
+} from "discord.js";
+import fs from "fs";
+import path from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import { get, set } from "../settings.js";
+import { MODULES, buildPanel } from "../utils/configView.js";
+import { buildCaptchaPanel } from "../features/verification/panel.js";
+import { logger } from "../utils/logger.js";
 
 async function postVerificationPanel(guild) {
   const channelId = get(guild.id, "verificationChannel");
@@ -38,7 +41,7 @@ async function postVerificationPanel(guild) {
   return { ok: true, status: "posted", channel };
 }
 
-async function postCaptchaPanel(guild) {
+export async function postCaptchaPanel(guild) {
   const channelId = get(guild.id, "verificationChannel");
   const roleId = get(guild.id, "verificationRole");
   const channel = channelId ? guild.channels.cache.get(channelId) : null;
@@ -167,7 +170,7 @@ async function postHypeSquadPanel(guild) {
   return { ok: true, status: "posted", channel };
 }
 
-const SEND_ALL_PANELS = [
+export const SEND_ALL_PANELS = [
   ["CAPTCHA Verification", postCaptchaPanel],
   ["Honeypot", postHoneypotNotice],
   ["Rules", postRulesPanel],
@@ -175,7 +178,7 @@ const SEND_ALL_PANELS = [
   ["HypeSquad", postHypeSquadPanel]
 ];
 
-module.exports = {
+export default {
   name: Events.InteractionCreate,
   SEND_ALL_PANELS,
   postCaptchaPanel,
@@ -197,8 +200,7 @@ module.exports = {
       const moduleKey = interaction.values[0];
       await interaction.update(buildPanel(interaction.guild, moduleKey));
       return;
-    }
-
+    };
     // ---------- Select 2: save channel/role ----------
     if (customId.startsWith("config_value:")) {
       const moduleKey = customId.split(":")[1];

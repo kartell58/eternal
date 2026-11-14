@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 function sleep(ms) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); }
 
@@ -53,4 +53,6 @@ function withFileLock(lockPath, fn, opts = {}) {
   }
 }
 
-module.exports = { readJsonSafe, writeJsonAtomic, withFileLock };
+export { readJsonSafe, writeJsonAtomic, withFileLock };
+
+export default { readJsonSafe, writeJsonAtomic, withFileLock };

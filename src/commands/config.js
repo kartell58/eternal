@@ -1,7 +1,7 @@
-const { SlashCommandBuilder } = require("discord.js");
-const { buildPanel } = require("../utils/configView");
+import { SlashCommandBuilder } from "discord.js";
+import { buildPanel } from "../utils/configView.js";
 
-module.exports = {
+export default {
   data: new SlashCommandBuilder()
     .setName("config")
     .setDescription("Centralized server configuration panel"),

@@ -1,7 +1,7 @@
-const assert = require('assert');
-const { normalizeImportedDocument } = require('../utils/json-document');
-const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
-const { toPublishPayload } = require('../services/publisher.service');
+import assert from 'assert';
+import { normalizeImportedDocument } from '../utils/json-document.js';
+import { buildComponentsV2Payload } from '../builders/components-v2.builder.js';
+import { toPublishPayload } from '../services/publisher.service.js';
 
 (async () => {
   const results = [];

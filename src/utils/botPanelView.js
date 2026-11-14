@@ -1,10 +1,10 @@
-const {
+import {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
   StringSelectMenuBuilder
-} = require("discord.js");
+} from "discord.js";
 
 const STATUS_LABELS = {
   online: "Online",
@@ -78,4 +78,6 @@ async function buildBotPanel(client) {
   return { embeds: [embed], components: [row1, row2, row3] };
 }
 
-module.exports = { buildBotPanel, STATUS_LABELS };
+export { buildBotPanel, STATUS_LABELS };
+
+export default { buildBotPanel, STATUS_LABELS };

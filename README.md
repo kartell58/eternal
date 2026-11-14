@@ -1,11 +1,11 @@
 # Eternal
 
-Eternal is a Discord bot written in Node.js (CommonJS) using discord.js. It provides per-guild configuration panels, CAPTCHA-based and legacy verification flows, AutoQuest and HypeSquad utilities, bot profile/presence management, and a visual message builder.
+Eternal is a Discord bot written in Node.js (ESM) using discord.js. It provides per-guild configuration panels, CAPTCHA-based and legacy verification flows, AutoQuest and HypeSquad utilities, bot profile/presence management, and a visual message builder.
 
 ## Scope
 
 ### What it does
-- Registers slash commands globally on startup and handles Discord gateway events (`src/connection.js`, `src/loader.js`).
+- Registers slash commands globally on startup and handles Discord gateway events (`src/connection.js`, `src/loader.js`, ESM async module loading).
 - Provides slash commands: `/ping` (latency/uptime), `/config` (ephemeral server configuration panel), `/clear` (bulk delete recent messages, requires Manage Messages), `/quest` (AutoQuest control panel), `/bot` (bot profile/presence panel), and `/builder` (visual message builder).
 - Supports per-guild configuration and panel posting for welcome, CAPTCHA verification, honeypot notice, rules, AutoQuest, and HypeSquad, with legacy verification support (`settings.js`, `src/utils/configView.js`, `src/events/configPanel.js`).
 - Implements a CAPTCHA verification flow: public Components V2 panel with **Respond** and **Why verify?**, ephemeral image/code challenge with attempts and expiry, and configured verification role assignment (`src/features/verification/`, `src/events/captchaVerification.js`).
@@ -22,7 +22,7 @@ Eternal is a Discord bot written in Node.js (CommonJS) using discord.js. It prov
 
 | Capability | Status | Notes |
 | --- | --- | --- |
-| Slash command registration and event loading | Supported | Commands registered via REST on startup; commands/events loaded from `src/commands` and `src/events`. |
+| Slash command registration and event loading | Supported | Commands registered via REST on startup; commands/events loaded asynchronously as ESM modules from `src/commands` and `src/events`. |
 | `/ping` latency and uptime embed | Supported | Returns interaction latency, WebSocket ping, and process uptime. |
 | `/config` per-guild configuration panel | Supported | Ephemeral panel for channels/roles/modules and posting configured panels. |
 | `/clear` bulk message deletion | Supported | Requires Manage Messages; deletes up to 100 recent messages (Discord 14-day limit applies). |

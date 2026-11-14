@@ -5,7 +5,7 @@
  * a modular implementation (watcher / process / restart / config / logger).
  *
  * Usage (module):
- *   const BetterThanDemons = require("./utils/betterThanDemons");
+ *   const BetterThanDemons = require("./utils/betterThanDemons.js");
  *   const runtime = new BetterThanDemons({ entry: "index.js" });
  *   runtime.start();
  *
@@ -34,10 +34,9 @@
  *   BTD_DEBOUNCE_MS, BTD_ON_CRASH, BTD_RESTART_DELAY_MS,
  *   BTD_MAX_CONSECUTIVE_CRASHES, BTD_CRASH_WINDOW_MS, BTD_LOG_LEVEL, BTD_CONFIG
  */
-const BetterThanDemons = require("./core/runtime");
-const EVENTS = require("./core/events");
-const { loadConfig } = require("./config/loader");
+import BetterThanDemons from './core/runtime.js';
+import * as EVENTS from './core/events.js';
+import { loadConfig } from './config/loader.js';
 
-module.exports = BetterThanDemons;
-module.exports.EVENTS = EVENTS;
-module.exports.loadConfig = loadConfig;
+export default BetterThanDemons;
+export { EVENTS, loadConfig };

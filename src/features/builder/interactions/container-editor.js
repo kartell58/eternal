@@ -1,13 +1,14 @@
-const {
+import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
   StringSelectMenuBuilder,
   TextDisplayBuilder,
   MessageFlags
-} = require('discord.js');
-const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
-const { allowedChildTypes } = require('../utils/component-tree');
+} from 'discord.js';
+import { buildComponentsV2Payload } from '../builders/components-v2.builder.js';
+import { allowedChildTypes } from '../utils/component-tree.js';
+import { listColors } from '../services/colors.service.js';
 
 function getContainers(session) {
   return (session.state?.root || []).filter(n => n && n.type === 'container');
@@ -148,7 +149,6 @@ function buildContainerColorScreen(session) {
     };
   }
 
-  const { listColors } = require('../services/colors.service');
   const saved = listColors(session.guildId, session.userId);
   const options = [
     { label: 'Nova cor', value: 'new', description: 'Salve uma cor com nome e codigo HEX' },
@@ -213,4 +213,6 @@ function buildContainerEditorClosed() {
   };
 }
 
-module.exports = { buildContainerEditor, buildContainerDeleteConfirm, buildContainerEditorClosed, buildContainerColorScreen, getSelectedContainer, getContainers };
+export { buildContainerEditor, buildContainerDeleteConfirm, buildContainerEditorClosed, buildContainerColorScreen, getSelectedContainer, getContainers };
+
+export default { buildContainerEditor, buildContainerDeleteConfirm, buildContainerEditorClosed, buildContainerColorScreen, getSelectedContainer, getContainers };

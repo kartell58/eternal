@@ -1,13 +1,13 @@
-const { EventEmitter } = require("events");
-const path = require("path");
+import { EventEmitter } from "events";
+import path from "path";
 
-const EVENTS = require("./events");
-const { createLogger } = require("../logger");
-const { loadConfig } = require("../config/loader");
-const { createFilter } = require("../watcher/filters");
-const { WatchEngine } = require("../watcher/engine");
-const { ProcessManager } = require("../process/manager");
-const { RestartEngine } = require("../restart/engine");
+import EVENTS from "./events.js";
+import { createLogger } from "../logger.js";
+import { loadConfig } from "../config/loader.js";
+import { createFilter } from "../watcher/filters.js";
+import { WatchEngine } from "../watcher/engine.js";
+import { ProcessManager } from "../process/manager.js";
+import { RestartEngine } from "../restart/engine.js";
 
 const MAX_LOG_ARG = 1000;
 
@@ -169,4 +169,4 @@ class BetterThanDemons extends EventEmitter {
   }
 }
 
-module.exports = BetterThanDemons;
+export default BetterThanDemons;

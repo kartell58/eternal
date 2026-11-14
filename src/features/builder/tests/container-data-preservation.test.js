@@ -1,16 +1,18 @@
-const assert = require('assert');
+import assert from 'assert';
+import { sessions, createSession } from '../services/session.service.js';
+import { buildContainerEditor } from '../interactions/container-editor.js';
+import { buildComponentsV2Payload } from '../builders/components-v2.builder.js';
+import { normalizeImportedDocument } from '../utils/json-document.js';
+import { toPublishPayload } from '../services/publisher.service.js';
+import { createContainer } from '../schemas/components-v2.schema.js';
 
 function freshModules() {
-  delete require.cache[require.resolve('../services/session.service')];
-  delete require.cache[require.resolve('../interactions/navigation')];
-  delete require.cache[require.resolve('../interactions/container-editor')];
-  delete require.cache[require.resolve('../builders/components-v2.builder')];
-  delete require.cache[require.resolve('../utils/json-document')];
+  sessions.clear();
 }
 
 (async () => {
   const results = [];
-  const test = async (name, fn) => { try { await fn(); results.push({ name, ok: true }); } catch (e) { results.push({ name, ok: false, err: e.message, stack: e.stack }); } };
+  const test = async (name, fn) => { try { freshModules(); await fn(); results.push({ name, ok: true }); } catch (e) { results.push({ name, ok: false, err: e.message, stack: e.stack }); } };
 
   const refDoc = {
     version: '1.0',
@@ -55,9 +57,6 @@ function freshModules() {
   }
 
   await test('creating an empty/default container initializes valid structure without arbitrary default content injection', () => {
-    freshModules();
-    const { createContainer } = require('../schemas/components-v2.schema');
-    const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
     const c = createContainer();
     assert.strictEqual(c.type, 'container');
     assert.strictEqual(c.accent_color, 0x5865F2);
@@ -73,11 +72,6 @@ function freshModules() {
   });
 
   await test('creating a container with a text display child preserves child in preview and publish', () => {
-    freshModules();
-    const { createSession } = require('../services/session.service');
-    const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
-    const { buildContainerEditor } = require('../interactions/container-editor');
-    const { toPublishPayload } = require('../services/publisher.service');
     const s = createSession('u1','g1','c1','components_v2');
     const c = s.state.root[0];
     c.components = [{ _id: 't1', type: 'text_display', content: 'Hello **world**' }];
@@ -90,11 +84,6 @@ function freshModules() {
   });
 
   await test('accent color is preserved through state, preview, serialization, and publish', () => {
-    freshModules();
-    const { createSession } = require('../services/session.service');
-    const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
-    const { buildContainerEditor } = require('../interactions/container-editor');
-    const { toPublishPayload } = require('../services/publisher.service');
     const s = createSession('u1','g1','c1','components_v2');
     const c = s.state.root[0];
     c.accent_color = 5793266;
@@ -108,10 +97,6 @@ function freshModules() {
   });
 
   await test('importing the exact reference JSON preserves container data and accent rendering payload', () => {
-    freshModules();
-    const { normalizeImportedDocument } = require('../utils/json-document');
-    const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
-    const { toPublishPayload } = require('../services/publisher.service');
     const norm = normalizeImportedDocument(refDoc);
     assert.ok(!norm.error, norm.error);
     const c = norm.state.root[0];
@@ -125,10 +110,6 @@ function freshModules() {
   });
 
   await test('opening imported container in editor shows same container structure in preview', () => {
-    freshModules();
-    const { normalizeImportedDocument } = require('../utils/json-document');
-    const { createSession } = require('../services/session.service');
-    const { buildContainerEditor } = require('../interactions/container-editor');
     const norm = normalizeImportedDocument(refDoc);
     const s = createSession('u1','g1','c1','components_v2');
     s.state = norm.state;
@@ -138,12 +119,6 @@ function freshModules() {
   });
 
   await test('preview and published payloads preserve the same structure for imported reference', () => {
-    freshModules();
-    const { normalizeImportedDocument } = require('../utils/json-document');
-    const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
-    const { toPublishPayload } = require('../services/publisher.service');
-    const { buildContainerEditor } = require('../interactions/container-editor');
-    const { createSession } = require('../services/session.service');
     const norm = normalizeImportedDocument(refDoc);
     const s = createSession('u1','g1','c1','components_v2');
     s.state = norm.state; s.selectedNodeId = s.state.root[0]._id;

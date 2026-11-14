@@ -1,5 +1,5 @@
-const { logger } = require('./src/utils/logger');
-const { connect } = require("./src/connection");
+import { logger } from './src/utils/logger.js';
+import { connect } from "./src/connection.js";
 
 let shutdownStarted = false;
 

@@ -1,7 +1,10 @@
-const fs = require("fs");
-const path = require("path");
-const Database = require("better-sqlite3");
-const { logger } = require("./utils/logger");
+import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import Database from "better-sqlite3";
+import { logger } from "./utils/logger.js";
 
 const DATA_DIR = path.join(__dirname, "..", "data");
 const DB_PATH = path.join(DATA_DIR, "settings.db");
@@ -107,4 +110,5 @@ function getAll(guildId) {
   }
 }
 
-module.exports = { get, set, remove, getAll, _db: db };
+export { get, set, remove, getAll, db as _db };
+export default { get, set, remove, getAll, _db: db };

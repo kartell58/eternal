@@ -1,17 +1,15 @@
-const assert = require('assert');
+import assert from 'assert';
+import { createSession, getSession, sessions } from '../services/session.service.js';
+import { handleNavigation } from '../interactions/navigation.js';
+import { createContainer } from '../schemas/components-v2.schema.js';
 
 function freshModules() {
-  delete require.cache[require.resolve('../services/session.service')];
-  delete require.cache[require.resolve('../interactions/navigation')];
-  delete require.cache[require.resolve('../interactions/components')];
-  delete require.cache[require.resolve('../interactions/properties')];
-  delete require.cache[require.resolve('../interactions/publishing')];
-  delete require.cache[require.resolve('../interactions/container-editor')];
+  sessions.clear();
 }
 
 (async () => {
   const results = [];
-  const test = async (name, fn) => { try { await fn(); results.push({ name, ok: true }); } catch (e) { results.push({ name, ok: false, err: e.message, stack: e.stack }); } };
+  const test = async (name, fn) => { try { freshModules(); await fn(); results.push({ name, ok: true }); } catch (e) { results.push({ name, ok: false, err: e.message, stack: e.stack }); } };
 
   function mockInteraction(session, customId, opts = {}) {
     return {
@@ -54,9 +52,6 @@ function freshModules() {
   }
 
   await test('creating the first container opens its container editor in the same ephemeral message', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     s.state.root = []; // no containers
     s.selectedNodeId = null;
@@ -78,9 +73,6 @@ function freshModules() {
   });
 
   await test('creating a subsequent container preserves existing containers and updates main panel in same message', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     const first = s.state.root[0];
     const firstId = first._id;
@@ -99,12 +91,9 @@ function freshModules() {
   });
 
   await test('selecting an existing container opens its editor in the same message with correct ID preserved', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     const c1 = s.state.root[0];
-    const c2 = { ...require('../schemas/components-v2.schema').createContainer(), _id: 'contB000' };
+    const c2 = { ...createContainer(), _id: 'contB000' };
     s.state.root.push(c2);
     s.selectedNodeId = c1._id;
     const i = mockInteraction(s, `bld:${s.id}:nav:container_select`, { isButton: false, isSelect: true, values: [c2._id] });
@@ -120,9 +109,6 @@ function freshModules() {
   });
 
   await test('unauthorized user cannot manipulate another user\'s container session', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('owner', 'g1', 'c1', 'components_v2');
     s.state.root = [];
     const i = mockInteraction(s, `bld:${s.id}:nav:add_container_main`);
@@ -135,9 +121,6 @@ function freshModules() {
   });
 
   await test('wrong guild cannot manipulate session', async () => {
-    freshModules();
-    const { createSession, getSession } = require('../services/session.service');
-    const { handleNavigation } = require('../interactions/navigation');
     const s = createSession('u1', 'g1', 'c1', 'components_v2');
     s.state.root = [];
     const i = mockInteraction(s, `bld:${s.id}:nav:add_container_main`);

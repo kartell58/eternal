@@ -1,8 +1,8 @@
-const { Events } = require('discord.js');
-const { routeBuilderInteraction } = require('../features/builder/interactions/router');
-const { logger } = require('../utils/logger');
+import { Events } from 'discord.js';
+import { routeBuilderInteraction } from '../features/builder/interactions/router.js';
+import { logger } from '../utils/logger.js';
 
-module.exports = {
+export default {
   name: Events.InteractionCreate,
   async execute(interaction) {
     try {
@@ -14,7 +14,7 @@ module.exports = {
           await interaction.followUp({ content: `Builder error: ${err.message}`, flags: 64 });
         } else if (interaction.isRepliable && interaction.isRepliable()) {
           await interaction.reply({ content: `Builder error: ${err.message}`, flags: 64 });
-        }
+        };
       } catch {}
     }
   }

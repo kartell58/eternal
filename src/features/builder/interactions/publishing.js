@@ -1,9 +1,10 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
-const { requireSession, saveSession } = require('../services/session.service');
-const { buildEmbedPayload } = require('../builders/embed.builder');
-const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
-const { validateEmbedState, validateComponentsV2State } = require('../utils/validator');
-const { toPublishPayload, publishNew, editExisting, canSendToChannel } = require('../services/publisher.service');
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ChannelSelectMenuBuilder, ChannelType } from 'discord.js';
+import { requireSession, saveSession } from '../services/session.service.js';
+import { buildEmbedPayload } from '../builders/embed.builder.js';
+import { buildComponentsV2Payload } from '../builders/components-v2.builder.js';
+import { validateEmbedState, validateComponentsV2State } from '../utils/validator.js';
+import { toPublishPayload, publishNew, editExisting, canSendToChannel } from '../services/publisher.service.js';
+import { ContainerBuilder, TextDisplayBuilder, MessageFlags } from 'discord.js';
 
 function sid(session) { return session.id; }
 
@@ -24,7 +25,6 @@ function buildPublishMenu(session) {
     lines.push(`**Destination:** ${session.publishChannelId ? `<#${session.publishChannelId}>` : 'Not selected'}`);
   }
 
-  const { ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
   const info = new ContainerBuilder()
     .setAccentColor(validation.valid ? 0x57f287 : 0xed4245)
     .addTextDisplayComponents(
@@ -101,7 +101,7 @@ async function handlePublishing(interaction, { sid }) {
         if (permErr) return interaction.reply({ content: `Cannot edit in target channel: ${permErr}`, flags: 64 });
         msg = await editExisting(target, payload);
         if (session.state.type === 'components_v2') {
-          try { require('../utils/published-runtime').collectActionsFromState(session.state, msg.id, { ownerId: interaction.user.id, guildId: interaction.guildId, channelId: channel.id }); } catch {}
+          try { (await import('../utils/published-runtime.js')).collectActionsFromState(session.state, msg.id, { ownerId: interaction.user.id, guildId: interaction.guildId, channelId: channel.id }); } catch {}
         }
         await interaction.reply({ content: `✅ Message edited successfully: ${msg.url}`, flags: 64 });
       } else {
@@ -110,7 +110,7 @@ async function handlePublishing(interaction, { sid }) {
         if (permErr) return interaction.reply({ content: `Cannot publish: ${permErr}`, flags: 64 });
         msg = await publishNew(channel, payload);
         if (session.state.type === 'components_v2') {
-          try { require('../utils/published-runtime').collectActionsFromState(session.state, msg.id, { ownerId: interaction.user.id, guildId: interaction.guildId, channelId: channel.id }); } catch {}
+          try { (await import('../utils/published-runtime.js')).collectActionsFromState(session.state, msg.id, { ownerId: interaction.user.id, guildId: interaction.guildId, channelId: channel.id }); } catch {}
         }
         await interaction.reply({ content: `✅ Published successfully: ${msg.url}`, flags: 64 });
       }
@@ -125,4 +125,6 @@ async function handlePublishing(interaction, { sid }) {
   return interaction.reply({ content: 'Unhandled publish action.', flags: 64 });
 }
 
-module.exports = { handlePublishing, buildPublishMenu };
+export { handlePublishing, buildPublishMenu };
+
+export default { handlePublishing, buildPublishMenu };

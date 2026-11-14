@@ -1,7 +1,10 @@
-const fs = require('fs');
-const path = require('path');
-const { randomUUID } = require('crypto');
-const { readJsonSafe, writeJsonAtomic, withFileLock } = require('../utils/safe-fs');
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+import path from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import { randomUUID } from 'crypto';
+import { readJsonSafe, writeJsonAtomic, withFileLock } from '../utils/safe-fs.js';
 
 const FILE_PATH = path.join(__dirname, '..', '..', '..', '..', 'builder-drafts.json');
 const LOCK_PATH = FILE_PATH + '.lock';
@@ -80,4 +83,6 @@ function getLoadStatus() {
   return loadAllRaw();
 }
 
-module.exports = { listDrafts, getDraft, getDraftFor, saveDraft, deleteDraft, getLoadStatus };
+export { listDrafts, getDraft, getDraftFor, saveDraft, deleteDraft, getLoadStatus };
+
+export default { listDrafts, getDraft, getDraftFor, saveDraft, deleteDraft, getLoadStatus };

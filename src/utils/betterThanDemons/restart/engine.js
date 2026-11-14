@@ -1,4 +1,4 @@
-const { EventEmitter } = require("events");
+import { EventEmitter } from "events";
 
 /**
  * Serializes restarts, coalesces change bursts, and applies the crash policy.
@@ -163,4 +163,6 @@ class RestartEngine extends EventEmitter {
   }
 }
 
-module.exports = { RestartEngine };
+export { RestartEngine };
+
+export default { RestartEngine };

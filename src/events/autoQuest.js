@@ -1,21 +1,21 @@
-const {
+import {
   Events,
   EmbedBuilder,
   ActionRowBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle
-} = require("discord.js");
-const { get } = require("../settings");
-const { get: getToken, set: setToken } = require("../utils/userTokens");
-const {
+} from "discord.js";
+import { get } from "../settings.js";
+import { get as getToken, set as setToken } from "../utils/userTokens.js";
+import {
   runAutoQuest,
   getUserInfo,
   fetchAvailableQuests,
   formatDuration,
   taskLabel
-} = require("../utils/autoFarm");
-const { logger } = require("../utils/logger");
+} from "../utils/autoFarm.js";
+import { logger } from "../utils/logger.js";
 
 const MODAL_ID = "aq_login_modal";
 const runningFarms = new Set();
@@ -54,7 +54,7 @@ function questSummaryLines(quests) {
   });
 }
 
-module.exports = {
+export default {
   name: Events.InteractionCreate,
 
   async execute(interaction) {
@@ -79,8 +79,7 @@ module.exports = {
       modal.addComponents(new ActionRowBuilder().addComponents(input));
       await interaction.showModal(modal);
       return;
-    }
-
+    };
     // Modal: save token
     if (customId === MODAL_ID && interaction.isModalSubmit()) {
       const token = interaction.fields.getTextInputValue("token_input").trim();

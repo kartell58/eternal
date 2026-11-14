@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { fileURLToPath } from 'url';
 /**
  * scripts/betterThanDemons.js — internal dev-runner for Eternal (nodemon replacement).
  *
@@ -13,9 +14,11 @@
  * Configuration: see src/utils/betterThanDemons/index.js (eternal.btd.json /
  * BTD_* env vars / constructor options).
  */
-const path = require("path");
-const BetterThanDemons = require("../src/utils/betterThanDemons");
-const { installSignalHandlers } = require("../src/utils/betterThanDemons/process/signals");
+import path from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import BetterThanDemons from "../src/utils/betterThanDemons.js";
+import { installSignalHandlers } from "../src/utils/betterThanDemons/process/signals.js";
 
 const entryArg = process.argv[2];
 

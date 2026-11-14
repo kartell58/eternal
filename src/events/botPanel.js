@@ -1,14 +1,14 @@
-const {
+import {
   Events,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
   ActivityType
-} = require("discord.js");
-const axios = require("axios");
-const { buildBotPanel } = require("../utils/botPanelView");
-const { logger } = require("../utils/logger");
+} from "discord.js";
+import axios from "axios";
+import { buildBotPanel } from "../utils/botPanelView.js";
+import { logger } from "../utils/logger.js";
 
 const IDS = {
   status: "bot_status",
@@ -60,7 +60,7 @@ async function fetchImage(url) {
   return Buffer.from(res.data);
 }
 
-module.exports = {
+export default {
   name: Events.InteractionCreate,
 
   async execute(interaction) {
@@ -75,8 +75,7 @@ module.exports = {
     if (!(await isAuthorized(interaction))) {
       await interaction.reply({ content: "❌ Only the application owner can configure the bot.", flags: 64 }).catch(() => {});
       return;
-    }
-
+    };
     try {
       // Refresh
       if (customId === IDS.refresh && interaction.isButton()) {

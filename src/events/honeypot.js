@@ -1,8 +1,8 @@
-const { Events } = require("discord.js");
-const { get } = require("../settings");
-const { logger } = require("../utils/logger");
+import { Events } from "discord.js";
+import { get } from "../settings.js";
+import { logger } from "../utils/logger.js";
 
-module.exports = {
+export default {
   name: Events.MessageCreate,
 
   async execute(message) {
@@ -22,8 +22,7 @@ module.exports = {
       await message.delete();
     } catch (err) {
       logger.warn("Honeypot: could not delete the message:", err);
-    }
-
+    };
     // Do not try to punish the server owner
     if (member.id === guild.ownerId) return;
 

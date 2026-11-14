@@ -1,4 +1,4 @@
-const { MessageFlags, ChannelType, PermissionFlagsBits } = require('discord.js');
+import { MessageFlags, ChannelType, PermissionFlagsBits } from 'discord.js';
 
 function canSendToChannel(channel, clientUser) {
   if (!channel) return 'Channel not found.';
@@ -47,4 +47,6 @@ function toPublishPayload(built, stateType) {
   };
 }
 
-module.exports = { publishNew, editExisting, toPublishPayload, canSendToChannel };
+export { publishNew, editExisting, toPublishPayload, canSendToChannel };
+
+export default { publishNew, editExisting, toPublishPayload, canSendToChannel };

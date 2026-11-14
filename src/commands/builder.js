@@ -1,1 +1,1 @@
-module.exports = require('../features/builder/commands/builder');
+export { default } from '../features/builder/commands/builder.js';

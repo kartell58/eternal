@@ -1,4 +1,4 @@
-const {
+import {
   Events,
   ContainerBuilder,
   TextDisplayBuilder,
@@ -9,21 +9,21 @@ const {
   StringSelectMenuBuilder,
   AttachmentBuilder,
   MessageFlags
-} = require("discord.js");
-const settings = require("../settings");
-const captcha = require("../features/verification/captcha");
-const { assignVerificationRole, resolveVerificationRole } = require("../features/verification/role");
+} from "discord.js";
+import settings from "../settings.js";
+import * as captcha from "../features/verification/captcha.js";
+import { assignVerificationRole, resolveVerificationRole } from "../features/verification/role.js";
 
-const WHY_TITLE = "Why verify your account?";
-const WHY_TITLE_MD = `**${WHY_TITLE}**`;
-const WHY_BODY = "Account verification helps prevent unwanted accounts from joining our server, keeping the community safer and reducing unnecessary spam in your DMs.";
-const WHY_CREDIT = "Developed by kartell (2sj5) • discord.gg/mN4Rh4c35";
-const WHY_VERIFY_TEXT = [WHY_TITLE_MD, WHY_BODY, WHY_CREDIT].join("\n");
+export const WHY_TITLE = "Why verify your account?";
+export const WHY_TITLE_MD = `**${WHY_TITLE}**`;
+export const WHY_BODY = "Account verification helps prevent unwanted accounts from joining our server, keeping the community safer and reducing unnecessary spam in your DMs.";
+export const WHY_CREDIT = "Developed by kartell (2sj5) • discord.gg/mN4Rh4c35";
+export const WHY_VERIFY_TEXT = [WHY_TITLE_MD, WHY_BODY, WHY_CREDIT].join("\n");
 
 const CV2_FLAGS = MessageFlags.IsComponentsV2;
 const EPHEMERAL_CV2_FLAGS = MessageFlags.Ephemeral | MessageFlags.IsComponentsV2;
 
-function buildWhyVerifyContainer() {
+export function buildWhyVerifyContainer() {
   return new ContainerBuilder()
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(WHY_TITLE_MD),
@@ -44,7 +44,7 @@ function challengeSelectRow(entry) {
   );
 }
 
-function buildChallengeContainer(entry, { statusLine = null } = {}) {
+export function buildChallengeContainer(entry, { statusLine = null } = {}) {
   const expiresAt = Math.floor(entry.expiresAt / 1000);
   const instruction = statusLine
     ? statusLine
@@ -86,7 +86,7 @@ function staticContainer({ title, body }) {
     );
 }
 
-async function handleWhy(interaction) {
+export async function handleWhy(interaction) {
   await interaction.reply({
     components: [buildWhyVerifyContainer()],
     flags: EPHEMERAL_CV2_FLAGS,
@@ -94,7 +94,7 @@ async function handleWhy(interaction) {
   });
 }
 
-async function handleRespond(interaction, { getSetting } = {}) {
+export async function handleRespond(interaction, { getSetting } = {}) {
   if (!interaction.guild) {
     await interaction.reply({ content: "This action can only be used inside a server.", flags: 64 });
     return;
@@ -125,7 +125,7 @@ async function handleRespond(interaction, { getSetting } = {}) {
   });
 }
 
-async function handleAnswer(interaction, { assignRole } = {}) {
+export async function handleAnswer(interaction, { assignRole } = {}) {
   if (!interaction.guild) {
     await interaction.reply({ content: "This action can only be used inside a server.", flags: 64 });
     return;
@@ -188,7 +188,18 @@ async function handleAnswer(interaction, { assignRole } = {}) {
   });
 }
 
-module.exports = {
+export async function execute(interaction) {
+  if (interaction.isButton()) {
+    if (interaction.customId === "captcha_respond") return handleRespond(interaction);
+    if (interaction.customId === "captcha_why") return handleWhy(interaction);
+    return;
+  }
+  if (interaction.isStringSelectMenu() && interaction.customId === "captcha_answer") {
+    return handleAnswer(interaction);
+  }
+}
+
+export default {
   name: Events.InteractionCreate,
   WHY_VERIFY_TEXT,
   WHY_TITLE,
@@ -200,16 +211,5 @@ module.exports = {
   handleWhy,
   handleRespond,
   handleAnswer,
-
-  async execute(interaction) {
-    if (interaction.isButton()) {
-      if (interaction.customId === "captcha_respond") return handleRespond(interaction);
-      if (interaction.customId === "captcha_why") return handleWhy(interaction);
-      return;
-    }
-
-    if (interaction.isStringSelectMenu() && interaction.customId === "captcha_answer") {
-      return handleAnswer(interaction);
-    }
-  }
+  execute
 };

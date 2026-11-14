@@ -58,4 +58,6 @@ const EMBED_LIMITS = {
   total: 6000
 };
 
-module.exports = { createDefaultEmbedState, createEmptyEmbed, normalizeEmbedState, getSelectedEmbed, EMBED_LIMITS };
+export { createDefaultEmbedState, createEmptyEmbed, normalizeEmbedState, getSelectedEmbed, EMBED_LIMITS };
+
+export default { createDefaultEmbedState, createEmptyEmbed, normalizeEmbedState, getSelectedEmbed, EMBED_LIMITS };

@@ -21,7 +21,7 @@
   },
   "license": "MIT",
   "author": "kartell",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.js",
   "engines": {
     "node": ">=20.0.0"

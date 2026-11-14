@@ -1,6 +1,6 @@
-const { spawn } = require("child_process");
-const path = require("path");
-const { EventEmitter } = require("events");
+import { spawn } from "child_process";
+import path from "path";
+import { EventEmitter } from "events";
 
 const KILL_TIMEOUT_MS = 2000;
 
@@ -161,4 +161,6 @@ class ProcessManager extends EventEmitter {
   }
 }
 
-module.exports = { ProcessManager, killGroup };
+export { ProcessManager, killGroup };
+
+export default { ProcessManager, killGroup };

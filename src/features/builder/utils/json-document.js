@@ -1,5 +1,5 @@
-const { createDefaultComponentsV2State, createContainer, createTextDisplay } = require('../schemas/components-v2.schema');
-const { createDefaultEmbedState, normalizeEmbedState } = require('../schemas/embed.schema');
+import { createDefaultComponentsV2State, createContainer, createTextDisplay, uid } from '../schemas/components-v2.schema.js';
+import { createDefaultEmbedState, normalizeEmbedState } from '../schemas/embed.schema.js';
 
 const DEFAULT_JSON_TEMPLATE = {
   version: '1.0',
@@ -58,7 +58,6 @@ function convertV1ToState(doc) {
         container.components.push({ ...createTextDisplay(typeof item.content === 'string' ? item.content : ''), content: typeof item.content === 'string' ? item.content : '' });
       } else {
         // Preserve unknown-but-structured items as-is (with _id if missing) for best-effort import; validator will catch issues
-        const { uid } = require('../schemas/components-v2.schema');
         container.components.push({ _id: item._id || uid(), ...item });
       }
     }
@@ -100,9 +99,6 @@ function normalizeImportedDocument(parsed) {
   return { state: JSON.parse(JSON.stringify(candidate)) };
 }
 
-module.exports = {
-  DEFAULT_JSON_TEMPLATE,
-  getDefaultJsonTemplateString,
-  isPristineDefaultState,
-  normalizeImportedDocument
-};
+export { DEFAULT_JSON_TEMPLATE, getDefaultJsonTemplateString, isPristineDefaultState, normalizeImportedDocument };
+
+export default { DEFAULT_JSON_TEMPLATE, getDefaultJsonTemplateString, isPristineDefaultState, normalizeImportedDocument };

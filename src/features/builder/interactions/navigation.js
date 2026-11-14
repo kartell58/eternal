@@ -1,4 +1,4 @@
-const {
+import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
@@ -9,22 +9,26 @@ const {
   TextInputStyle,
   LabelBuilder,
   FileUploadBuilder
-} = require('discord.js');
-const { requireSession, saveSession, pushHistory, popHistory } = require('../services/session.service');
-const { createDefaultEmbedState, createEmptyEmbed, normalizeEmbedState, getSelectedEmbed } = require('../schemas/embed.schema');
-const { createDefaultComponentsV2State, createContainer, COMPONENT_FACTORIES } = require('../schemas/components-v2.schema');
-const draftService = require('../services/draft.service');
-const templateService = require('../services/template.service');
-const { buildEmbedPayload } = require('../builders/embed.builder');
-const { buildComponentsV2Payload } = require('../builders/components-v2.builder');
-const { toPublishPayload, publishNew, editExisting, canSendToChannel } = require('../services/publisher.service');
-const { validateEmbedState, validateComponentsV2State, parseColor } = require('../utils/validator');
-const { allowedChildTypes } = require('../utils/component-tree');
-const { buildContainerEditor, buildContainerDeleteConfirm, buildContainerColorScreen, getSelectedContainer } = require('./container-editor');
+} from 'discord.js';
+import { requireSession, saveSession, pushHistory, popHistory } from '../services/session.service.js';
+import { createDefaultEmbedState, createEmptyEmbed, normalizeEmbedState, getSelectedEmbed } from '../schemas/embed.schema.js';
+import { createDefaultComponentsV2State, createContainer, COMPONENT_FACTORIES } from '../schemas/components-v2.schema.js';
+import draftService from '../services/draft.service.js';
+import templateService from '../services/template.service.js';
+import { buildEmbedPayload } from '../builders/embed.builder.js';
+import { buildComponentsV2Payload } from '../builders/components-v2.builder.js';
+import { toPublishPayload, publishNew, editExisting, canSendToChannel } from '../services/publisher.service.js';
+import { validateEmbedState, validateComponentsV2State, parseColor } from '../utils/validator.js';
+import { allowedChildTypes } from '../utils/component-tree.js';
+import { buildContainerEditor, buildContainerDeleteConfirm, buildContainerEditorClosed, buildContainerColorScreen, getSelectedContainer } from './container-editor.js';
+import { ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, MessageFlags } from 'discord.js';
+import { getColorById } from '../services/colors.service.js';
+import { getDefaultJsonTemplateString, isPristineDefaultState } from '../utils/json-document.js';
+import { buildPublishMenu } from './publishing.js';
+import { showCv2EditModal } from './properties.js';
 
 
 function cv2Screen(components, accent = 0x5865f2) {
-  const { MessageFlags } = require('discord.js');
   return {
     content: null,
     embeds: [],
@@ -34,7 +38,6 @@ function cv2Screen(components, accent = 0x5865f2) {
 }
 
 function infoContainer(title, description, fields = [], footer = null, accent = 0x5865f2) {
-  const { ContainerBuilder, TextDisplayBuilder } = require('discord.js');
   const c = new ContainerBuilder().setAccentColor(accent);
   if (title) c.addTextDisplayComponents(new TextDisplayBuilder().setContent(`## ${title}`));
   if (description) c.addTextDisplayComponents(new TextDisplayBuilder().setContent(String(description).slice(0, 4000)));
@@ -73,7 +76,6 @@ function getEmbedOptions(session) {
 }
 
 function buildEmbedMainPanel(session) {
-  const { TextDisplayBuilder } = require('discord.js');
   normalizeEmbedState(session.state);
   const embeds = session.state.embeds || [];
   const options = getEmbedOptions(session);
@@ -109,7 +111,6 @@ function buildEmbedMainPanel(session) {
 }
 
 function buildSelectionScreen(session) {
-  const { TextDisplayBuilder } = require('discord.js');
   const info = infoContainer(
     'Visual Builder',
     'Choose which builder you want to use for this session.\n\n**Embed Builder** — Create and edit Discord embed messages.\n**Components V2 Builder** — Create and edit messages using Components V2 containers and components.',
@@ -125,7 +126,6 @@ function buildSelectionScreen(session) {
 
 function buildMainPanel(session) {
   const containers = getContainers(session);
-  const { ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, MessageFlags } = require('discord.js');
 
   const options = containers.length
     ? containers.slice(0, 25).map((c, i) => ({
@@ -196,7 +196,6 @@ function buildEmbedEditor(session) {
   const idx = session.state.selectedEmbedIndex || 0;
   const total = session.state.embeds.length;
   const accent = parseColor(e.color);
-  const { ContainerBuilder, TextDisplayBuilder } = require('discord.js');
 
   const preview = new ContainerBuilder()
     .setAccentColor(accent != null ? accent : 0x5865f2)
@@ -444,7 +443,6 @@ async function handleNavigation(interaction, { sid }) {
       session.containerEditorContainerId = container._id;
       session.selectedNodeId = item._id;
       saveSession(session);
-      const { showCv2EditModal } = require('./properties');
       try {
         return await showCv2EditModal(interaction, session);
       } catch (e) {
@@ -506,7 +504,6 @@ async function handleNavigation(interaction, { sid }) {
       }
       if (val.startsWith('saved:')) {
         const id = val.slice('saved:'.length);
-        const { getColorById } = require('../services/colors.service');
         const saved = getColorById(session.guildId, session.userId, id);
         if (!saved) return interaction.reply({ content: 'A cor salva não foi encontrada.', flags: 64 });
         pushHistory(session);
@@ -775,7 +772,6 @@ async function handleNavigation(interaction, { sid }) {
       return interaction.update(buildMainPanel(session));
     }
     case 'json_editor': {
-      const { getDefaultJsonTemplateString, isPristineDefaultState } = require('../utils/json-document');
       let defaultValue = getDefaultJsonTemplateString();
       if (!isPristineDefaultState(session)) {
         try {
@@ -810,7 +806,6 @@ async function handleNavigation(interaction, { sid }) {
       return interaction.showModal(modal);
     }
     case 'send_custom': {
-      const { buildPublishMenu } = require('./publishing');
       session.view = 'publish';
       saveSession(session);
       return interaction.update(buildPublishMenu(session));
@@ -829,7 +824,7 @@ async function handleNavigation(interaction, { sid }) {
           if (permErr) return interaction.reply({ content: `Cannot quick send (edit): ${permErr}`, flags: 64 });
           const msg = await editExisting(target, payload);
           if (session.state.type === 'components_v2') {
-            try { require('../utils/published-runtime').collectActionsFromState(session.state, msg.id, { ownerId: interaction.user.id, guildId: interaction.guildId, channelId: channel.id }); } catch {}
+            try { (await import('../utils/published-runtime.js')).collectActionsFromState(session.state, msg.id, { ownerId: interaction.user.id, guildId: interaction.guildId, channelId: channel.id }); } catch {}
           }
           return interaction.reply({ content: `✅ Message edited (quick send): ${msg.url}`, flags: 64 });
         }
@@ -842,7 +837,7 @@ async function handleNavigation(interaction, { sid }) {
         if (permErr) return interaction.reply({ content: `Cannot quick send: ${permErr}`, flags: 64 });
         const msg = await publishNew(channel, payload);
         if (session.state.type === 'components_v2') {
-          try { require('../utils/published-runtime').collectActionsFromState(session.state, msg.id, { ownerId: interaction.user.id, guildId: interaction.guildId, channelId: channel.id }); } catch {}
+          try { (await import('../utils/published-runtime.js')).collectActionsFromState(session.state, msg.id, { ownerId: interaction.user.id, guildId: interaction.guildId, channelId: channel.id }); } catch {}
         }
         return interaction.reply({ content: `✅ Published (quick send): ${msg.url}`, flags: 64 });
       } catch (e) {
@@ -884,7 +879,6 @@ async function handleNavigation(interaction, { sid }) {
     case 'save_menu':
       return interaction.update(buildSaveMenu(session));
     case 'publish_menu': {
-      const { buildPublishMenu } = require('./publishing');
       session.view = 'publish';
       saveSession(session);
       return interaction.update(buildPublishMenu(session));
@@ -974,4 +968,6 @@ async function handleNavigation(interaction, { sid }) {
   }
 }
 
-module.exports = { handleNavigation, buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor, currentEditor, buildContainerEditor, buildSelectionScreen, buildEmbedMainPanel };
+export { handleNavigation, buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor, currentEditor, buildContainerEditor, buildSelectionScreen, buildEmbedMainPanel };
+
+export default { handleNavigation, buildHome, buildMainPanel, buildEmbedEditor, buildCv2Editor, currentEditor, buildContainerEditor, buildSelectionScreen, buildEmbedMainPanel };

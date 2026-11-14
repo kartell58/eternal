@@ -1,17 +1,19 @@
-const {
+import {
   Client,
   GatewayIntentBits,
   Events,
   REST,
   Routes
-} = require("discord.js");
+} from "discord.js";
 
-require("dotenv").config();
+import dotenv from "dotenv";
 
-const { loadCommands, loadEvents } = require("./loader");
-const { logger } = require("./utils/logger");
+dotenv.config();
 
-const { messageHandler } = require("./middlewares/messageHandler");
+import { loadCommands, loadEvents } from "./loader.js";
+import { logger } from "./utils/logger.js";
+
+import { messageHandler } from "./middlewares/messageHandler.js";
 
 const INTENTS = [
   GatewayIntentBits.Guilds,
@@ -24,7 +26,7 @@ async function connect() {
     intents: INTENTS
   });
 
-  const commands = loadCommands();
+  const commands = await loadCommands();
 
   const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
@@ -43,7 +45,7 @@ async function connect() {
   );
 
   // Events loader (WELCOME, etc)
-  loadEvents(client);
+  await loadEvents(client);
 
   client.once(Events.ClientReady, () => {
     logger.info(`Logged in as ${client.user.tag}`);
@@ -54,4 +56,6 @@ async function connect() {
   return client;
 }
 
-module.exports = { connect, INTENTS };
+export { connect, INTENTS };
+
+export default { connect, INTENTS };

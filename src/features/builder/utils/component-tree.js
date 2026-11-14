@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 function walk(components, fn, parent = null, path = []) {
   if (!Array.isArray(components)) return null;
   for (let i = 0; i < components.length; i++) {
@@ -66,7 +67,6 @@ function moveNode(root, id, direction) {
 }
 
 function reassignIds(node) {
-  const { randomUUID } = require('crypto');
   if (node && typeof node === 'object') {
     if (node._id) node._id = randomUUID().slice(0, 8);
     if (Array.isArray(node.components)) node.components.forEach(reassignIds);
@@ -92,4 +92,6 @@ function allowedChildTypes(parentType) {
   }
 }
 
-module.exports = { walk, findNode, findParentInfo, removeNode, duplicateNode, moveNode, reassignIds, allowedChildTypes };
+export { walk, findNode, findParentInfo, removeNode, duplicateNode, moveNode, reassignIds, allowedChildTypes };
+
+export default { walk, findNode, findParentInfo, removeNode, duplicateNode, moveNode, reassignIds, allowedChildTypes };

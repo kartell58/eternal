@@ -1,4 +1,4 @@
-const { request } = require("./userApi");
+import { request } from "./userApi.js";
 
 const TASK_TYPES = {
   WATCH_VIDEO: "Video",
@@ -193,7 +193,7 @@ async function fetchAvailableQuests(token) {
   return sortQuests(result);
 }
 
-const { logger } = require("./logger");
+import { logger } from "./logger.js";
 const farmLogger = logger.child("autoquest");
 
 function toLoggerLevel(level) {
@@ -473,7 +473,20 @@ async function runAutoQuest(token, logCallback, userId) {
   return { completed, total: quests.length, user };
 }
 
-module.exports = {
+export {
+  runAutoQuest,
+  runQuest,
+  makeRequest,
+  getUserInfo,
+  getOrbsBalance,
+  fetchAvailableQuests,
+  TASK_TYPES,
+  formatDuration,
+  taskLabel,
+  createLogger as _createLogger
+};
+
+export default {
   runAutoQuest,
   runQuest,
   makeRequest,

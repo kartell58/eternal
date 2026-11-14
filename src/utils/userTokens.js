@@ -1,7 +1,10 @@
-const fs = require("fs");
-const path = require("path");
-const Database = require("better-sqlite3");
-const { logger } = require("./logger");
+import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import Database from "better-sqlite3";
+import { logger } from "./logger.js";
 
 const DATA_DIR = path.join(__dirname, "..", "..", "data");
 const DB_PATH = path.join(DATA_DIR, "tokens.db");
@@ -85,4 +88,6 @@ function remove(userId) {
   }
 }
 
-module.exports = { get, set, remove, DB_PATH };
+export { get, set, remove, DB_PATH };
+
+export default { get, set, remove, DB_PATH };

@@ -1,7 +1,7 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
-const { logger } = require("../utils/logger");
+import { SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
+import { logger } from "../utils/logger.js";
 
-module.exports = {
+export default {
   data: new SlashCommandBuilder()
     .setName("clear")
     .setDescription("Deletes recent messages in the current channel")
@@ -14,8 +14,7 @@ module.exports = {
         flags: 64
       });
       return;
-    }
-
+    };
     const channel = interaction.channel;
 
     if (!channel || !channel.isTextBased() || !("bulkDelete" in channel)) {

@@ -31,4 +31,6 @@ function createLogger({ name = "btd", level = "info", sink = null } = {}) {
   };
 }
 
-module.exports = { createLogger, LEVELS };
+export { createLogger, LEVELS };
+
+export default { createLogger, LEVELS };

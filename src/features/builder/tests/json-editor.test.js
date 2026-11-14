@@ -1,9 +1,9 @@
-const assert = require('assert');
-const { createSession } = require('../services/session.service');
-const { getDefaultJsonTemplateString, isPristineDefaultState, normalizeImportedDocument, DEFAULT_JSON_TEMPLATE } = require('../utils/json-document');
-const { createDefaultComponentsV2State } = require('../schemas/components-v2.schema');
-const { createDefaultEmbedState } = require('../schemas/embed.schema');
-const { validateComponentsV2State } = require('../utils/validator');
+import assert from 'assert';
+import { createSession } from '../services/session.service.js';
+import { getDefaultJsonTemplateString, isPristineDefaultState, normalizeImportedDocument, DEFAULT_JSON_TEMPLATE } from '../utils/json-document.js';
+import { createDefaultComponentsV2State } from '../schemas/components-v2.schema.js';
+import { createDefaultEmbedState } from '../schemas/embed.schema.js';
+import { validateComponentsV2State } from '../utils/validator.js';
 
 (async () => {
   const results = [];
