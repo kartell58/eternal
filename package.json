@@ -1,6 +1,6 @@
 {
   "name": "eternal",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Discord bot with per-guild configuration panels, verification flows, AutoQuest/HypeSquad utilities, bot profile management, and a visual message builder.",
   "keywords": [
     "discord",

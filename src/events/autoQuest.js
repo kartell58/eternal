@@ -11,7 +11,9 @@ const { get: getToken, set: setToken } = require("../utils/userTokens");
 const {
   runAutoQuest,
   getUserInfo,
-  fetchAvailableQuests
+  fetchAvailableQuests,
+  formatDuration,
+  taskLabel
 } = require("../utils/autoFarm");
 
 const MODAL_ID = "aq_login_modal";
@@ -19,13 +21,13 @@ const runningFarms = new Set();
 
 function truncate(text, max = 3900) {
   const value = String(text || "").trim();
-  return value.length > max ? `${value.slice(0, max - 20)}\n… (truncated)` : value;
+  return value.length > max ? `${value.slice(0, max - 20)}\n... (truncated)` : value;
 }
 
 function getFarmChannel(interaction) {
   if (!interaction.guild) return null;
   const channelId = get(interaction.guild.id, "autoQuestChannel");
-  return interaction.guild.channels.cache.get(channelId) || interaction.channel;
+  return (channelId && interaction.guild.channels.cache.get(channelId)) || interaction.channel;
 }
 
 async function sendFarmLog(channel, title, description, color) {
@@ -39,8 +41,16 @@ async function sendFarmLog(channel, title, description, color) {
 
     await channel.send({ embeds: [embed] });
   } catch (err) {
-    console.error("Error sending AutoQuest log:", err.message);
+    console.error("[AUTOQUEST] Failed to send farm log:", err.message);
   }
+}
+
+function questSummaryLines(quests) {
+  return quests.map((quest, index) => {
+    const app = quest.applicationName ? ` | ${quest.applicationName}` : "";
+    return `**${index + 1}. ${quest.questName}**\n` +
+      `Reward: ${quest.rewardText} | Task: ${taskLabel(quest.taskType)} | Duration: ${formatDuration(quest.target)}${app}`;
+  });
 }
 
 module.exports = {
@@ -50,19 +60,19 @@ module.exports = {
     const customId = interaction.customId;
     if (!customId) return;
 
-    // ---------- Button: Configure account ----------
+    // Button: Configure account
     if (customId === "aq_config" && interaction.isButton()) {
       const modal = new ModalBuilder()
         .setCustomId(MODAL_ID)
-        .setTitle("Login - AutoQuest");
+        .setTitle("AutoQuest - Connect Account");
 
       const input = new TextInputBuilder()
         .setCustomId("token_input")
         .setLabel("Discord user token")
         .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder("Paste your token here...")
+        .setPlaceholder("Paste your Discord user token here...")
         .setMinLength(20)
-        .setMaxLength(200)
+        .setMaxLength(400)
         .setRequired(true);
 
       modal.addComponents(new ActionRowBuilder().addComponents(input));
@@ -70,36 +80,43 @@ module.exports = {
       return;
     }
 
-    // ---------- Modal: save token ----------
+    // Modal: save token
     if (customId === MODAL_ID && interaction.isModalSubmit()) {
       const token = interaction.fields.getTextInputValue("token_input").trim();
 
       await interaction.deferReply({ flags: 64 });
 
-      const user = await getUserInfo(token);
-      if (!user) {
+      try {
+        const user = await getUserInfo(token);
+        if (!user) {
+          await interaction.editReply({
+            content: "Invalid or expired token. Please verify the token and try again."
+          });
+          return;
+        }
+
+        setToken(interaction.user.id, token);
+
         await interaction.editReply({
-          content: "❌ Invalid or expired token. Please check it and try again."
+          content:
+            `Account connected: **${user.global_name || user.username}** (@${user.username}).\n` +
+            "Use **View quests** to list available quests or **Start farm** to run them."
         });
-        return;
+      } catch (err) {
+        console.error("[AUTOQUEST] Token validation error:", err);
+        await interaction.editReply({
+          content: `Could not validate token: ${err.message || "unknown error"}`
+        });
       }
-
-      setToken(interaction.user.id, token);
-
-      await interaction.editReply({
-        content:
-          `✅ Account connected: **${user.global_name || user.username}** (@${user.username}).\n` +
-          "Use **View quests** to list quests or **Start farm** to automate them."
-      });
       return;
     }
 
-    // ---------- Button: View quests ----------
+    // Button: View quests
     if (customId === "aq_ver" && interaction.isButton()) {
       const token = getToken(interaction.user.id);
       if (!token) {
         await interaction.reply({
-          content: "❌ Connect your account first using **Configure account**.",
+          content: "Connect your account first using **Configure account**.",
           flags: 64
         });
         return;
@@ -111,36 +128,33 @@ module.exports = {
         const quests = await fetchAvailableQuests(token);
 
         if (!quests.length) {
-          await interaction.editReply({ content: "📭 No quests available." });
+          await interaction.editReply({ content: "No quests available for this account right now." });
           return;
         }
 
-        const lines = quests.map((quest, index) =>
-          `**${index + 1}. ${quest.questName}**\n` +
-          `🎁 ${quest.rewardText} • ${quest.taskType} • ${Math.floor(quest.target / 60)}min`
-        );
-
+        const lines = questSummaryLines(quests);
         const embed = new EmbedBuilder()
           .setColor(0x57f287)
-          .setTitle("📋 Available quests")
-          .setDescription(truncate(lines.join("\n\n")));
+          .setTitle("Available Quests")
+          .setDescription(truncate(lines.join("\n\n")))
+          .setFooter({ text: `${quests.length} quest(s) found` });
 
         await interaction.editReply({ embeds: [embed] });
       } catch (err) {
-        console.error("Error fetching AutoQuest quests:", err);
+        console.error("[AUTOQUEST] Error fetching quests:", err);
         await interaction.editReply({
-          content: `❌ Error fetching quests: ${err.message}`
+          content: `Error fetching quests: ${err.message || "unknown error"}`
         });
       }
       return;
     }
 
-    // ---------- Button: Start farm ----------
+    // Button: Start farm
     if (customId === "aq_farm" && interaction.isButton()) {
       const token = getToken(interaction.user.id);
       if (!token) {
         await interaction.reply({
-          content: "❌ Connect your account first using **Configure account**.",
+          content: "Connect your account first using **Configure account**.",
           flags: 64
         });
         return;
@@ -148,7 +162,7 @@ module.exports = {
 
       if (runningFarms.has(interaction.user.id)) {
         await interaction.reply({
-          content: "⏳ You already have a farm running. Please wait for it to finish.",
+          content: "You already have a farm running. Please wait for it to finish.",
           flags: 64
         });
         return;
@@ -160,71 +174,74 @@ module.exports = {
       const channel = getFarmChannel(interaction);
 
       await interaction.reply({
-        content: "🔄 Farm started. Progress will be sent to the AutoQuest channel.",
+        content: "Farm started. Progress updates will be sent to the configured AutoQuest channel.",
         flags: 64
       });
 
       await sendFarmLog(
         channel,
-        "🚀 Farm started",
-        `Account: **${user.global_name || user.username}** (@${user.username})\nStarting automated execution...`,
+        "AutoQuest Farm Started",
+        `Requested by: <@${user.id}> (${user.global_name || user.username})\nStarting automated execution...`,
         0x5865f2
       );
 
       runAutoQuest(
         token,
-        async message => {
-          console.log(`[AutoQuest][${user.id}] ${message}`);
+        async (line, level, message) => {
+          // Console logging is handled by autoFarm's logger; keep channel logs meaningful.
+          const text = String(message || line || "");
+          const isStart = level === "quest" || text.startsWith("Starting:");
+          const isDone = level === "ok" && /Quest completed:|Run finished:/i.test(text);
+          const isError = level === "error";
+          const isWarn = level === "warn";
 
-          const isStart = message.includes("🚀 Starting:");
-          const isDone = message.includes("✅ Quest completed");
-          const isError = message.includes("❌") || message.includes("🚫");
+          if (!isStart && !isDone && !isError && !isWarn) return;
 
-          if (!isStart && !isDone && !isError) return;
-
-          let title = "ℹ️ AutoQuest";
+          let title = "AutoQuest Update";
           let color = 0x5865f2;
-
           if (isStart) {
-            title = "🎯 Quest started";
+            title = "Quest Started";
           } else if (isDone) {
-            title = "✅ Quest completed";
+            title = "Quest Progress";
             color = 0x57f287;
+          } else if (isWarn) {
+            title = "AutoQuest Warning";
+            color = 0xf1c40f;
           } else if (isError) {
-            title = "⚠️ AutoQuest";
+            title = "AutoQuest Error";
             color = 0xed4245;
           }
 
-          await sendFarmLog(channel, title, message, color);
+          await sendFarmLog(channel, title, text || String(line), color);
         },
         user.id
       )
         .then(async result => {
           await sendFarmLog(
             channel,
-            "🏁 Farm finished",
-            `Account: **${result.user?.global_name || user.username}**\n` +
-              `${result.completed}/${result.total} quests completed.`,
+            "AutoQuest Farm Finished",
+            `Account: **${result.user?.global_name || result.user?.username || user.username}**\n` +
+              `${result.completed}/${result.total} quest(s) completed.`,
             0x57f287
           );
         })
         .catch(async err => {
-          console.error(`Error in farm for ${user.id}:`, err);
+          console.error(`[AUTOQUEST] Farm error for ${user.id}:`, err);
 
           await sendFarmLog(
             channel,
-            "❌ Farm error",
-            `Account: **${user.global_name || user.username}**\n${err.message}`,
+            "AutoQuest Farm Error",
+            `Requested by: <@${user.id}> (${user.global_name || user.username})\n${err.message || "Unknown error"}`,
             0xed4245
           );
 
           try {
             await interaction.followUp({
-              content: `❌ Farm error: ${err.message}`,
+              content: `Farm error: ${err.message || "Unknown error"}`,
               flags: 64
             });
           } catch {
-            // The interaction may have expired; the channel log already records the error.
+            // Interaction may have expired; channel log already records the error.
           }
         })
         .finally(() => {
