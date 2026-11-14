@@ -29,7 +29,9 @@
   "scripts": {
     "start": "node .",
     "dev": "node scripts/betterThanDemons.js",
-    "test": "node src/features/verification/captcha.test.js && node src/features/builder/tests/audit-fixes.test.js && node src/features/builder/tests/container-creation-flow.test.js && node src/features/builder/tests/container-data-preservation.test.js && node src/features/builder/tests/container-editor.test.js && node src/features/builder/tests/embed-editor.test.js && node src/features/builder/tests/json-editor.test.js && node src/features/builder/tests/native-container-presentation.test.js && node src/features/builder/tests/ui-redesign.test.js"
+    "test": "node scripts/run-tests.js",
+    "check": "./scripts/checker.sh",
+    "verify": "npm run check"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.1.0",
