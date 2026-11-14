@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const { logger } = require("../utils/logger");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -37,7 +38,7 @@ module.exports = {
         content: `🧹 Deleted ${deleted.size} message(s).`
       }).catch(() => {});
     } catch (err) {
-      console.error("Error deleting messages:", err);
+      logger.error("Error deleting messages:", err);
       await interaction.editReply({
         content:
           "❌ Could not delete messages. Check my permissions and ensure messages are less than 14 days old."

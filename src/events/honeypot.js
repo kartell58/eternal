@@ -1,5 +1,6 @@
 const { Events } = require("discord.js");
 const { get } = require("../settings");
+const { logger } = require("../utils/logger");
 
 module.exports = {
   name: Events.MessageCreate,
@@ -20,7 +21,7 @@ module.exports = {
     try {
       await message.delete();
     } catch (err) {
-      console.error("Honeypot: could not delete the message:", err);
+      logger.warn("Honeypot: could not delete the message:", err);
     }
 
     // Do not try to punish the server owner
@@ -31,9 +32,7 @@ module.exports = {
 
     // Check hierarchy: the bot must be above the member to punish them
     if (member.roles.highest.position >= me.roles.highest.position) {
-      console.warn(
-        `Honeypot: could not softban ${member.user.tag} (insufficient role hierarchy).`
-      );
+      logger.warn(`Honeypot: could not softban ${member.user.tag} (insufficient role hierarchy).`);
       return;
     }
 
@@ -47,9 +46,9 @@ module.exports = {
         member.id,
         "Automatic honeypot softban"
       );
-      console.log(`Honeypot: softban applied to ${member.user.tag} (${member.id}).`);
+      logger.info(`Honeypot: softban applied to ${member.user.tag} (${member.id}).`);
     } catch (err) {
-      console.error("Error applying honeypot softban:", err);
+      logger.error("Error applying honeypot softban:", err);
     }
   }
 };

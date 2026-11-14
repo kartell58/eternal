@@ -8,6 +8,7 @@ const {
 } = require("discord.js");
 const axios = require("axios");
 const { buildBotPanel } = require("../utils/botPanelView");
+const { logger } = require("../utils/logger");
 
 const IDS = {
   status: "bot_status",
@@ -35,7 +36,7 @@ async function isAuthorized(interaction) {
     if (owner.ownerId && owner.ownerId === interaction.user.id) return true;
     if (owner.members && typeof owner.members.has === "function" && owner.members.has(interaction.user.id)) return true;
   } catch (err) {
-    console.error("Bot panel authorization check failed:", err);
+    logger.error("Bot panel authorization check failed:", err);
   }
   return false;
 }
@@ -171,7 +172,7 @@ module.exports = {
         }
       }
     } catch (err) {
-      console.error("Bot panel error:", err);
+      logger.error("Bot panel error:", err);
       const msg = `❌ Could not complete the action: ${err.message || "Unknown error"}`;
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply(msg).catch(() => {});

@@ -10,6 +10,7 @@ const path = require("path");
 const { get, set } = require("../settings");
 const { MODULES, buildPanel } = require("../utils/configView");
 const { buildCaptchaPanel } = require("../features/verification/panel");
+const { logger } = require("../utils/logger");
 
 async function postVerificationPanel(guild) {
   const channelId = get(guild.id, "verificationChannel");
@@ -77,7 +78,7 @@ async function postRulesPanel(guild) {
     rulesContent = fs.readFileSync(rulesPath, "utf8");
   } catch (err) {
     rulesContent = "⚠️ Could not read the rules file.";
-    console.error("Error reading rules file:", err);
+    logger.error("Error reading rules file:", err);
   }
 
   const embed = new EmbedBuilder()
@@ -232,7 +233,7 @@ module.exports = {
         }
         await interaction.reply({ content: `CAPTCHA panel posted in ${result.channel}.`, flags: 64 });
       } catch (err) {
-        console.error("Error posting CAPTCHA panel:", err);
+        logger.error("Error posting CAPTCHA panel:", err);
         await interaction.reply({
           content: "Could not post the CAPTCHA panel. Check the bot's permissions.",
           flags: 64
@@ -254,7 +255,7 @@ module.exports = {
         }
         await interaction.reply({ content: `Verification panel posted in ${result.channel}.`, flags: 64 });
       } catch (err) {
-        console.error("Error posting verification panel:", err);
+        logger.error("Error posting verification panel:", err);
         await interaction.reply({
           content: "Could not post the verification panel. Check the bot's permissions.",
           flags: 64
@@ -276,7 +277,7 @@ module.exports = {
         }
         await interaction.reply({ content: `Honeypot notice posted in ${result.channel}.`, flags: 64 });
       } catch (err) {
-        console.error("Error posting honeypot notice:", err);
+        logger.error("Error posting honeypot notice:", err);
         await interaction.reply({
           content: "Could not post the honeypot notice. Check the bot's permissions.",
           flags: 64
@@ -298,7 +299,7 @@ module.exports = {
         }
         await interaction.reply({ content: `AutoQuest panel posted in ${result.channel}.`, flags: 64 });
       } catch (err) {
-        console.error("Error posting AutoQuest panel:", err);
+        logger.error("Error posting AutoQuest panel:", err);
         await interaction.reply({
           content: "Could not post the AutoQuest panel. Check the bot's permissions.",
           flags: 64
@@ -320,7 +321,7 @@ module.exports = {
         }
         await interaction.reply({ content: `HypeSquad panel posted in ${result.channel}.`, flags: 64 });
       } catch (err) {
-        console.error("Error posting HypeSquad panel:", err);
+        logger.error("Error posting HypeSquad panel:", err);
         await interaction.reply({
           content: "Could not post the HypeSquad panel. Check the bot's permissions.",
           flags: 64
@@ -342,7 +343,7 @@ module.exports = {
         }
         await interaction.reply({ content: `Rules posted in ${result.channel}.`, flags: 64 });
       } catch (err) {
-        console.error("Error posting rules:", err);
+        logger.error("Error posting rules:", err);
         await interaction.reply({
           content: "Could not post the rules. Check the bot's permissions.",
           flags: 64
@@ -372,7 +373,7 @@ module.exports = {
             failed.push(`${name}: ${result.reason || "unknown error"}`);
           }
         } catch (err) {
-          console.error(`Error posting ${name} panel:`, err);
+          logger.error(`Error posting ${name} panel:`, err);
           failed.push(`${name}: ${err.message || "failed to post"}`);
         }
       }

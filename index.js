@@ -1,3 +1,4 @@
+const { logger } = require('./src/utils/logger');
 const { connect } = require("./src/connection");
 
 let shutdownStarted = false;
@@ -5,12 +6,12 @@ let shutdownStarted = false;
 async function shutdown(signal, clientPromise) {
   if (shutdownStarted) return;
   shutdownStarted = true;
-  console.error(`${signal} received — shutting down gracefully...`);
+  logger.info(`${signal} received - shutting down gracefully...`);
   try {
     const client = await clientPromise;
     if (client) client.destroy();
   } catch (err) {
-    console.error("Error while destroying the Discord client:", err);
+    logger.error("Error while destroying the Discord client:", err);
   }
   // Give the websocket a moment to close before exiting.
   setTimeout(() => process.exit(0), 500);
@@ -19,7 +20,7 @@ async function shutdown(signal, clientPromise) {
 const clientPromise = connect();
 
 clientPromise.catch(err => {
-  console.error("Failed to start the bot:", err);
+  logger.error("Failed to start the bot:", err);
   process.exit(1);
 });
 

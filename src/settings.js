@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const Database = require("better-sqlite3");
+const { logger } = require("./utils/logger");
 
 const DATA_DIR = path.join(__dirname, "..", "data");
 const DB_PATH = path.join(DATA_DIR, "settings.db");
@@ -49,9 +50,9 @@ function migrateLegacyJson() {
     });
 
     insertMany(Object.entries(parsed));
-    console.log("Migrated legacy settings.json into SQLite database.");
+    logger.info("Migrated legacy settings.json into SQLite database.");
   } catch (err) {
-    console.error("Error migrating legacy settings.json:", err);
+    logger.error("Error migrating legacy settings.json:", err);
   }
 }
 
@@ -64,7 +65,7 @@ function get(guildId, key) {
     if (!row) return undefined;
     return JSON.parse(row.value);
   } catch (err) {
-    console.error("Error reading setting:", err);
+    logger.error("Error reading setting:", err);
     return undefined;
   }
 }
@@ -74,7 +75,7 @@ function set(guildId, key, value) {
   try {
     stmtSet.run(String(guildId), String(key), JSON.stringify(value));
   } catch (err) {
-    console.error("Error saving setting:", err);
+    logger.error("Error saving setting:", err);
   }
 }
 
@@ -83,7 +84,7 @@ function remove(guildId, key) {
   try {
     stmtRemove.run(String(guildId), String(key));
   } catch (err) {
-    console.error("Error removing setting:", err);
+    logger.error("Error removing setting:", err);
   }
 }
 
@@ -101,7 +102,7 @@ function getAll(guildId) {
     }
     return result;
   } catch (err) {
-    console.error("Error reading guild settings:", err);
+    logger.error("Error reading guild settings:", err);
     return {};
   }
 }

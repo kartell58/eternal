@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const { get } = require("../settings");
+const { logger } = require("../utils/logger");
 
 function formatDateTime(date) {
   const dd = String(date.getDate()).padStart(2, "0");
@@ -24,7 +25,7 @@ module.exports = {
       try {
         await member.roles.add(autoRole);
       } catch (err) {
-        console.error("Error adding auto role:", err);
+        logger.error("Error adding auto role:", err);
       }
     }
 
@@ -59,7 +60,7 @@ module.exports = {
         embeds: [embed]
       });
     } catch (err) {
-      console.error("Error sending welcome message:", err);
+      logger.error("Error sending welcome message:", err);
     }
   }
 };

@@ -1,5 +1,6 @@
 const { Events } = require('discord.js');
 const { routeBuilderInteraction } = require('../features/builder/interactions/router');
+const { logger } = require('../utils/logger');
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -7,7 +8,7 @@ module.exports = {
     try {
       await routeBuilderInteraction(interaction);
     } catch (err) {
-      console.error('Builder interaction error:', err);
+      logger.error('Builder interaction error:', err);
       try {
         if (interaction.deferred || interaction.replied) {
           await interaction.followUp({ content: `Builder error: ${err.message}`, flags: 64 });

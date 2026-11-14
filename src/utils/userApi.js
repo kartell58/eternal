@@ -1,4 +1,5 @@
 const axios = require("axios");
+const { logger } = require("./logger");
 
 // Defaults for user-token Discord API requests (AutoQuest/HypeSquad helpers).
 // Kept in code so the runtime does not depend on a local config.json file.
@@ -42,10 +43,7 @@ async function request(endpoint, method, body, token) {
       validateStatus: () => true
     });
   } catch (error) {
-    console.error(
-      `Request failed ${method} ${endpoint}:`,
-      error.code || error.message
-    );
+    logger.warn(`Request failed ${method} ${endpoint}:`, error.code || error.message);
     return { status: 500, data: null, error };
   }
 }

@@ -15,6 +15,7 @@ const {
   formatDuration,
   taskLabel
 } = require("../utils/autoFarm");
+const { logger } = require("../utils/logger");
 
 const MODAL_ID = "aq_login_modal";
 const runningFarms = new Set();
@@ -41,7 +42,7 @@ async function sendFarmLog(channel, title, description, color) {
 
     await channel.send({ embeds: [embed] });
   } catch (err) {
-    console.error("[AUTOQUEST] Failed to send farm log:", err.message);
+    logger.error("[AUTOQUEST] Failed to send farm log:", err.message);
   }
 }
 
@@ -103,7 +104,7 @@ module.exports = {
             "Use **View quests** to list available quests or **Start farm** to run them."
         });
       } catch (err) {
-        console.error("[AUTOQUEST] Token validation error:", err);
+        logger.error("[AUTOQUEST] Token validation error:", err);
         await interaction.editReply({
           content: `Could not validate token: ${err.message || "unknown error"}`
         });
@@ -141,7 +142,7 @@ module.exports = {
 
         await interaction.editReply({ embeds: [embed] });
       } catch (err) {
-        console.error("[AUTOQUEST] Error fetching quests:", err);
+        logger.error("[AUTOQUEST] Error fetching quests:", err);
         await interaction.editReply({
           content: `Error fetching quests: ${err.message || "unknown error"}`
         });
@@ -226,7 +227,7 @@ module.exports = {
           );
         })
         .catch(async err => {
-          console.error(`[AUTOQUEST] Farm error for ${user.id}:`, err);
+          logger.error(`[AUTOQUEST] Farm error for ${user.id}:`, err);
 
           await sendFarmLog(
             channel,

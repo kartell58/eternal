@@ -1,4 +1,5 @@
 const settings = require("../../settings");
+const { logger } = require("../../utils/logger");
 
 function readSetting(getSetting) {
   return getSetting || ((guildId, key) => settings.get(guildId, key));
@@ -55,7 +56,7 @@ async function assignVerificationRole(interaction, { getSetting } = {}) {
       message: `Congratulations! You received the ${role} role.`
     };
   } catch (err) {
-    console.error("Error adding verification role:", err);
+    logger.error("Error adding verification role:", err);
     return {
       status: "error",
       message: "Error assigning role. Please try again or notify an administrator."

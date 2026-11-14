@@ -193,19 +193,33 @@ async function fetchAvailableQuests(token) {
   return sortQuests(result);
 }
 
+const { logger } = require("./logger");
+const farmLogger = logger.child("autoquest");
+
+function toLoggerLevel(level) {
+  if (level === "error") return "error";
+  if (level === "warn") return "warn";
+  if (level === "progress") return "debug";
+  return "info";
+}
+
+function levelTag(level) {
+  return {
+    info: "[INFO]",
+    ok: "[ OK ]",
+    warn: "[WARN]",
+    error: "[ERR ]",
+    progress: "[PROG]",
+    step: "[STEP]",
+    quest: "[QUEST]"
+  }[level] || "[INFO]";
+}
+
 function createLogger(logCallback) {
   return (level, message) => {
-    const prefix = {
-      info: "[INFO]",
-      ok: "[ OK ]",
-      warn: "[WARN]",
-      error: "[ERR ]",
-      progress: "[PROG]",
-      step: "[STEP]",
-      quest: "[QUEST]"
-    }[level] || "[INFO]";
-    const line = `${prefix} ${message}`;
-    console.log(line);
+    const tag = levelTag(level);
+    const line = `${tag} ${message}`;
+    farmLogger.log(toLoggerLevel(level), line);
     if (typeof logCallback === "function") {
       try { logCallback(line, level, message); } catch {}
     }

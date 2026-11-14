@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const Database = require("better-sqlite3");
+const { logger } = require("./logger");
 
 const DATA_DIR = path.join(__dirname, "..", "..", "data");
 const DB_PATH = path.join(DATA_DIR, "tokens.db");
@@ -49,7 +50,7 @@ function migrateFromLegacyJsonIfNeeded() {
 
     insert(Object.entries(data));
   } catch (err) {
-    console.error("Error migrating legacy tokens:", err.message);
+    logger.error("Error migrating legacy tokens:", err.message);
   }
 }
 
@@ -61,7 +62,7 @@ function get(userId) {
     const row = stmtGet.get(String(userId));
     return row ? row.token : null;
   } catch (err) {
-    console.error("Error reading token:", err.message);
+    logger.error("Error reading token:", err.message);
     return null;
   }
 }
@@ -71,7 +72,7 @@ function set(userId, token) {
   try {
     stmtSet.run(String(userId), String(token).trim());
   } catch (err) {
-    console.error("Error saving token:", err.message);
+    logger.error("Error saving token:", err.message);
   }
 }
 
@@ -80,7 +81,7 @@ function remove(userId) {
   try {
     stmtRemove.run(String(userId));
   } catch (err) {
-    console.error("Error removing token:", err.message);
+    logger.error("Error removing token:", err.message);
   }
 }
 

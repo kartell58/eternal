@@ -9,6 +9,7 @@ const {
 require("dotenv").config();
 
 const { loadCommands, loadEvents } = require("./loader");
+const { logger } = require("./utils/logger");
 
 const { messageHandler } = require("./middlewares/messageHandler");
 
@@ -45,7 +46,7 @@ async function connect() {
   loadEvents(client);
 
   client.once(Events.ClientReady, () => {
-    console.log(`Logged in as ${client.user.tag}`);
+    logger.info(`Logged in as ${client.user.tag}`);
   });
 
   await client.login(process.env.TOKEN);
