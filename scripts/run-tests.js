@@ -5,6 +5,8 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 
 const tests = [
+  'src/tests/connection.test.js',
+  'src/tests/logger.test.js',
   'src/features/verification/captcha.test.js',
   'src/features/builder/tests/audit-fixes.test.js',
   'src/features/builder/tests/container-creation-flow.test.js',

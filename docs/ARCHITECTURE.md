@@ -59,3 +59,26 @@ The builder feature is isolated under `src/features/builder/` with thin shims at
 - **No guaranteed delivery across restarts for in-memory state:** builder sessions and transient challenge state are not durable process state.
 - **No secret management beyond local runtime files/env:** tokens and settings are expected to be provided/configured by the operator and must not be committed.
 - **No assumption of sufficient permissions:** role assignment, message posting/deletion, and profile edits depend on Discord permissions, hierarchy, and channel access at runtime.
+
+## 9. Logging — `src/utils/logger.js`
+
+`src/utils/logger.js` exports `LEVELS`, `createLogger(options)`, and a shared `logger` scoped as `eternal`.
+
+### Levels and configuration
+
+- Supported levels: `debug`, `info`, `warn`, `error`, `silent` (lowest to highest threshold).
+- Effective level precedence: explicit `options.level` > inherited parent/child option > `process.env.LOG_LEVEL` at logger creation time > `info`.
+- Invalid configured levels fall back to `info`. `logger.log(level, ...)` uses `info` when the provided level is unknown.
+- Logger instances are immutable after creation (frozen); configuration changes require creating a new logger/child.
+
+### Scopes and output
+
+- `logger.child(name, options)` creates a scoped logger. Nested scopes are joined with `:` (for example `eternal:autoquest:execution`) and empty scope segments are ignored.
+- Child loggers inherit the parent's effective level and sink unless overridden via `childOptions`.
+- Default output format: `[YYYY-MM-DDTHH:mm:ss.sssZ] [LEVEL] [scope] message` (scope omitted when absent). Severity labels are emitted once by the shared logger; feature-specific progress tags may still be passed as message/callback content where appropriate (for example AutoQuest).
+- Arguments are serialized safely (Error stack/message, strings, primitives, BigInt/symbol string forms, JSON for objects). Circular references become `[Circular]` and serialization failures become `[Unserializable: ...]`. Filtered messages are not formatted.
+
+### Sinks and failure policy
+
+- `options.sink(line, meta)` receives the formatted line and `{ level, name, timestamp, args }`. Without a custom sink, output goes to `console.error` for `error`, `console.warn` for `warn`, and `console.log` for other emitted levels.
+- Sink failures must not crash unrelated application operations. If a custom sink throws, the logger emits a `[LOGGER_SINK_ERROR]` diagnostic to `console.error` and then attempts to write the original formatted line to the default console sink.

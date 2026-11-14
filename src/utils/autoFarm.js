@@ -217,11 +217,16 @@ function levelTag(level) {
 
 function createLogger(logCallback) {
   return (level, message) => {
+    const text = message == null ? "" : String(message);
     const tag = levelTag(level);
-    const line = `${tag} ${message}`;
-    farmLogger.log(toLoggerLevel(level), line);
+    const callbackLine = `${tag} ${text}`;
+
+    // Shared logger output uses its own severity label/scope/timestamp.
+    // AutoQuest semantic tags remain available via callbackLine/message.
+    farmLogger.log(toLoggerLevel(level), text);
+
     if (typeof logCallback === "function") {
-      try { logCallback(line, level, message); } catch {}
+      try { logCallback(callbackLine, level, text); } catch {}
     }
   };
 }
@@ -477,5 +482,6 @@ module.exports = {
   fetchAvailableQuests,
   TASK_TYPES,
   formatDuration,
-  taskLabel
+  taskLabel,
+  _createLogger: createLogger
 };
