@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import { spawn } from "child_process";
 
-import BetterThanDemons from "...js";
+import BetterThanDemons, { loadConfig } from "../index.js";
 import EVENTS from "../core/events.js";
 import { createFilter } from "../watcher/filters.js";
 
@@ -44,7 +44,7 @@ import { createFilter } from "../watcher/filters.js";
 
   function fixtureApp(cleanupMs) {
     return `
-import fs from 'fs';
+const fs = require('fs');
 const log = process.env.FIXTURE_LOG;
 fs.appendFileSync(log, 'start ' + process.pid + '\\n');
 setInterval(() => {}, 1000);

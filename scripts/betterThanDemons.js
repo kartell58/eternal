@@ -17,7 +17,7 @@ import { fileURLToPath } from 'url';
 import path from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-import BetterThanDemons from "../src/utils/betterThanDemons.js";
+import BetterThanDemons from "../src/utils/betterThanDemons/index.js";
 import { installSignalHandlers } from "../src/utils/betterThanDemons/process/signals.js";
 
 const entryArg = process.argv[2];

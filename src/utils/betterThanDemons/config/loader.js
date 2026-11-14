@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { LEVELS } from "../logger.js";
+import { LEVELS } from "../logger/index.js";
 
 const DEFAULT_WATCH_EXTENSIONS = [".js", ".mjs", ".cjs", ".json", ".env", ".txt"];
 

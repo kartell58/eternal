@@ -18,7 +18,8 @@ const tests = [
   'src/features/builder/tests/embed-editor.test.js',
   'src/features/builder/tests/json-editor.test.js',
   'src/features/builder/tests/native-container-presentation.test.js',
-  'src/features/builder/tests/ui-redesign.test.js'
+  'src/features/builder/tests/ui-redesign.test.js',
+  'src/utils/betterThanDemons/tests/betterThanDemons.test.js'
 ];
 
 for (const rel of tests) {

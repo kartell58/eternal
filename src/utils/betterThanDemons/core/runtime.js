@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import path from "path";
 
 import EVENTS from "./events.js";
-import { createLogger } from "../logger.js";
+import { createLogger } from "../logger/index.js";
 import { loadConfig } from "../config/loader.js";
 import { createFilter } from "../watcher/filters.js";
 import { WatchEngine } from "../watcher/engine.js";

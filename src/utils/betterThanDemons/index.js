@@ -5,7 +5,7 @@
  * a modular implementation (watcher / process / restart / config / logger).
  *
  * Usage (module):
- *   const BetterThanDemons = require("./utils/betterThanDemons.js");
+ *   import BetterThanDemons from "./src/utils/betterThanDemons/index.js";
  *   const runtime = new BetterThanDemons({ entry: "index.js" });
  *   runtime.start();
  *
@@ -37,6 +37,9 @@
 import BetterThanDemons from './core/runtime.js';
 import * as EVENTS from './core/events.js';
 import { loadConfig } from './config/loader.js';
+
+BetterThanDemons.loadConfig = loadConfig;
+BetterThanDemons.EVENTS = EVENTS;
 
 export default BetterThanDemons;
 export { EVENTS, loadConfig };
