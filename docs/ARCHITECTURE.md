@@ -16,7 +16,7 @@ Feature modules:
 
 Persistence/config:
   settings.js / settings.json (per-guild panel and module configuration)
-  data/tokens.json            (user tokens for quest/hypesquad flows, runtime-managed)
+  data/tokens.db            (user tokens for quest/hypesquad flows, runtime-managed)
   builder-*.json              (builder drafts/templates/published action mappings)
 ```
 

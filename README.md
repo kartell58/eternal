@@ -9,7 +9,7 @@ Eternal is a Discord bot written in Node.js (CommonJS) using discord.js. It prov
 - Provides slash commands: `/ping` (latency/uptime), `/config` (ephemeral server configuration panel), `/clear` (bulk delete recent messages, requires Manage Messages), `/quest` (AutoQuest control panel), `/bot` (bot profile/presence panel), and `/builder` (visual message builder).
 - Supports per-guild configuration and panel posting for welcome, CAPTCHA verification, honeypot notice, rules, AutoQuest, and HypeSquad, with legacy verification support (`settings.js`, `src/utils/configView.js`, `src/events/configPanel.js`).
 - Implements a CAPTCHA verification flow: public Components V2 panel with **Respond** and **Why verify?**, ephemeral image/code challenge with attempts and expiry, and configured verification role assignment (`src/features/verification/`, `src/events/captchaVerification.js`).
-- Includes AutoQuest and HypeSquad interaction flows backed by service modules and user-provided tokens stored in runtime data (`src/events/autoQuest.js`, `src/events/hypeSquad.js`, `data/tokens.json`).
+- Includes AutoQuest and HypeSquad interaction flows backed by service modules and user-provided tokens stored in runtime data (`src/events/autoQuest.js`, `src/events/hypeSquad.js`, `data/tokens.db`).
 - Provides `/builder` for creating, editing, previewing, saving, and publishing Embed and Components V2 messages, with drafts/templates and validation (`src/features/builder/`).
 
 ### What it is not
@@ -120,7 +120,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the runtime flow, stage res
 - **Permission and hierarchy constraints:** message deletion, panel posting, role assignment, and bot profile updates can fail when permissions, role hierarchy, or channel access are insufficient.
 - **Ephemeral/in-memory state:** builder sessions and CAPTCHA challenge state are process-local and can be lost on restart or expiration.
 - **External service reliance:** AutoQuest and HypeSquad flows depend on user-provided tokens and external Discord API behavior, including rate limits and token validity.
-- **Local runtime data:** `settings.json`, `data/tokens.json`, and builder JSON storage files are operational data; they are not committed and are not automatically backed up by the bot.
+- **Local runtime data:** `settings.json`, `data/tokens.db`, and builder JSON storage files are operational data; they are not committed and are not automatically backed up by the bot.
 - **No live end-to-end verification in this change:** documentation was updated to reflect repository behavior and available tests; full runtime behavior depends on a correctly configured Discord environment.
 
 ## License
