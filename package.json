@@ -25,8 +25,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node .",
-    "dev": "node --watch .",
-    "dev:btd": "node betterThanDemons.js"
+    "dev": "node scripts/betterThanDemons.js"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.1.0",

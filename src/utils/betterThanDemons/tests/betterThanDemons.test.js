@@ -74,13 +74,13 @@ process.on('SIGTERM', async () => {
   const watchLog = dir => path.join(dir, "fixture.log");
 
   // ---------------------------------------------------------------- filters
-  await test("filter ignores volatile paths (node_modules, data, databases, assets, rules.txt)", () => {
+  await test("filter ignores volatile paths (node_modules, data, databases, assets, rules files)", () => {
     const filter = createFilter({
       extensions: [".js"],
       ignored: [],
       ignoreDefaults: true
     });
-    for (const rel of ["node_modules/pkg/index.js", ".git/config", "data/settings.db", "data/settings.db-wal", "dist/app.js", "logs/out.log", "src/app.db", "assets/logo.png", "rules.txt"]) {
+    for (const rel of ["node_modules/pkg/index.js", ".git/config", "data/settings.db", "data/settings.db-wal", "dist/app.js", "logs/out.log", "src/app.db", "assets/logo.png", "rules.txt", "config/rules.md"]) {
       assert.strictEqual(filter.isIgnored(rel), true, `expected ignored: ${rel}`);
     }
     for (const rel of ["src/index.js", "index.js", "lib/tool.js"]) {
@@ -403,8 +403,8 @@ process.on('SIGTERM', async () => {
     }
   });
 
-  await test("watcher ignores data/, images and rules.txt", async () => {
-    const fixture = await makeFixture({ "app.js": fixtureApp(50), "data/settings.db": "db", "image.png": "png", "rules.txt": "rules" });
+  await test("watcher ignores data/, images and rules files", async () => {
+    const fixture = await makeFixture({ "app.js": fixtureApp(50), "data/settings.db": "db", "image.png": "png", "rules.txt": "rules", "config/rules.md": "# rules" });
     const logFile = watchLog(fixture);
     process.env.FIXTURE_LOG = logFile;
     const runtime = new BetterThanDemons(makeOptions(fixture, { entry: "app.js" }));
@@ -414,6 +414,7 @@ process.on('SIGTERM', async () => {
       fs.appendFileSync(path.join(fixture, "data/settings.db"), "x");
       fs.appendFileSync(path.join(fixture, "image.png"), "x");
       fs.appendFileSync(path.join(fixture, "rules.txt"), "x");
+      fs.appendFileSync(path.join(fixture, "config/rules.md"), "x");
       await new Promise(r => setTimeout(r, 500));
       assert.strictEqual((readLog(logFile).match(/start /g) || []).length, 1, "ignored paths triggered no restart");
       await runtime.stop();
@@ -426,7 +427,7 @@ process.on('SIGTERM', async () => {
   await test("cli shim: SIGINT to the runner shuts the app down gracefully and exits 130", async () => {
     const fixture = await makeFixture({ "app.js": fixtureApp(200) });
     const logFile = watchLog(fixture);
-    const shim = path.join(__dirname, "..", "..", "..", "..", "betterThanDemons.js");
+    const shim = path.join(__dirname, "..", "..", "..", "..", "scripts", "betterThanDemons.js");
     const child = spawn(process.execPath, [shim, "app.js"], {
       cwd: fixture,
       env: Object.assign({}, process.env, { FIXTURE_LOG: logFile }),

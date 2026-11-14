@@ -14,7 +14,7 @@ const DEFAULT_IGNORED = {
     ".bak", ".corrupt", ".swp", ".lock", ".map", ".mp4", ".zip",
     ".jpg", ".jpeg", ".png", ".gif", ".webp", ".ico"
   ],
-  names: ["rules.txt", ".ds_store", "thumbs.db"]
+  names: ["rules.md", "rules.txt", ".ds_store", "thumbs.db"]
 };
 
 const DEFAULTS = {

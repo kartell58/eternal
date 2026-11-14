@@ -72,7 +72,7 @@ Start the bot:
 npm start
 # or
 node .
-# development (watch mode)
+# development (BetterThanDemons dev runner)
 npm run dev
 ```
 

@@ -1,7 +1,7 @@
 /**
  * betterThanDemons — internal experimental development runner for Eternal.
  *
- * NOT a public package. Replaces the old root-level betterThanDemons.js with
+ * NOT a public package. Replaces the old root-level CLI script with
  * a modular implementation (watcher / process / restart / config / logger).
  *
  * Usage (module):
@@ -9,8 +9,8 @@
  *   const runtime = new BetterThanDemons({ entry: "index.js" });
  *   runtime.start();
  *
- * CLI (root betterThanDemons.js shim):
- *   node betterThanDemons.js [entry]
+ * CLI (scripts/betterThanDemons.js shim):
+ *   node scripts/betterThanDemons.js [entry]
  *
  * Configuration (lowest to highest precedence):
  *   defaults → package.json "btdConfig"/"betterThanDemons"

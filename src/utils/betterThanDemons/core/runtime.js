@@ -13,7 +13,7 @@ const MAX_LOG_ARG = 1000;
 
 /**
  * BetterThanDemons — internal experimental dev-runner for Eternal.
- * Not a public package; see the root `betterThanDemons.js` CLI wrapper.
+ * Not a public package; see the `scripts/betterThanDemons.js` CLI wrapper.
  *
  * const runtime = new BetterThanDemons({ entry: "index.js" });
  * runtime.start();

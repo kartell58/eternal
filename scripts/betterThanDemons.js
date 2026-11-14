@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 /**
- * betterThanDemons.js — internal dev-runner for Eternal (nodemon replacement).
+ * scripts/betterThanDemons.js — internal dev-runner for Eternal (nodemon replacement).
  *
  * Thin CLI wrapper around src/utils/betterThanDemons. Spawns the app in its
  * own process group, restarts it on file changes with debouncing, and gives
  * it time to clean up on Ctrl+C (SIGTERM first, SIGKILL after a timeout).
  *
  * Usage:
- *   node betterThanDemons.js          # runs `node .` (package.json "main")
- *   node betterThanDemons.js index.js
+ *   node scripts/betterThanDemons.js          # runs `node .` (package.json "main")
+ *   node scripts/betterThanDemons.js index.js
  *
  * Configuration: see src/utils/betterThanDemons/index.js (eternal.btd.json /
  * BTD_* env vars / constructor options).
  */
 const path = require("path");
-const BetterThanDemons = require("./src/utils/betterThanDemons");
-const { installSignalHandlers } = require("./src/utils/betterThanDemons/process/signals");
+const BetterThanDemons = require("../src/utils/betterThanDemons");
+const { installSignalHandlers } = require("../src/utils/betterThanDemons/process/signals");
 
 const entryArg = process.argv[2];
 
