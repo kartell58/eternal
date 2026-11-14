@@ -14,10 +14,10 @@ const settings = require("../settings");
 const captcha = require("../features/verification/captcha");
 const { assignVerificationRole, resolveVerificationRole } = require("../features/verification/role");
 
-const WHY_TITLE = "Por que ter uma verificação de conta...";
+const WHY_TITLE = "Why verify your account?";
 const WHY_TITLE_MD = `**${WHY_TITLE}**`;
-const WHY_BODY = "A verificação de conta é para prevenir que contas indesejadas entre em nosso servidor, assim deixando uma comunidade mais segura e sem SPAM desnecessários em sua DM.";
-const WHY_CREDIT = "Desenvolvido por kartell (2sj5) • discord.gg/mN4Rh4c35";
+const WHY_BODY = "Account verification helps prevent unwanted accounts from joining our server, keeping the community safer and reducing unnecessary spam in your DMs.";
+const WHY_CREDIT = "Developed by kartell (2sj5) • discord.gg/mN4Rh4c35";
 const WHY_VERIFY_TEXT = [WHY_TITLE_MD, WHY_BODY, WHY_CREDIT].join("\n");
 
 const CV2_FLAGS = MessageFlags.IsComponentsV2;
