@@ -63,7 +63,7 @@ Selections are saved automatically to `settings.json` and the panel is updated i
 
 - **Verification**: green embed, title `✅ Verification`, description "Click the button below to receive your verified role.", footer with server name, button `✅ Verify`.
 - **Honeypot**: red embed, title `🚫 DO NOT SEND ANY MESSAGES HERE`, warning about automated accounts and softban.
-- **Rules**: embed with title `📜 Server Rules`, content read from `rules.txt`, posted to the configured channel.
+- **Rules**: embed with title `📜 Server Rules`, content read from `config/rules.txt`, posted to the configured channel.
 - **AutoQuest**: embed, title `🚀 AutoQuest`, buttons `Configure account` and `Start farm`.
 - **HypeSquad**: embed, title `🏆 HypeSquad`, buttons `Configure account`, `Bravery`, `Brilliance`, `Balance`, `Leave house`.
 
@@ -98,7 +98,7 @@ Selections are saved automatically to `settings.json` and the panel is updated i
 
 ### 4.5. Rules
 
-- Content read from `rules.txt` and displayed in an embed.
+- Content read from `config/rules.txt` and displayed in an embed.
 - Publication channel configurable via the `/config` panel.
 - "Post rules" button in the panel posts the embed to the configured channel.
 - Rules are isolated per server and persistent.

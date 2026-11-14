@@ -73,11 +73,11 @@ async function postRulesPanel(guild) {
 
   let rulesContent = "";
   try {
-    const rulesPath = path.join(__dirname, "..", "..", "rules.txt");
+    const rulesPath = path.join(__dirname, "..", "..", "config", "rules.txt");
     rulesContent = fs.readFileSync(rulesPath, "utf8");
   } catch (err) {
     rulesContent = "⚠️ Could not read the rules file.";
-    console.error("Error reading rules.txt:", err);
+    console.error("Error reading rules file:", err);
   }
 
   const embed = new EmbedBuilder()
